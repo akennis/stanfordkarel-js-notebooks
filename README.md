@@ -1,12 +1,90 @@
 # Stanford Karel — JavaScript
 
-A JavaScript port of the [Stanford Karel](https://github.com/TylerYep/stanfordkarel) robot programming library (CS 106A), designed for [Observable](https://observablehq.com/) notebooks. Karel programs render as inline animated GIFs — no desktop window or Python environment required.
+A JavaScript port of the [Stanford Karel](https://github.com/TylerYep/stanfordkarel) robot programming library (CS 106A). Karel programs run entirely in the browser and render as inline animated GIFs — no desktop window, Python environment, or build step required.
 
-## Usage in Observable
+The package ships two things:
 
-### 1. Attach the file
+- **A library** (`stanfordkarel.js`) you can drop into any browser page, JavaScript notebook ([Observable](https://observablehq.com/), etc.), or bundler project. Call `runKarel(world, program)` and get back an animated `<img>`.
+- **An interactive course** (`index.html` + `lessons/`) — *Learning JavaScript with Karel* — ten short, notebook-style lessons that teach programming fundamentals by driving Karel around a grid.
 
-Upload `stanfordkarel.js` as a file attachment in your notebook, then load it as an ES module:
+---
+
+## Learning JavaScript with Karel (the course)
+
+Open `index.html` in a browser to start the course. It's a self-contained, no-setup introduction to programming: each lesson mixes plain-English explanations with real JavaScript, and every code snippet is brought to life as an animated Karel program right on the page.
+
+The ten lessons build on one another in order:
+
+| # | Lesson | Concept |
+|---|---|---|
+| 01 | Commands & Sequencing | Programs are lists of commands that run in order |
+| 02 | Functions | Bundle commands into reusable, named building blocks |
+| 03 | The `for` Loop | Repeat something a fixed number of times |
+| 04 | The `while` Loop | Repeat until a condition changes |
+| 05 | Making Decisions with `if` | Booleans, and running code only when a condition holds |
+| 06 | `if` / `else` | Choose between two different actions |
+| 07 | Parameters | Functions that take input and adapt their behaviour |
+| 08 | Variables | Give a program a memory: store, read, and update values |
+| 09 | Return Values & Logic | Functions that answer questions; `and` / `or` / `not` |
+| 10 | Putting It All Together | Nested loops and every concept, in one program |
+
+Each lesson is a standalone HTML page under `lessons/` that pulls the library from a CDN, so the pages work as static files — serve the folder (or the whole repo) over any static host, or open a page directly. `lessons/square.html` is a longer, standalone demo (Karel walks a perimeter collecting beepers).
+
+### How the lesson pages are built
+
+Lesson pages import a tiny helper, `renderNotebook`, from `lessons/lesson.js`. You hand it an array of **cells** — either a markdown block or a runnable Karel cell — and it renders a notebook-style page, syntax-highlighting the code and running each program to produce the animation beneath it.
+
+```javascript
+import { renderNotebook } from "./lesson.js";
+
+renderNotebook([
+  { md: `<h2>Meet Karel</h2><p>Karel takes three steps east.</p>` },
+  {
+    world: `Dimension: (5, 5)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
+    code: function main(k) {
+      k.move();
+      k.move();
+      k.move();
+    },
+  },
+]);
+```
+
+- `{ md }` — an HTML/markdown block, rendered as prose.
+- `{ world, code, opts }` — a Karel cell. `world` is a world string, `code` is the `main` function (its source is shown, then executed), and `opts` are optional `runKarel` options.
+
+If a program hits a wall, the partial animation still renders and the error is shown below it, so a mistake is visible rather than silent.
+
+---
+
+## Using the library
+
+### In a plain HTML page
+
+Import the module straight from a CDN — no bundler needed:
+
+```html
+<div id="out"></div>
+<script type="module">
+  import { runKarel } from "https://esm.sh/stanfordkarel-js-notebooks/stanfordkarel.js";
+
+  const img = await runKarel(`
+    Dimension: (5, 5)
+    Karel: (1, 1); east
+    BeeperBag: INFINITY
+  `, function main(k) {
+    while (k.frontIsClear()) k.move();
+    k.turnLeft();
+    while (k.frontIsClear()) k.move();
+  });
+
+  document.getElementById("out").appendChild(img);
+</script>
+```
+
+### In Observable
+
+Upload `stanfordkarel.js` as a file attachment and load it as an ES module:
 
 ```javascript
 stanfordkarel = FileAttachment("stanfordkarel.js")
@@ -16,7 +94,13 @@ stanfordkarel = FileAttachment("stanfordkarel.js")
 karel = import(await stanfordkarel.url())
 ```
 
-### 2. Define a world and run a program
+…or import it directly from a CDN:
+
+```javascript
+karel = import("https://esm.sh/stanfordkarel-js-notebooks/stanfordkarel.js")
+```
+
+Then run a program — the returned `<img>` displays inline in the cell:
 
 ```javascript
 animation = karel.runKarel(`
@@ -30,17 +114,48 @@ animation = karel.runKarel(`
 })
 ```
 
-### 3. Destructure for Python-style syntax
+> Observable has no npm resolver, so static `import … from "bare-package"` raises an `UnexpectedToken` error. Use a dynamic `import()` against a CDN URL (or a file attachment) instead.
 
-If you prefer calling functions without the `k.` prefix, destructure the API:
+### With a bundler (Vite / webpack / esbuild) or Node
+
+Static imports with the bare package specifier work here, since npm resolution is available:
 
 ```javascript
-animation = karel.runKarel(worldText, function main({
-  move, turnLeft, frontIsClear, beepersPresent, pickBeeper, putBeeper
-}) {
+import * as karel from "stanfordkarel-js-notebooks";
+
+const img = await karel.runKarel(karel.worlds.square, main);
+document.body.appendChild(img);
+```
+
+### Python-style syntax
+
+If you'd rather call functions without the `k.` prefix, destructure the API from the argument:
+
+```javascript
+runKarel(worldText, function main({ move, turnLeft, frontIsClear, putBeeper }) {
   while (frontIsClear()) move();
 })
 ```
+
+---
+
+## `runKarel(worldText, mainFunc, options?)`
+
+Runs a Karel program and returns a `Promise<HTMLImageElement>` — an animated GIF ready to display.
+
+If the program throws (e.g. Karel hits a wall), the promise still resolves with the **partial** animation; the error message is available on `img.dataset.error` and as the element's tooltip (`img.title`).
+
+`mainFunc` receives a Karel instance (or, destructured, its methods) and may be `async`.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `cellSize` | `number` | `50` | Pixels per grid cell |
+| `delay` | `number` | `100`\* | Milliseconds per animation frame |
+| `finalFrameDelay` | `number` | `1000` | Extra pause on the last frame (ms) |
+| `icon` | `"karel"` \| `"simple"` | `"karel"` | Robot sprite style |
+| `gifWorkers` | `number` | `2` | Web workers used by gif.js |
+
+\* If the world includes a `Speed:` directive, that value sets the default delay (`delay = round(100 / speed)` ms, so Speed 2.0 → 50 ms, Speed 0.5 → 200 ms). An explicit `delay` option always takes precedence.
 
 ---
 
@@ -87,29 +202,13 @@ const { RED, BLACK, CYAN, DARK_GRAY, GRAY, GREEN, LIGHT_GRAY,
         MAGENTA, ORANGE, PINK, WHITE, BLUE, YELLOW, BLANK } = karel;
 ```
 
-Use these with `k.paintCorner(karel.RED)` or destructure them directly.
-
----
-
-## `runKarel(worldText, mainFunc, options?)`
-
-Returns a `Promise<HTMLImageElement>` — an animated GIF ready to display in an Observable cell.
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `cellSize` | `number` | `50` | Pixels per grid cell |
-| `delay` | `number` | `100`* | Milliseconds per animation frame |
-| `finalFrameDelay` | `number` | `1000` | Extra pause on the last frame (ms) |
-| `icon` | `"karel"` \| `"simple"` | `"karel"` | Robot sprite style |
-| `gifWorkers` | `number` | `2` | Web workers used by gif.js |
-
-\* If the world includes a `Speed:` directive, that value sets the default delay (`delay = 100 / speed` ms). An explicit `delay` option always takes precedence.
+Use these with `k.paintCorner(karel.RED)`, or destructure them directly.
 
 ---
 
 ## World File Format
 
-Worlds are plain text strings, one directive per line. The same `.w` format used by the Python library is supported.
+Worlds are plain-text strings, one directive per line — the same `.w` format used by the Python library.
 
 ```
 Dimension: (num_avenues, num_streets)
@@ -142,69 +241,31 @@ Wall: (2, 3); north
 
 ## Bundled Worlds
 
-Ready-made worlds ship as importable ES modules under `worlds/`. Each is a
-plain-text world string, so you can hand it straight to `runKarel`.
+Ready-made worlds ship as importable ES modules under `worlds/`. Each is a plain-text world string (its default export), so you can hand it straight to `runKarel`. They're also re-exported on the library object as `karel.worlds`.
 
 | World | Description |
 |---|---|
-| `square` | 9×9 grid with 16 beepers around a 5×5 inner square; Karel at (1, 1) facing east. |
-
-### In Observable
-
-The bundled worlds are exposed on the library object itself, so once you've
-imported `karel` you can reach any world through `karel.worlds`:
+| `square` | 9×9 grid with 16 beepers around a 5×5 inner square; Karel at (1, 1) facing east with an empty bag. |
 
 ```javascript
-karel = import("https://esm.sh/stanfordkarel-js-notebooks/stanfordkarel.js")
+// Via the library object (works everywhere the library is loaded):
+karel.runKarel(karel.worlds.square, main)
 ```
 
 ```javascript
-animation = karel.runKarel(karel.worlds.square, main)
-```
-
-Observable has no npm module resolver, so **static `import … from "…"` with a bare
-package name does not work** (it raises an `UnexpectedToken` error). If you'd
-rather import the worlds on their own, use a dynamic `import()` against a CDN URL
-to grab the whole collection:
-
-```javascript
+// Via CDN — the whole collection…
 worlds = import("https://esm.sh/stanfordkarel-js-notebooks/worlds/index.js")
-```
-
-```javascript
-animation = karel.runKarel(worlds.square, main)
-```
-
-…or a single world module (its default export is the world string):
-
-```javascript
+// …or a single world module (default export is the world string):
 square = (await import("https://esm.sh/stanfordkarel-js-notebooks/worlds/square.js")).default
 ```
 
-Pin a version by appending `@x.y.z` to the package name, e.g.
-`https://esm.sh/stanfordkarel-js-notebooks@0.4.0/worlds/square.js`.
-
-If you've uploaded the files to the notebook as attachments, load them from there
-instead:
-
 ```javascript
-worlds = import(await FileAttachment("worlds/index.js").url())
-```
-
-### With a bundler (Vite / webpack / esbuild) or Node
-
-Static imports with the bare package specifier work here, since npm resolution is
-available:
-
-```javascript
-import * as karel from "stanfordkarel-js-notebooks";
-animation = karel.runKarel(karel.worlds.square, main);
-
-// or import the worlds directly:
+// With a bundler / Node:
 import { square } from "stanfordkarel-js-notebooks/worlds";
-// or a single module:
 import square from "stanfordkarel-js-notebooks/worlds/square";
 ```
+
+Pin a version by appending `@x.y.z` to the package name on a CDN URL, e.g. `https://esm.sh/stanfordkarel-js-notebooks@0.5.0/worlds/square.js`.
 
 ---
 
@@ -213,11 +274,8 @@ import square from "stanfordkarel-js-notebooks/worlds/square";
 Convenience helper that fetches a `.w` world file from a URL and returns its text.
 
 ```javascript
-worldText = karel.fetchWorld("https://example.com/worlds/my_world.w")
-```
-
-```javascript
-animation = karel.runKarel(await worldText, main)
+worldText = await karel.fetchWorld("https://example.com/worlds/my_world.w")
+animation = karel.runKarel(worldText, main)
 ```
 
 ---
@@ -227,67 +285,57 @@ animation = karel.runKarel(await worldText, main)
 Karel navigates from the south-west corner to a 5×5 inner square and collects all 16 beepers around its perimeter:
 
 ```javascript
-animation = {
-  const worldText = `
-Dimension: (9, 9)
-Karel: (1, 1); east
-BeeperBag: 0
-Beeper: (3, 3); 1
-Beeper: (4, 3); 1
-Beeper: (5, 3); 1
-Beeper: (6, 3); 1
-Beeper: (7, 3); 1
-Beeper: (7, 4); 1
-Beeper: (7, 5); 1
-Beeper: (7, 6); 1
-Beeper: (7, 7); 1
-Beeper: (6, 7); 1
-Beeper: (5, 7); 1
-Beeper: (4, 7); 1
-Beeper: (3, 7); 1
-Beeper: (3, 6); 1
-Beeper: (3, 5); 1
-Beeper: (3, 4); 1
-`;
+const worldText = karel.worlds.square;
 
-  function main(k) {
-    function turnRight() {
-      k.turnLeft(); k.turnLeft(); k.turnLeft();
+function main(k) {
+  function turnRight() {
+    k.turnLeft(); k.turnLeft(); k.turnLeft();
+  }
+  function walkAndPick(steps) {
+    for (let i = 0; i < steps; i++) {
+      k.move();
+      if (k.beepersPresent()) k.pickBeeper();
     }
-    function walkAndPick(steps) {
-      for (let i = 0; i < steps; i++) {
-        k.move();
-        if (k.beepersPresent()) k.pickBeeper();
-      }
-    }
-
-    // Navigate to the bottom-left corner of the inner square
-    k.move(); k.move();  // east to avenue 3
-    k.turnLeft();       // face north
-    k.move(); k.move();  // north to street 3
-    k.pickBeeper();     // pick corner beeper at (3,3)
-
-    walkAndPick(4);  // up the left side:    (3,4) → (3,7)
-    turnRight();    // face east
-    walkAndPick(4);  // across the top:      (4,7) → (7,7)
-    turnRight();    // face south
-    walkAndPick(4);  // down the right side: (7,6) → (7,3)
-    turnRight();    // face west
-    walkAndPick(3);  // back along bottom:   (6,3) → (4,3)
-    k.move();        // return to start — already cleared
   }
 
-  return karel.runKarel(worldText, main, { cellSize: 60, delay: 150 });
+  // Navigate to the bottom-left corner of the inner square
+  k.move(); k.move();  // east to avenue 3
+  k.turnLeft();        // face north
+  k.move(); k.move();  // north to street 3
+  k.pickBeeper();      // pick corner beeper at (3, 3)
+
+  walkAndPick(4);  // up the left side:    (3,4) → (3,7)
+  turnRight();     // face east
+  walkAndPick(4);  // across the top:      (4,7) → (7,7)
+  turnRight();     // face south
+  walkAndPick(4);  // down the right side: (7,6) → (7,3)
+  turnRight();     // face west
+  walkAndPick(3);  // back along bottom:   (6,3) → (4,3)
 }
+
+animation = karel.runKarel(worldText, main, { cellSize: 60, delay: 150 });
 ```
+
+See `lessons/square.html` for this example running as a standalone page.
+
+---
+
+## Repository layout
+
+| Path | Purpose |
+|---|---|
+| `stanfordkarel.js` | The library — world parser, simulator, and GIF renderer |
+| `worlds/` | Bundled world modules (`index.js`, `square.js`, …) |
+| `index.html` | Landing page for the *Learning JavaScript with Karel* course |
+| `lessons/` | The ten lesson pages, plus `lesson.js` / `lesson.css` and the `square.html` demo |
+
+Only `stanfordkarel.js`, `worlds/`, `LICENSE`, and `README.md` are published to npm (see the `files` field in `package.json`); the course pages live in the repo and are meant to be served as static files.
 
 ---
 
 ## Publishing to npm
 
-The package is published at
-[npmjs.com/package/stanfordkarel-js-notebooks](https://www.npmjs.com/package/stanfordkarel-js-notebooks).
-To cut a new release:
+The package is published at [npmjs.com/package/stanfordkarel-js-notebooks](https://www.npmjs.com/package/stanfordkarel-js-notebooks). To cut a new release:
 
 ```bash
 # 1. Ensure you're logged in as the package owner
@@ -309,8 +357,7 @@ git push && git push --tags
 
 Notes:
 - Commit all working-tree changes first — `npm version` refuses to run on a dirty tree.
-- Only files in the `files` array of `package.json` are published, so new worlds
-  added under `worlds/` are included automatically.
+- Only files in the `files` array of `package.json` are published, so new worlds added under `worlds/` are included automatically.
 - If 2FA is enabled on your npm account, `npm publish` will prompt for a one-time code.
 
 ---
