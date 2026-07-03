@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Learning JavaScript with Karel</title>
+  <style>
+    :root{ --ink:#1a1a1a; --muted:#666; --line:#e5e7eb; --accent:#0b5fff; }
+    *{box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+      color:var(--ink);background:#fafafa;margin:0;line-height:1.6;}
+    .wrap{max-width:52rem;margin:0 auto;padding:3rem 1.25rem 4rem;}
+    .crumb{font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+    h1{margin:.3rem 0 .4rem;font-size:2.1rem;}
+    .lead{margin:0 0 .5rem;color:var(--muted);font-size:1.1rem;}
+    .intro{margin:1.4rem 0 2rem;}
+    .intro code{background:#eef1f4;padding:.1em .35em;border-radius:4px;font-size:.92em;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+    h2{font-size:1.15rem;margin:2rem 0 .75rem;}
+    ol.toc{list-style:none;margin:0;padding:0;counter-reset:lesson;}
+    ol.toc li{margin:0;}
+    ol.toc a{display:flex;gap:1rem;align-items:baseline;text-decoration:none;color:inherit;
+      padding:.85rem 1rem;border:1px solid var(--line);border-radius:8px;margin-bottom:.55rem;
+      background:#fff;transition:border-color .15s, box-shadow .15s;}
+    ol.toc a:hover{border-color:var(--accent);box-shadow:0 1px 6px rgba(11,95,255,.08);}
+    ol.toc .num{counter-increment:lesson;flex:0 0 1.9rem;font-variant-numeric:tabular-nums;
+      font-weight:700;color:var(--accent);font-size:1.05rem;}
+    ol.toc .num::before{content:counter(lesson,decimal-leading-zero);}
+    ol.toc .body{flex:1;}
+    ol.toc .title{font-weight:600;font-size:1.02rem;}
+    ol.toc .desc{color:var(--muted);font-size:.9rem;}
+    ol.toc .title code{background:#eef1f4;padding:.05em .3em;border-radius:4px;
+      font-family:ui-monospace,monospace;font-size:.92em;font-weight:600;}
+    .foot{margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid var(--line);
+      color:var(--muted);font-size:.9rem;}
+    .foot a{color:var(--accent);text-decoration:none;} .foot a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="crumb">An introduction to programming</div>
+    <h1>Learning JavaScript with Karel</h1>
+    <p class="lead">Ten short, notebook-style lessons that teach the fundamentals of JavaScript by
+      programming a friendly robot named Karel.</p>
+
+    <p class="intro">No setup required. Every lesson mixes plain-English explanations with real
+      JavaScript code, and each snippet is brought to life as an animated Karel program right on the
+      page. Work through them in order — each builds on the one before.</p>
+
+    <h2>The course</h2>
+    <ol class="toc">
+      <li><a href="./lessons/01-commands.html"><span class="num"></span><span class="body">
+        <div class="title">Commands &amp; Sequencing</div>
+        <div class="desc">Programs are lists of commands that run in order.</div></span></a></li>
+      <li><a href="./lessons/02-functions.html"><span class="num"></span><span class="body">
+        <div class="title">Functions</div>
+        <div class="desc">Bundle commands into reusable, named building blocks.</div></span></a></li>
+      <li><a href="./lessons/03-for-loops.html"><span class="num"></span><span class="body">
+        <div class="title">The <code>for</code> Loop</div>
+        <div class="desc">Repeat something a fixed number of times.</div></span></a></li>
+      <li><a href="./lessons/04-while-loops.html"><span class="num"></span><span class="body">
+        <div class="title">The <code>while</code> Loop</div>
+        <div class="desc">Repeat until a condition changes.</div></span></a></li>
+      <li><a href="./lessons/05-if.html"><span class="num"></span><span class="body">
+        <div class="title">Making Decisions with <code>if</code></div>
+        <div class="desc">Booleans, and running code only when a condition holds.</div></span></a></li>
+      <li><a href="./lessons/06-if-else.html"><span class="num"></span><span class="body">
+        <div class="title"><code>if</code> / <code>else</code></div>
+        <div class="desc">Choose between two different actions.</div></span></a></li>
+      <li><a href="./lessons/07-parameters.html"><span class="num"></span><span class="body">
+        <div class="title">Parameters</div>
+        <div class="desc">Functions that take input and adapt their behaviour.</div></span></a></li>
+      <li><a href="./lessons/08-variables.html"><span class="num"></span><span class="body">
+        <div class="title">Variables</div>
+        <div class="desc">Give a program a memory: store, read, and update values.</div></span></a></li>
+      <li><a href="./lessons/09-booleans-return.html"><span class="num"></span><span class="body">
+        <div class="title">Return Values &amp; Logic</div>
+        <div class="desc">Functions that answer questions; and / or / not.</div></span></a></li>
+      <li><a href="./lessons/10-capstone.html"><span class="num"></span><span class="body">
+        <div class="title">Putting It All Together</div>
+        <div class="desc">Nested loops and every concept, in one program.</div></span></a></li>
+    </ol>
+
+    <div class="foot">
+      Powered by <a href="https://www.npmjs.com/package/stanfordkarel-js-notebooks">stanfordkarel-js-notebooks</a>.
+      See the <a href="./lessons/square.html">square world demo</a> for a longer example.
+    </div>
+  </div>
+</body>
+</html>

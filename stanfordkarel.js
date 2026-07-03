@@ -13,18 +13,18 @@
  *     Karel: (1, 1); east
  *     BeeperBag: INFINITY
  *   `, function main(k) {
- *     while (k.front_is_clear()) k.move();
- *     k.turn_left();
- *     while (k.front_is_clear()) k.move();
+ *     while (k.frontIsClear()) k.move();
+ *     k.turnLeft();
+ *     while (k.frontIsClear()) k.move();
  *   })
  *
- * Or destructure the API for a style closer to the Python version:
+ * Or destructure the API for a terser, prefix-free style:
  *
  *   animation = karel.runKarel(worldText, function main({
- *     move, turn_left, front_is_clear, beepers_present, put_beeper
+ *     move, turnLeft, frontIsClear, beepersPresent, putBeeper
  *   }) {
- *     while (front_is_clear()) { move(); }
- *     if (beepers_present()) { put_beeper(); }
+ *     while (frontIsClear()) { move(); }
+ *     if (beepersPresent()) { putBeeper(); }
  *   })
  */
 
@@ -259,12 +259,12 @@ class KarelProgram {
     this._notify();
   }
 
-  turn_left() {
+  turnLeft() {
     this.direction = TURN_LEFT_MAP[this.direction];
     this._notify();
   }
 
-  put_beeper() {
+  putBeeper() {
     if (this.numBeepers === 0)
       throw new Error("Karel tried to put a beeper but has none in its bag");
     this.world.addBeeper(this.avenue, this.street);
@@ -272,7 +272,7 @@ class KarelProgram {
     this._notify();
   }
 
-  pick_beeper() {
+  pickBeeper() {
     if (this.world.beeperCount(this.avenue, this.street) === 0)
       throw new Error(
         `Karel tried to pick up a beeper at (${this.avenue}, ${this.street}) but there are none`
@@ -284,40 +284,40 @@ class KarelProgram {
 
   // ── Sensing ──────────────────────────────────────────────────────────────
 
-  front_is_clear()  { return this._directionIsClear(this.direction); }
-  front_is_blocked() { return !this.front_is_clear(); }
+  frontIsClear()  { return this._directionIsClear(this.direction); }
+  frontIsBlocked() { return !this.frontIsClear(); }
 
-  left_is_clear()   { return this._directionIsClear(TURN_LEFT_MAP[this.direction]); }
-  left_is_blocked() { return !this.left_is_clear(); }
+  leftIsClear()   { return this._directionIsClear(TURN_LEFT_MAP[this.direction]); }
+  leftIsBlocked() { return !this.leftIsClear(); }
 
-  right_is_clear()   { return this._directionIsClear(TURN_RIGHT_MAP[this.direction]); }
-  right_is_blocked() { return !this.right_is_clear(); }
+  rightIsClear()   { return this._directionIsClear(TURN_RIGHT_MAP[this.direction]); }
+  rightIsBlocked() { return !this.rightIsClear(); }
 
-  beepers_present()    { return this.world.beeperCount(this.avenue, this.street) > 0; }
-  no_beepers_present() { return !this.beepers_present(); }
+  beepersPresent()   { return this.world.beeperCount(this.avenue, this.street) > 0; }
+  noBeepersPresent() { return !this.beepersPresent(); }
 
-  beepers_in_bag()    { return this.numBeepers !== 0; }
-  no_beepers_in_bag() { return !this.beepers_in_bag(); }
+  beepersInBag()   { return this.numBeepers !== 0; }
+  noBeepersInBag() { return !this.beepersInBag(); }
 
-  facing_north()     { return this.direction === "north"; }
-  not_facing_north() { return !this.facing_north(); }
-  facing_east()      { return this.direction === "east";  }
-  not_facing_east()  { return !this.facing_east(); }
-  facing_south()     { return this.direction === "south"; }
-  not_facing_south() { return !this.facing_south(); }
-  facing_west()      { return this.direction === "west";  }
-  not_facing_west()  { return !this.facing_west(); }
+  facingNorth()    { return this.direction === "north"; }
+  notFacingNorth() { return !this.facingNorth(); }
+  facingEast()     { return this.direction === "east";  }
+  notFacingEast()  { return !this.facingEast(); }
+  facingSouth()    { return this.direction === "south"; }
+  notFacingSouth() { return !this.facingSouth(); }
+  facingWest()     { return this.direction === "west";  }
+  notFacingWest()  { return !this.facingWest(); }
 
   // ── Color ────────────────────────────────────────────────────────────────
 
-  paint_corner(color) {
+  paintCorner(color) {
     if (color && !Object.hasOwn(CSS_COLORS, color))
       throw new Error(`Invalid Karel color: "${color}"`);
     this.world.paintCorner(this.avenue, this.street, color);
     this._notify();
   }
 
-  corner_color_is(color) {
+  cornerColorIs(color) {
     return this.world.cornerColor(this.avenue, this.street) === color;
   }
 }

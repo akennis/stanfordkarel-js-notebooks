@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4 · The <code>while</code> Loop — Karel JS</title>
+  <style>
+    :root{
+      --ink:#1a1a1a; --muted:#666; --line:#e5e7eb;
+      --in-bg:#f6f8fa; --in-border:#d0d7de; --prompt:#8a3ffc; --accent:#0b5fff;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+      color:var(--ink);background:#fafafa;margin:0;line-height:1.6;}
+    .course{max-width:52rem;margin:0 auto;padding:2.5rem 1.25rem 0.25rem;}
+    .crumb{font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+    .course h1{margin:.3rem 0 .4rem;font-size:1.9rem;line-height:1.15;}
+    .course .lead{margin:0;color:var(--muted);font-size:1.08rem;}
+    #notebook{max-width:52rem;margin:1rem auto;padding:0 1.25rem;}
+    .md{padding:.3rem 0 .1rem;}
+    .md h2{font-size:1.32rem;margin:1.5rem 0 .5rem;}
+    .md h3{font-size:1.06rem;margin:1.1rem 0 .35rem;}
+    .md p{margin:.5rem 0;}
+    .md code{background:#eef1f4;padding:.1em .35em;border-radius:4px;font-size:.92em;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+    .md .callout{border-left:4px solid var(--accent);background:#eef4ff;padding:.6rem .9rem;
+      border-radius:0 6px 6px 0;margin:.85rem 0;}
+    .md .callout.tip{border-color:#16a34a;background:#effaf1;}
+    .md .callout.warn{border-color:#d97706;background:#fff7ed;}
+    .md .callout strong{display:block;margin-bottom:.15rem;}
+    .md ul{margin:.4rem 0 .4rem 1.15rem;} .md li{margin:.2rem 0;}
+    .cell{margin:1rem 0 1.5rem;}
+    .in,.out{display:flex;gap:.55rem;align-items:flex-start;}
+    .prompt{flex:0 0 auto;width:4rem;text-align:right;font-family:ui-monospace,monospace;
+      font-size:.78rem;color:var(--prompt);padding-top:.6rem;user-select:none;}
+    .out-prompt{color:#d1451b;}
+    pre.code{flex:1 1 auto;margin:0;background:var(--in-bg);border:1px solid var(--in-border);
+      border-radius:6px;padding:.6rem .85rem;overflow-x:auto;}
+    pre.code code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:.9rem;line-height:1.55;color:#24292f;white-space:pre;}
+    .kw{color:#cf222e;} .st{color:#0a3069;} .cm{color:#6e7781;font-style:italic;} .nm{color:#0550ae;}
+    .out{margin-top:.45rem;}
+    .render{flex:1 1 auto;min-height:56px;padding-top:.25rem;}
+    .render img{border:1px solid var(--line);border-radius:4px;background:#fff;max-width:100%;}
+    .status{color:#999;font-size:.9rem;font-style:italic;}
+    .err{color:#b91c1c;font-size:.85rem;margin-top:.4rem;font-family:ui-monospace,monospace;}
+    .pager{max-width:52rem;margin:2rem auto 3rem;padding:1.2rem 1.25rem 0;
+      border-top:1px solid var(--line);display:flex;justify-content:space-between;
+      gap:1rem;font-size:.95rem;}
+    .pager a{color:var(--accent);text-decoration:none;font-weight:500;}
+    .pager a:hover{text-decoration:underline;} .pager .spacer{flex:1;}
+  </style>
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 4 of 10</div>
+    <h1>4 · The <code>while</code> Loop</h1>
+    <p class="lead">Repeat until a condition changes — even when you don't know the count ahead of time.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./03-for-loops.html">← for loops</a><span class="spacer"></span><a href="./05-if.html">if statements →</a>
+  </nav>
+
+  <script type="module">
+    import { runKarel } from "https://esm.sh/stanfordkarel-js-notebooks@0.4.0/stanfordkarel.js";
+
+    const cells = [
+      { md: `<h2>When you don't know how far</h2>
+      <p>A <code>for</code> loop is perfect when you know the count. But what if Karel should walk to a
+      wall that might be near or far? For that we use a <strong>while loop</strong>, which keeps going
+      <em>as long as a condition is true</em>.</p>
+      <p>Karel can sense its surroundings. One such <em>condition</em> is <code>k.frontIsClear()</code>,
+      which is <code>true</code> when there's no wall directly ahead.</p>` },
+      { md: `<h2>Walk until blocked</h2>
+      <p>Read this as: "while the front is clear, move." Karel keeps stepping and re-checks before each
+      step; the moment a wall is ahead, the loop stops. This works no matter how wide the world is.</p>` },
+      { world: `Dimension: (7, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: function main(k) {
+          while (k.frontIsClear()) {
+            k.move();
+          }
+      } },
+      { md: `<h2>Work along the way</h2>
+      <p>Just like a for loop, a while loop can do several things each pass. Here Karel fills an entire
+      row with beepers, however long the row happens to be, then drops one on the final square.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: function main(k) {
+          while (k.frontIsClear()) {
+            k.putBeeper();
+            k.move();
+          }
+          k.putBeeper();
+      } },
+      { md: `<h2>Reaching a corner</h2>
+      <p>Combining while loops lets Karel navigate. Below, Karel walks east to the wall, turns to face
+      north, then walks up to the far corner — without knowing the grid's size in advance.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: function main(k) {
+          while (k.frontIsClear()) {
+            k.move();
+          }
+          k.turnLeft();
+          while (k.frontIsClear()) {
+            k.move();
+          }
+      } },
+      { md: `<div class="callout warn"><strong>Watch out</strong>
+      A while loop only stops when its condition becomes <code>false</code>. If the condition can never
+      change, Karel loops forever. Always make sure something inside the loop moves you toward stopping.</div>` },
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      A <code>while</code> loop repeats as long as a condition is <code>true</code>. Use it with sensing
+      commands like <code>frontIsClear()</code> when you don't know the exact number of repetitions.</div>` },
+    ];
+
+    const esc = s => s.replace(/[&<>]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;" }[c]));
+
+    function highlight(src) {
+      return src.split(/(\/\/[^\n]*|`[^`]*`|"[^"]*"|'[^']*')/g).map((p, i) => {
+        if (i % 2 === 1) return `<span class="${p.startsWith("//") ? "cm" : "st"}">${esc(p)}</span>`;
+        let h = esc(p);
+        h = h.replace(/\b(function|for|while|if|else|let|const|return|true|false|new)\b/g, '<span class="kw">$1</span>');
+        h = h.replace(/\b(\d+)\b/g, '<span class="nm">$1</span>');
+        return h;
+      }).join("");
+    }
+
+    function dedent(s) {
+      const lines = s.replace(/^\n+/, "").replace(/\s+$/, "").split("\n");
+      const widths = lines.filter(l => l.trim()).map(l => l.match(/^ */)[0].length);
+      const min = widths.length ? Math.min(...widths) : 0;
+      return lines.map(l => l.slice(min)).join("\n");
+    }
+
+    function bodySource(fn) {
+      const s = fn.toString();
+      return dedent(s.slice(s.indexOf("{") + 1, s.lastIndexOf("}")));
+    }
+
+    let counter = 0;
+    const nb = document.getElementById("notebook");
+
+    function renderMd(cell) {
+      const div = document.createElement("div");
+      div.className = "md";
+      div.innerHTML = cell.md;
+      nb.appendChild(div);
+    }
+
+    async function renderCode(cell) {
+      const n = ++counter;
+      const wrap = document.createElement("div");
+      wrap.className = "cell";
+      wrap.innerHTML =
+        `<div class="in"><div class="prompt">In [${n}]:</div>` +
+        `<pre class="code"><code>${highlight(bodySource(cell.code))}</code></pre></div>` +
+        `<div class="out"><div class="prompt out-prompt">Out[${n}]:</div>` +
+        `<div class="render"><span class="status">Running…</span></div></div>`;
+      nb.appendChild(wrap);
+      const render = wrap.querySelector(".render");
+      try {
+        const img = await runKarel(cell.world, cell.code, cell.opts || { cellSize: 46, delay: 150 });
+        render.replaceChildren(img);
+        if (img.dataset.error) {
+          const e = document.createElement("div");
+          e.className = "err";
+          e.textContent = "Karel stopped early: " + img.dataset.error;
+          render.appendChild(e);
+        }
+      } catch (err) {
+        render.innerHTML = `<div class="err">Error: ${esc(err.message)}</div>`;
+      }
+    }
+
+    for (const cell of cells) {
+      if (cell.md !== undefined) renderMd(cell);
+      else await renderCode(cell);
+    }
+  </script>
+</body>
+</html>

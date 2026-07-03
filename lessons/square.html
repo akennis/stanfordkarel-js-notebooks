@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karel — Collect Newspaper (square world)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.5; }
+    h1 { margin-bottom: 0.25rem; }
+    p.sub { color: #555; margin-top: 0; }
+    #out { margin-top: 1.5rem; min-height: 480px; }
+    #out img { border: 1px solid #ddd; }
+    .status { color: #888; }
+  </style>
+</head>
+<body>
+  <h1>Collect the perimeter — <code>square</code> world</h1>
+  <p class="sub">Karel walks the perimeter of the inner 5×5 square, picking up all 16 beepers.</p>
+
+  <div id="out"><span class="status">Rendering…</span></div>
+
+  <script type="module">
+    import * as karel from "https://esm.sh/stanfordkarel-js-notebooks@0.4.0/stanfordkarel.js";
+
+    const { runKarel, worlds: { square } } = karel;
+
+    function main(k) {
+      function turnRight() {
+        k.turnLeft(); k.turnLeft(); k.turnLeft();
+      }
+      function walkAndPick(steps) {
+        for (let i = 0; i < steps; i++) {
+          k.move();
+          if (k.beepersPresent()) k.pickBeeper();
+        }
+      }
+
+      // Navigate from (1,1) to the bottom-left corner of the inner square
+      k.move(); k.move();  // east to avenue 3
+      k.turnLeft();       // face north
+      k.move(); k.move();  // north to street 3
+      k.pickBeeper();     // pick corner beeper at (3,3)
+
+      walkAndPick(4);  // up the left side:   (3,4) → (3,7)
+      turnRight();    // face east at (3,7)
+      walkAndPick(4);  // across the top:     (4,7) → (7,7)
+      turnRight();    // face south at (7,7)
+      walkAndPick(4);  // down the right side:(7,6) → (7,3)
+      turnRight();    // face west at (7,3)
+      walkAndPick(3);  // back along bottom:  (6,3) → (4,3)
+      k.move();        // return to (3,3) — already cleared
+    }
+
+    const out = document.getElementById("out");
+    try {
+      const img = await runKarel(square, main);
+      out.replaceChildren(img);
+    } catch (err) {
+      out.innerHTML = `<span class="status">Error: ${err.message}</span>`;
+    }
+  </script>
+</body>
+</html>

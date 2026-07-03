@@ -1,6 +1,6 @@
 {
   "name": "stanfordkarel-js-notebooks",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Stanford Karel robot simulation for Javascript notebooks — animate Karel programs as GIFs in the browser",
   "type": "module",
   "main": "stanfordkarel.js",

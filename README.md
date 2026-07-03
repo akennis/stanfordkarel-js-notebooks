@@ -24,9 +24,9 @@ animation = karel.runKarel(`
   Karel: (1, 1); east
   BeeperBag: INFINITY
 `, function main(k) {
-  while (k.front_is_clear()) k.move();
-  k.turn_left();
-  while (k.front_is_clear()) k.move();
+  while (k.frontIsClear()) k.move();
+  k.turnLeft();
+  while (k.frontIsClear()) k.move();
 })
 ```
 
@@ -36,9 +36,9 @@ If you prefer calling functions without the `k.` prefix, destructure the API:
 
 ```javascript
 animation = karel.runKarel(worldText, function main({
-  move, turn_left, front_is_clear, beepers_present, pick_beeper, put_beeper
+  move, turnLeft, frontIsClear, beepersPresent, pickBeeper, putBeeper
 }) {
-  while (front_is_clear()) move();
+  while (frontIsClear()) move();
 })
 ```
 
@@ -51,34 +51,34 @@ animation = karel.runKarel(worldText, function main({
 | Function | Description |
 |---|---|
 | `k.move()` | Move one step forward. Throws if blocked by a wall or boundary. |
-| `k.turn_left()` | Rotate 90° counterclockwise. |
-| `k.put_beeper()` | Place a beeper at the current corner. Throws if bag is empty. |
-| `k.pick_beeper()` | Pick up a beeper from the current corner. Throws if none present. |
-| `k.paint_corner(color)` | Paint the current corner a color (use a color constant). |
+| `k.turnLeft()` | Rotate 90° counterclockwise. |
+| `k.putBeeper()` | Place a beeper at the current corner. Throws if bag is empty. |
+| `k.pickBeeper()` | Pick up a beeper from the current corner. Throws if none present. |
+| `k.paintCorner(color)` | Paint the current corner a color (use a color constant). |
 
 ### Conditions
 
 | Function | Returns `true` when… |
 |---|---|
-| `k.front_is_clear()` | No wall or boundary ahead |
-| `k.front_is_blocked()` | Wall or boundary ahead |
-| `k.left_is_clear()` | No wall or boundary to the left |
-| `k.left_is_blocked()` | Wall or boundary to the left |
-| `k.right_is_clear()` | No wall or boundary to the right |
-| `k.right_is_blocked()` | Wall or boundary to the right |
-| `k.beepers_present()` | At least one beeper on the current corner |
-| `k.no_beepers_present()` | No beepers on the current corner |
-| `k.beepers_in_bag()` | At least one beeper in Karel's bag |
-| `k.no_beepers_in_bag()` | Karel's bag is empty |
-| `k.facing_north()` | Karel faces north |
-| `k.facing_east()` | Karel faces east |
-| `k.facing_south()` | Karel faces south |
-| `k.facing_west()` | Karel faces west |
-| `k.not_facing_north()` | Karel does not face north |
-| `k.not_facing_east()` | Karel does not face east |
-| `k.not_facing_south()` | Karel does not face south |
-| `k.not_facing_west()` | Karel does not face west |
-| `k.corner_color_is(color)` | Current corner is painted the given color |
+| `k.frontIsClear()` | No wall or boundary ahead |
+| `k.frontIsBlocked()` | Wall or boundary ahead |
+| `k.leftIsClear()` | No wall or boundary to the left |
+| `k.leftIsBlocked()` | Wall or boundary to the left |
+| `k.rightIsClear()` | No wall or boundary to the right |
+| `k.rightIsBlocked()` | Wall or boundary to the right |
+| `k.beepersPresent()` | At least one beeper on the current corner |
+| `k.noBeepersPresent()` | No beepers on the current corner |
+| `k.beepersInBag()` | At least one beeper in Karel's bag |
+| `k.noBeepersInBag()` | Karel's bag is empty |
+| `k.facingNorth()` | Karel faces north |
+| `k.facingEast()` | Karel faces east |
+| `k.facingSouth()` | Karel faces south |
+| `k.facingWest()` | Karel faces west |
+| `k.notFacingNorth()` | Karel does not face north |
+| `k.notFacingEast()` | Karel does not face east |
+| `k.notFacingSouth()` | Karel does not face south |
+| `k.notFacingWest()` | Karel does not face west |
+| `k.cornerColorIs(color)` | Current corner is painted the given color |
 
 ### Color Constants
 
@@ -87,7 +87,7 @@ const { RED, BLACK, CYAN, DARK_GRAY, GRAY, GREEN, LIGHT_GRAY,
         MAGENTA, ORANGE, PINK, WHITE, BLUE, YELLOW, BLANK } = karel;
 ```
 
-Use these with `k.paint_corner(karel.RED)` or destructure them directly.
+Use these with `k.paintCorner(karel.RED)` or destructure them directly.
 
 ---
 
@@ -182,7 +182,7 @@ square = (await import("https://esm.sh/stanfordkarel-js-notebooks/worlds/square.
 ```
 
 Pin a version by appending `@x.y.z` to the package name, e.g.
-`https://esm.sh/stanfordkarel-js-notebooks@0.2.0/worlds/square.js`.
+`https://esm.sh/stanfordkarel-js-notebooks@0.4.0/worlds/square.js`.
 
 If you've uploaded the files to the notebook as attachments, load them from there
 instead:
@@ -251,28 +251,28 @@ Beeper: (3, 4); 1
 `;
 
   function main(k) {
-    function turn_right() {
-      k.turn_left(); k.turn_left(); k.turn_left();
+    function turnRight() {
+      k.turnLeft(); k.turnLeft(); k.turnLeft();
     }
     function walkAndPick(steps) {
       for (let i = 0; i < steps; i++) {
         k.move();
-        if (k.beepers_present()) k.pick_beeper();
+        if (k.beepersPresent()) k.pickBeeper();
       }
     }
 
     // Navigate to the bottom-left corner of the inner square
     k.move(); k.move();  // east to avenue 3
-    k.turn_left();       // face north
+    k.turnLeft();       // face north
     k.move(); k.move();  // north to street 3
-    k.pick_beeper();     // pick corner beeper at (3,3)
+    k.pickBeeper();     // pick corner beeper at (3,3)
 
     walkAndPick(4);  // up the left side:    (3,4) → (3,7)
-    turn_right();    // face east
+    turnRight();    // face east
     walkAndPick(4);  // across the top:      (4,7) → (7,7)
-    turn_right();    // face south
+    turnRight();    // face south
     walkAndPick(4);  // down the right side: (7,6) → (7,3)
-    turn_right();    // face west
+    turnRight();    // face west
     walkAndPick(3);  // back along bottom:   (6,3) → (4,3)
     k.move();        // return to start — already cleared
   }
