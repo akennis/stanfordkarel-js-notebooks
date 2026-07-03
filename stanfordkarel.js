@@ -228,6 +228,15 @@ class KarelProgram {
     this.numBeepers = world.karelBeeperCount;
     /** @type {Array<()=>void>} */
     this._callbacks = [];
+
+    // Bind every public method to this instance so programs can destructure the
+    // API for a prefix-free style, e.g.
+    //   function main({ move, turnLeft, frontIsClear }) { ... }
+    // Detached calls like `move()` would otherwise lose `this`.
+    for (const name of Object.getOwnPropertyNames(KarelProgram.prototype)) {
+      if (name === "constructor" || name.startsWith("_")) continue;
+      if (typeof this[name] === "function") this[name] = this[name].bind(this);
+    }
   }
 
   _notify() {
