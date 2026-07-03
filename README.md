@@ -143,30 +143,68 @@ Wall: (2, 3); north
 ## Bundled Worlds
 
 Ready-made worlds ship as importable ES modules under `worlds/`. Each is a
-plain-text world string, so you can hand it straight to `runKarel`:
-
-```javascript
-import { square } from "stanfordkarel-js-notebooks/worlds";
-
-animation = karel.runKarel(square, main);
-```
-
-Or import a single world module directly:
-
-```javascript
-import square from "stanfordkarel-js-notebooks/worlds/square";
-```
-
-In Observable, load them the same way you load the library:
-
-```javascript
-worlds = import(await FileAttachment("worlds/index.js").url())
-animation = karel.runKarel(worlds.square, main)
-```
+plain-text world string, so you can hand it straight to `runKarel`.
 
 | World | Description |
 |---|---|
 | `square` | 9×9 grid with 16 beepers around a 5×5 inner square; Karel at (1, 1) facing east. |
+
+### In Observable
+
+The bundled worlds are exposed on the library object itself, so once you've
+imported `karel` you can reach any world through `karel.worlds`:
+
+```javascript
+karel = import("https://esm.sh/stanfordkarel-js-notebooks/stanfordkarel.js")
+```
+
+```javascript
+animation = karel.runKarel(karel.worlds.square, main)
+```
+
+Observable has no npm module resolver, so **static `import … from "…"` with a bare
+package name does not work** (it raises an `UnexpectedToken` error). If you'd
+rather import the worlds on their own, use a dynamic `import()` against a CDN URL
+to grab the whole collection:
+
+```javascript
+worlds = import("https://esm.sh/stanfordkarel-js-notebooks/worlds/index.js")
+```
+
+```javascript
+animation = karel.runKarel(worlds.square, main)
+```
+
+…or a single world module (its default export is the world string):
+
+```javascript
+square = (await import("https://esm.sh/stanfordkarel-js-notebooks/worlds/square.js")).default
+```
+
+Pin a version by appending `@x.y.z` to the package name, e.g.
+`https://esm.sh/stanfordkarel-js-notebooks@0.2.0/worlds/square.js`.
+
+If you've uploaded the files to the notebook as attachments, load them from there
+instead:
+
+```javascript
+worlds = import(await FileAttachment("worlds/index.js").url())
+```
+
+### With a bundler (Vite / webpack / esbuild) or Node
+
+Static imports with the bare package specifier work here, since npm resolution is
+available:
+
+```javascript
+import * as karel from "stanfordkarel-js-notebooks";
+animation = karel.runKarel(karel.worlds.square, main);
+
+// or import the worlds directly:
+import { square } from "stanfordkarel-js-notebooks/worlds";
+// or a single module:
+import square from "stanfordkarel-js-notebooks/worlds/square";
+```
 
 ---
 

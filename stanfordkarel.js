@@ -28,6 +28,17 @@
  *   })
  */
 
+// ─────────────────────────────── WORLDS ─────────────────────────────────────
+
+/**
+ * Bundled Karel worlds, exposed as a namespace so they can be reached straight
+ * off the library object:
+ *
+ *   karel = import("https://esm.sh/stanfordkarel-js-notebooks@0.2.0/stanfordkarel.js")
+ *   animation = karel.runKarel(karel.worlds.square, main)
+ */
+export * as worlds from "./worlds/index.js";
+
 // ─────────────────────────── COLOR CONSTANTS ────────────────────────────────
 
 export const RED = "Red";
