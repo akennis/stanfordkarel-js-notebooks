@@ -53,7 +53,7 @@ renderNotebook([
 - `{ md }` — an HTML/markdown block, rendered as prose.
 - `{ world, code, opts }` — a Karel cell. `world` is a world string, `code` is the `main` function (its source is shown, then executed), and `opts` are optional `runKarel` options.
 
-If a program hits a wall, the partial animation still renders with a red X marking the offending corner, and the error is shown below it, so a mistake is visible rather than silent.
+If a program hits a wall, the partial animation still renders with Karel drawn in red at the offending corner, and the error is shown below it, so a mistake is visible rather than silent.
 
 ---
 
@@ -143,7 +143,7 @@ runKarel(worldText, function main({ move, turnLeft, frontIsClear, putBeeper }) {
 
 Runs a Karel program and returns a `Promise<HTMLImageElement>` — an animated GIF ready to display.
 
-If the program throws (e.g. Karel hits a wall), the promise still resolves with the **partial** animation, ending on a frame that marks the offending corner with a red X; the error message is available on `img.dataset.error` and as the element's tooltip (`img.title`).
+If the program throws (e.g. Karel hits a wall), the promise still resolves with the **partial** animation, ending on a frame that draws Karel in red at the offending corner; the error message is available on `img.dataset.error` and as the element's tooltip (`img.title`).
 
 `mainFunc` receives a Karel instance (or, destructured, its methods) and may be `async`.
 

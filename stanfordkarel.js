@@ -395,7 +395,7 @@ function drawPolygon(ctx, points, fill, outline, lineWidth) {
   if (outline) { ctx.strokeStyle = outline; ctx.lineWidth = lineWidth; ctx.stroke(); }
 }
 
-function drawKarelBody(ctx, x, y, cs, center, angle) {
+function drawKarelBody(ctx, x, y, cs, center, angle, outline = "black") {
   const w = cs * KAREL_WIDTH;
   const h = cs * KAREL_HEIGHT;
   const llDiag = (cs * KAREL_LOWER_LEFT_DIAG) / Math.SQRT2;
@@ -411,7 +411,7 @@ function drawKarelBody(ctx, x, y, cs, center, angle) {
     x,               y + h - llDiag,
   ];
   rotatePoints(center, outer, angle);
-  drawPolygon(ctx, outer, "white", "black", KAREL_LINE_WIDTH);
+  drawPolygon(ctx, outer, "white", outline, KAREL_LINE_WIDTH);
 
   // Inner rectangle (window)
   const ix = x + cs * KAREL_INNER_OFFSET;
@@ -420,21 +420,21 @@ function drawKarelBody(ctx, x, y, cs, center, angle) {
   const ih = cs * KAREL_INNER_HEIGHT;
   const inner = [ix, iy,  ix + iw, iy,  ix + iw, iy + ih,  ix, iy + ih];
   rotatePoints(center, inner, angle);
-  drawPolygon(ctx, inner, "white", "black", KAREL_LINE_WIDTH);
+  drawPolygon(ctx, inner, "white", outline, KAREL_LINE_WIDTH);
 
   // Mouth line
   const mx = x + cs * KAREL_MOUTH_HORIZONTAL_OFFSET;
   const my = iy + ih + cs * KAREL_MOUTH_VERTICAL_OFFSET;
   const mouth = [mx, my,  mx + cs * KAREL_MOUTH_WIDTH, my];
   rotatePoints(center, mouth, angle);
-  ctx.strokeStyle = "black"; ctx.lineWidth = KAREL_LINE_WIDTH;
+  ctx.strokeStyle = outline; ctx.lineWidth = KAREL_LINE_WIDTH;
   ctx.beginPath();
   ctx.moveTo(mouth[0], mouth[1]);
   ctx.lineTo(mouth[2], mouth[3]);
   ctx.stroke();
 }
 
-function drawKarelLegs(ctx, x, y, cs, center, angle) {
+function drawKarelLegs(ctx, x, y, cs, center, angle, outline = "black") {
   const legLen  = cs * KAREL_LEG_LENGTH;
   const footLen = cs * KAREL_FOOT_LENGTH;
   const footW   = cs * KAREL_LEG_FOOT_WIDTH;
@@ -451,7 +451,7 @@ function drawKarelLegs(ctx, x, y, cs, center, angle) {
     x,                  y + vertOff + footW,
   ];
   rotatePoints(center, leftLeg, angle);
-  drawPolygon(ctx, leftLeg, "black", "black", 1);
+  drawPolygon(ctx, leftLeg, outline, outline, 1);
 
   // Right leg (extends downward from body bottom)
   const bodyBottom = y + cs * KAREL_HEIGHT;
@@ -464,10 +464,10 @@ function drawKarelLegs(ctx, x, y, cs, center, angle) {
     x + horizOff + footW,    bodyBottom,
   ];
   rotatePoints(center, rightLeg, angle);
-  drawPolygon(ctx, rightLeg, "black", "black", 1);
+  drawPolygon(ctx, rightLeg, outline, outline, 1);
 }
 
-function drawKarelIcon(ctx, direction, kx, ky, cellSize, icon) {
+function drawKarelIcon(ctx, direction, kx, ky, cellSize, icon, outline = "black") {
   const angle  = DIRECTION_TO_RADIANS[direction];
   const center = [kx, ky];
 
@@ -482,31 +482,14 @@ function drawKarelIcon(ctx, direction, kx, ky, cellSize, icon) {
       kx,         ky - h / 2,
     ];
     rotatePoints(center, pts, angle);
-    drawPolygon(ctx, pts, "white", "black", KAREL_LINE_WIDTH);
+    drawPolygon(ctx, pts, "white", outline, KAREL_LINE_WIDTH);
   } else {
     // Full Karel body (default)
     const ox = kx - cellSize / 2 + KAREL_LEFT_HORIZONTAL_PAD * cellSize;
     const oy = ky - cellSize / 2 + KAREL_VERTICAL_OFFSET * cellSize;
-    drawKarelBody(ctx, ox, oy, cellSize, center, angle);
-    drawKarelLegs(ctx, ox, oy, cellSize, center, angle);
+    drawKarelBody(ctx, ox, oy, cellSize, center, angle, outline);
+    drawKarelLegs(ctx, ox, oy, cellSize, center, angle, outline);
   }
-}
-
-/**
- * Draw a red X centered on (cx, cy) to mark the spot of an illegal action
- * (hitting a wall, or an empty-handed put/pick). Drawn on top of Karel.
- */
-function drawErrorMarker(ctx, cx, cy, cellSize) {
-  const r = cellSize * 0.35;
-  ctx.save();
-  ctx.strokeStyle = "red";
-  ctx.lineWidth = Math.max(3, cellSize * 0.08);
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(cx - r, cy - r); ctx.lineTo(cx + r, cy + r);
-  ctx.moveTo(cx + r, cy - r); ctx.lineTo(cx - r, cy + r);
-  ctx.stroke();
-  ctx.restore();
 }
 
 /**
@@ -515,8 +498,8 @@ function drawErrorMarker(ctx, cx, cy, cellSize) {
  * @param {KarelProgram} karel
  * @param {number} cellSize  Pixels per cell
  * @param {string} icon      "karel" (default) or "simple"
- * @param {boolean} [errorMark=false]  Draw a red X on Karel's corner to mark
- *   an illegal action (wall collision, empty-bag put, no-beeper pick).
+ * @param {boolean} [errorMark=false]  Draw Karel in red to mark an illegal
+ *   action (wall collision, empty-bag put, no-beeper pick).
  * @returns {HTMLCanvasElement}
  */
 function renderFrame(world, karel, cellSize, icon = "karel", errorMark = false) {
@@ -613,12 +596,11 @@ function renderFrame(world, karel, cellSize, icon = "karel", errorMark = false) 
   }
 
   // ── Karel robot ───────────────────────────────────────────────────────────
-  drawKarelIcon(ctx, karel.direction, cornerX(karel.avenue), cornerY(karel.street), cellSize, icon);
-
-  // ── Illegal-action marker ─────────────────────────────────────────────────
-  if (errorMark) {
-    drawErrorMarker(ctx, cornerX(karel.avenue), cornerY(karel.street), cellSize);
-  }
+  // On an illegal action, draw Karel in red to mark where the error happened.
+  drawKarelIcon(
+    ctx, karel.direction, cornerX(karel.avenue), cornerY(karel.street),
+    cellSize, icon, errorMark ? "red" : "black"
+  );
 
   return canvas;
 }
@@ -676,8 +658,8 @@ async function loadGifDeps() {
  * @param {"karel"|"simple"} [options.icon="karel"]  Robot icon style
  * @returns {Promise<HTMLImageElement>} Resolves with the animated GIF image.
  *   If the Karel program throws (e.g. hitting a wall), the promise still
- *   resolves with the partial animation; a final frame marks the offending
- *   corner with a red X, and the error message is available on
+ *   resolves with the partial animation; a final frame draws Karel in red at
+ *   the offending corner, and the error message is available on
  *   `img.dataset.error` and as the element's tooltip (`img.title`).
  */
 export async function runKarel(worldText, mainFunc, options = {}) {
