@@ -154,8 +154,12 @@ If the program throws (e.g. Karel hits a wall), the promise still resolves with 
 | `finalFrameDelay` | `number` | `1000` | Extra pause on the last frame (ms) |
 | `icon` | `"karel"` \| `"simple"` | `"karel"` | Robot sprite style |
 | `gifWorkers` | `number` | `2` | Web workers used by gif.js |
+| `solution` | `Function` | — | Optional reference program. Its final state (run on a fresh copy of the world) is compared to this run's; on a match Karel is drawn **green** on an extra final frame and `img.dataset.solved` is set to `"true"`. |
+| `check` | `string[]` | `["beepers","position","direction"]` | Which aspects the `solution` comparison grades on |
 
 \* If the world includes a `Speed:` directive, that value sets the default delay (`delay = round(100 / speed)` ms, so Speed 2.0 → 50 ms, Speed 0.5 → 200 ms). An explicit `delay` option always takes precedence.
+
+When a `solution` is supplied and the run matches it, the promise resolves with `img.dataset.solved === "true"` and the animation ends on a green Karel; otherwise `img.dataset.solved` is unset. `statesMatch(reader, goal, aspects)` is also exported for comparing two state snapshots directly.
 
 ---
 

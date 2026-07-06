@@ -26,40 +26,6 @@ function dedent(s) {
 const DEFAULT_OPTS = { cellSize: 46, delay: 150 };
 const DEFAULT_STUB = "function main(k) {\n  // your code here\n}\n";
 
-// A canonical, comparable snapshot of the world once a program has finished.
-// runKarel() awaits mainFunc before rendering, so by the time it resolves the
-// KarelProgram instance we captured holds the final state.
-function snapshot(k) {
-  const beepers = [...k.world.beepers.entries()]
-    .filter(([, count]) => count > 0)
-    .map(([key, count]) => `${key}=${count}`)
-    .sort()
-    .join(",");
-  return { avenue: k.avenue, street: k.street, direction: k.direction, beepers };
-}
-
-// Compare only the aspects a challenge cares about ("beepers", "position",
-// "direction"). Defaults let a challenge ignore Karel's final pose when only
-// the beeper layout matters, or vice versa.
-function statesMatch(reader, goal, aspects) {
-  if (!reader || !goal) return false;
-  if (aspects.includes("beepers") && reader.beepers !== goal.beepers) return false;
-  if (aspects.includes("position") &&
-      (reader.avenue !== goal.avenue || reader.street !== goal.street)) return false;
-  if (aspects.includes("direction") && reader.direction !== goal.direction) return false;
-  return true;
-}
-
-// Run a program and return both its animated <img> and its final-state snapshot.
-// We wrap mainFunc so we can grab the live KarelProgram reference; the wrapper
-// forwards the call (and return value, so async programs are still awaited).
-async function runAndCapture(world, fn, opts) {
-  let prog = null;
-  const wrapped = (k) => { prog = k; return fn(k); };
-  const img = await runKarel(world, wrapped, opts);
-  return { img, state: prog ? snapshot(prog) : null };
-}
-
 // Turn the reader's editor text into a callable main(). new Function throws a
 // SyntaxError up front for malformed code, which the caller reports.
 function compileMain(src) {
@@ -194,11 +160,12 @@ export async function renderNotebook(cells, mount = document.getElementById("not
       editor.focus();
     });
 
-    // Build the goal GIF and target state from the (never shown) solution.
-    let target = null;
+    // Build the goal GIF from the (never shown) solution. Passing the solution
+    // as its own reference makes runKarel draw Karel green on the final frame,
+    // so the goal shows the winning end-state the reader is aiming for.
     try {
-      const { img, state } = await runAndCapture(cell.world, cell.solution, opts);
-      target = state;
+      const img = await runKarel(cell.world, cell.solution,
+        { ...opts, solution: cell.solution, check: aspects });
       goalRender.replaceChildren(img);
     } catch (err) {
       goalRender.innerHTML = `<div class="err">Could not build goal: ${esc(friendlyError(err))}</div>`;
@@ -220,7 +187,10 @@ export async function renderNotebook(cells, mount = document.getElementById("not
         return;
       }
       try {
-        const { img, state } = await runAndCapture(cell.world, fn, opts);
+        // The library runs the (never shown) solution, compares final states,
+        // and reports the result on img.dataset.solved — grading it green.
+        const img = await runKarel(cell.world, fn,
+          { ...opts, solution: cell.solution, check: aspects });
         yourRender.replaceChildren(img);
         if (img.dataset.error) {
           const e = document.createElement("div");
@@ -228,7 +198,7 @@ export async function renderNotebook(cells, mount = document.getElementById("not
           e.textContent = "Karel stopped early: " + img.dataset.error;
           yourRender.appendChild(e);
         }
-        if (target && statesMatch(state, target, aspects)) {
+        if (img.dataset.solved === "true") {
           verdict.className = "verdict ok";
           verdict.textContent = "✓ Solved — matches the goal!";
         } else {

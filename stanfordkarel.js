@@ -498,11 +498,13 @@ function drawKarelIcon(ctx, direction, kx, ky, cellSize, icon, outline = "black"
  * @param {KarelProgram} karel
  * @param {number} cellSize  Pixels per cell
  * @param {string} icon      "karel" (default) or "simple"
- * @param {boolean} [errorMark=false]  Draw Karel in red to mark an illegal
- *   action (wall collision, empty-bag put, no-beeper pick).
+ * @param {string} [outline="black"]  Outline color for the Karel icon. The
+ *   default black is overridden to mark a final state: "red" for an illegal
+ *   action (wall collision, empty-bag put, no-beeper pick), "green" when the
+ *   run matched a supplied solution.
  * @returns {HTMLCanvasElement}
  */
-function renderFrame(world, karel, cellSize, icon = "karel", errorMark = false) {
+function renderFrame(world, karel, cellSize, icon = "karel", outline = "black") {
   const imgW  = 2 * BORDER_OFFSET + world.numAvenues * cellSize;
   const imgH  = 2 * BORDER_OFFSET + world.numStreets * cellSize;
   const leftX = BORDER_OFFSET;
@@ -596,10 +598,11 @@ function renderFrame(world, karel, cellSize, icon = "karel", errorMark = false) 
   }
 
   // ── Karel robot ───────────────────────────────────────────────────────────
-  // On an illegal action, draw Karel in red to mark where the error happened.
+  // Outline color marks a final state: red for an illegal action, green for a
+  // run that matched the supplied solution, black otherwise.
   drawKarelIcon(
     ctx, karel.direction, cornerX(karel.avenue), cornerY(karel.street),
-    cellSize, icon, errorMark ? "red" : "black"
+    cellSize, icon, outline
   );
 
   return canvas;
@@ -640,6 +643,62 @@ async function loadGifDeps() {
   return _gifDeps;
 }
 
+// ─────────────────────────── SOLUTION CHECK ─────────────────────────────────
+
+// Aspects a challenge can grade on. A caller passes some subset of these to
+// runKarel's `check` option; the default grades all three.
+const DEFAULT_CHECK_ASPECTS = ["beepers", "position", "direction"];
+
+/**
+ * A canonical, comparable snapshot of a program's final state: Karel's pose and
+ * the world's beeper layout. Two runs "match" when the aspects a challenge
+ * cares about are equal (see statesMatch).
+ * @param {KarelProgram} karel
+ * @returns {{avenue:number, street:number, direction:string, beepers:string}}
+ */
+function snapshotState(karel) {
+  const beepers = [...karel.world.beepers.entries()]
+    .filter(([, count]) => count > 0)
+    .map(([key, count]) => `${key}=${count}`)
+    .sort()
+    .join(",");
+  return { avenue: karel.avenue, street: karel.street, direction: karel.direction, beepers };
+}
+
+/**
+ * Compare two state snapshots on only the requested aspects ("beepers",
+ * "position", "direction"). Letting a challenge ignore Karel's final pose when
+ * only the beeper layout matters, or vice versa.
+ * @param {ReturnType<typeof snapshotState>|null} reader
+ * @param {ReturnType<typeof snapshotState>|null} goal
+ * @param {string[]} aspects
+ * @returns {boolean}
+ */
+export function statesMatch(reader, goal, aspects = DEFAULT_CHECK_ASPECTS) {
+  if (!reader || !goal) return false;
+  if (aspects.includes("beepers") && reader.beepers !== goal.beepers) return false;
+  if (aspects.includes("position") &&
+      (reader.avenue !== goal.avenue || reader.street !== goal.street)) return false;
+  if (aspects.includes("direction") && reader.direction !== goal.direction) return false;
+  return true;
+}
+
+/**
+ * Run a solution program against a fresh copy of the world and return its
+ * final-state snapshot — the target a reader's program must match. Runs on its
+ * own KarelWorld/KarelProgram so it can't disturb the animated run.
+ * @param {string} worldText
+ * @param {Function} solution
+ * @returns {Promise<ReturnType<typeof snapshotState>>}
+ */
+async function computeSolutionState(worldText, solution) {
+  const world = new KarelWorld();
+  world.loadFromText(worldText);
+  const karel = new KarelProgram(world);
+  await solution(karel);
+  return snapshotState(karel);
+}
+
 // ─────────────────────────── MAIN API ───────────────────────────────────────
 
 /**
@@ -656,6 +715,12 @@ async function loadGifDeps() {
  * @param {number} [options.finalFrameDelay=1000] Extra pause on the last frame
  * @param {number} [options.gifWorkers=2]         Web workers for gif.js
  * @param {"karel"|"simple"} [options.icon="karel"]  Robot icon style
+ * @param {Function} [options.solution]  Optional reference program. When given,
+ *   its final state (run on a fresh copy of the world) is compared to this
+ *   run's final state; on a match Karel is drawn green in an extra final frame
+ *   and `img.dataset.solved` is set to `"true"`.
+ * @param {string[]} [options.check=["beepers","position","direction"]]  Which
+ *   aspects the solution comparison grades on. Only used when `solution` is set.
  * @returns {Promise<HTMLImageElement>} Resolves with the animated GIF image.
  *   If the Karel program throws (e.g. hitting a wall), the promise still
  *   resolves with the partial animation; a final frame draws Karel in red at
@@ -673,6 +738,8 @@ export async function runKarel(worldText, mainFunc, options = {}) {
     finalFrameDelay = 1000,
     gifWorkers      = 2,
     icon            = "karel",
+    solution        = null,
+    check           = DEFAULT_CHECK_ASPECTS,
   } = options;
 
   const karel = new KarelProgram(world);
@@ -695,7 +762,21 @@ export async function runKarel(worldText, mainFunc, options = {}) {
     // Karel's pose is unchanged by a failed action (move throws before it
     // steps; put/pick throw before touching beepers), so its current corner
     // is the point of the error. Add a final frame marking it with a red X.
-    frames.push(renderFrame(world, karel, cellSize, icon, true));
+    frames.push(renderFrame(world, karel, cellSize, icon, "red"));
+  }
+
+  // Optional solution check: if the program finished without error and a
+  // reference solution was supplied, compare final states. A match adds a
+  // green final frame celebrating success and is reported on img.dataset.solved.
+  let solved = false;
+  if (!programError && solution) {
+    try {
+      const target = await computeSolutionState(worldText, solution);
+      solved = statesMatch(snapshotState(karel), target, check);
+    } catch {
+      solved = false;   // a solution that can't run can't be matched
+    }
+    if (solved) frames.push(renderFrame(world, karel, cellSize, icon, "green"));
   }
 
   const { GIF, workerBlob } = await loadGifDeps();
@@ -722,6 +803,7 @@ export async function runKarel(worldText, mainFunc, options = {}) {
         img.dataset.error = programError.message;
         img.title = `Karel error: ${programError.message}`;
       }
+      if (solved) img.dataset.solved = "true";
       resolve(img);
     });
     gif.on("error", reject);
