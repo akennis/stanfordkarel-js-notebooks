@@ -500,8 +500,8 @@ function drawKarelIcon(ctx, direction, kx, ky, cellSize, icon, outline = "black"
  * @param {string} icon      "karel" (default) or "simple"
  * @param {string} [outline="black"]  Outline color for the Karel icon. The
  *   default black is overridden to mark a final state: "red" for an illegal
- *   action (wall collision, empty-bag put, no-beeper pick), "green" when the
- *   run matched a supplied solution.
+ *   action (wall collision, empty-bag put, no-beeper pick) or a failed
+ *   solution check, "green" when the run matched a supplied solution.
  * @returns {HTMLCanvasElement}
  */
 function renderFrame(world, karel, cellSize, icon = "karel", outline = "black") {
@@ -734,8 +734,8 @@ async function computeSolutionState(worldText, solution) {
  * @param {"karel"|"simple"} [options.icon="karel"]  Robot icon style
  * @param {Function} [options.solution]  Optional reference program. When given,
  *   its final state (run on a fresh copy of the world) is compared to this
- *   run's final state; on a match Karel is drawn green in an extra final frame
- *   and `img.dataset.solved` is set to `"true"`.
+ *   run's final state; an extra final frame draws Karel green on a match (with
+ *   `img.dataset.solved` set to `"true"`) or red on a mismatch.
  * @param {string[]} [options.check=["beepers","position","direction"]]  Which
  *   aspects the solution comparison grades on. Only used when `solution` is set.
  * @param {{avenue?:number, street?:number, direction?:string}} [options.end]
@@ -790,8 +790,9 @@ export async function runKarel(worldText, mainFunc, options = {}) {
 
   // Optional success check: if the program finished without error and either a
   // reference solution or an explicit end pose was supplied, grade the run.
-  // Both checks (when present) must pass. Success adds a green final frame
-  // celebrating it and is reported on img.dataset.solved.
+  // Both checks (when present) must pass. Either way an extra final frame marks
+  // the verdict — green when solved, red when not — and img.dataset.solved
+  // reports success.
   let solved = false;
   if (!programError && (solution || end)) {
     let ok = true;
@@ -805,7 +806,7 @@ export async function runKarel(worldText, mainFunc, options = {}) {
     }
     if (ok && end) ok = matchesEnd(karel, end);
     solved = ok;
-    if (solved) frames.push(renderFrame(world, karel, cellSize, icon, "green"));
+    frames.push(renderFrame(world, karel, cellSize, icon, solved ? "green" : "red"));
   }
 
   const { GIF, workerBlob } = await loadGifDeps();
