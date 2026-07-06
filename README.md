@@ -156,10 +156,11 @@ If the program throws (e.g. Karel hits a wall), the promise still resolves with 
 | `gifWorkers` | `number` | `2` | Web workers used by gif.js |
 | `solution` | `Function` | — | Optional reference program. Its final state (run on a fresh copy of the world) is compared to this run's; on a match Karel is drawn **green** on an extra final frame and `img.dataset.solved` is set to `"true"`. |
 | `check` | `string[]` | `["beepers","position","direction"]` | Which aspects the `solution` comparison grades on |
+| `end` | `{ avenue?, street?, direction? }` | — | Optional explicit end pose. When given, Karel must finish at the specified avenue/street/direction (any subset) to count as solved. ANDs with the `solution` check when both are supplied; either alone drives the green frame and `img.dataset.solved`. |
 
 \* If the world includes a `Speed:` directive, that value sets the default delay (`delay = round(100 / speed)` ms, so Speed 2.0 → 50 ms, Speed 0.5 → 200 ms). An explicit `delay` option always takes precedence.
 
-When a `solution` is supplied and the run matches it, the promise resolves with `img.dataset.solved === "true"` and the animation ends on a green Karel; otherwise `img.dataset.solved` is unset. `statesMatch(reader, goal, aspects)` is also exported for comparing two state snapshots directly.
+When a `solution` and/or an explicit `end` pose is supplied and the run satisfies every supplied check, the promise resolves with `img.dataset.solved === "true"` and the animation ends on a green Karel; otherwise `img.dataset.solved` is unset. `statesMatch(reader, goal, aspects)` and `matchesEnd(state, end)` are also exported for comparing states directly.
 
 ---
 

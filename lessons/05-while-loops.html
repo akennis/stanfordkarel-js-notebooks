@@ -85,6 +85,8 @@ BeeperBag: INFINITY`,
   }
   // drop one beeper at the wall
 }`,
+        check: ["beepers"],
+        end: { avenue: 7, street: 1, direction: "east" },
         solution: function main(k) {
           while (k.frontIsClear()) {
             k.move();
@@ -120,6 +122,7 @@ Beeper: (1, 1); 5`,
   }
 }`,
         check: ["beepers"],
+        end: { avenue: 1, street: 1, direction: "east" },
         solution: function main(k) {
           while (k.beepersPresent()) {
             k.pickBeeper();
@@ -156,7 +159,8 @@ BeeperBag: INFINITY`,
   }
   // turn around, then walk back to the start
 }`,
-        check: ["position", "direction"],
+        check: ["beepers"],
+        end: { avenue: 1, street: 1, direction: "west" },
         solution: function main(k) {
           while (k.frontIsClear()) {
             k.move();

@@ -66,8 +66,10 @@ function handleTab(e) {
 //                                   verbatim and compiled/run exactly the way a
 //                                   challenge compiles the reader's code.
 //   { world, solution, prompt,   — an interactive challenge: the reader writes
-//     starter?, check?, opts? }    code and Runs it to match the solution's goal
-//                                   GIF. `solution` source is NEVER displayed.
+//     starter?, check?, end?,       code and Runs it to match the solution's
+//     opts? }                       goal GIF. `solution` source is NEVER shown.
+//                                   `end` optionally pins the required final
+//                                   pose ({ avenue, street, direction }).
 export async function renderNotebook(cells, mount = document.getElementById("notebook")) {
   let counter = 0;
   const nb = mount;
@@ -165,7 +167,7 @@ export async function renderNotebook(cells, mount = document.getElementById("not
     // so the goal shows the winning end-state the reader is aiming for.
     try {
       const img = await runKarel(cell.world, cell.solution,
-        { ...opts, solution: cell.solution, check: aspects });
+        { ...opts, solution: cell.solution, check: aspects, end: cell.end });
       goalRender.replaceChildren(img);
     } catch (err) {
       goalRender.innerHTML = `<div class="err">Could not build goal: ${esc(friendlyError(err))}</div>`;
@@ -188,9 +190,10 @@ export async function renderNotebook(cells, mount = document.getElementById("not
       }
       try {
         // The library runs the (never shown) solution, compares final states,
-        // and reports the result on img.dataset.solved — grading it green.
+        // enforces any explicit end pose, and reports the result on
+        // img.dataset.solved — grading it green.
         const img = await runKarel(cell.world, fn,
-          { ...opts, solution: cell.solution, check: aspects });
+          { ...opts, solution: cell.solution, check: aspects, end: cell.end });
         yourRender.replaceChildren(img);
         if (img.dataset.error) {
           const e = document.createElement("div");

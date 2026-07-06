@@ -684,6 +684,23 @@ export function statesMatch(reader, goal, aspects = DEFAULT_CHECK_ASPECTS) {
 }
 
 /**
+ * Check a program's final pose against an explicit target, independent of any
+ * solution. Only the fields present on `end` are enforced, so a challenge can
+ * pin any subset of the ending avenue, street, and direction.
+ * @param {{avenue:number, street:number, direction:string}} state  Karel (or a
+ *   snapshot) — anything with avenue/street/direction.
+ * @param {{avenue?:number, street?:number, direction?:string}} end
+ * @returns {boolean}
+ */
+export function matchesEnd(state, end) {
+  if (!state || !end) return false;
+  if (end.avenue != null && state.avenue !== end.avenue) return false;
+  if (end.street != null && state.street !== end.street) return false;
+  if (end.direction != null && state.direction !== end.direction) return false;
+  return true;
+}
+
+/**
  * Run a solution program against a fresh copy of the world and return its
  * final-state snapshot — the target a reader's program must match. Runs on its
  * own KarelWorld/KarelProgram so it can't disturb the animated run.
@@ -721,6 +738,11 @@ async function computeSolutionState(worldText, solution) {
  *   and `img.dataset.solved` is set to `"true"`.
  * @param {string[]} [options.check=["beepers","position","direction"]]  Which
  *   aspects the solution comparison grades on. Only used when `solution` is set.
+ * @param {{avenue?:number, street?:number, direction?:string}} [options.end]
+ *   Optional explicit end pose. When given, Karel must finish at the specified
+ *   avenue/street/direction (any subset) for the run to count as solved. ANDs
+ *   with the `solution` check when both are supplied; either alone suffices to
+ *   drive the green final frame and `img.dataset.solved`.
  * @returns {Promise<HTMLImageElement>} Resolves with the animated GIF image.
  *   If the Karel program throws (e.g. hitting a wall), the promise still
  *   resolves with the partial animation; a final frame draws Karel in red at
@@ -740,6 +762,7 @@ export async function runKarel(worldText, mainFunc, options = {}) {
     icon            = "karel",
     solution        = null,
     check           = DEFAULT_CHECK_ASPECTS,
+    end             = null,
   } = options;
 
   const karel = new KarelProgram(world);
@@ -765,17 +788,23 @@ export async function runKarel(worldText, mainFunc, options = {}) {
     frames.push(renderFrame(world, karel, cellSize, icon, "red"));
   }
 
-  // Optional solution check: if the program finished without error and a
-  // reference solution was supplied, compare final states. A match adds a
-  // green final frame celebrating success and is reported on img.dataset.solved.
+  // Optional success check: if the program finished without error and either a
+  // reference solution or an explicit end pose was supplied, grade the run.
+  // Both checks (when present) must pass. Success adds a green final frame
+  // celebrating it and is reported on img.dataset.solved.
   let solved = false;
-  if (!programError && solution) {
-    try {
-      const target = await computeSolutionState(worldText, solution);
-      solved = statesMatch(snapshotState(karel), target, check);
-    } catch {
-      solved = false;   // a solution that can't run can't be matched
+  if (!programError && (solution || end)) {
+    let ok = true;
+    if (solution) {
+      try {
+        const target = await computeSolutionState(worldText, solution);
+        ok = statesMatch(snapshotState(karel), target, check);
+      } catch {
+        ok = false;   // a solution that can't run can't be matched
+      }
     }
+    if (ok && end) ok = matchesEnd(karel, end);
+    solved = ok;
     if (solved) frames.push(renderFrame(world, karel, cellSize, icon, "green"));
   }
 
