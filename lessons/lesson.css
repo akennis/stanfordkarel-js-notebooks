@@ -23,6 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-seri
 .md .callout.warn{border-color:#d97706;background:#fff7ed;}
 .md .callout strong{display:block;margin-bottom:.15rem;}
 .md ul{margin:.4rem 0 .4rem 1.15rem;} .md li{margin:.2rem 0;}
+.md pre.code,.chal-prompt pre.code{margin:.6rem 0;}
 .cell{margin:1rem 0 1.5rem;}
 .in,.out{display:flex;gap:.55rem;align-items:flex-start;}
 .prompt{flex:0 0 auto;width:4rem;text-align:right;font-family:ui-monospace,monospace;
@@ -38,6 +39,39 @@ pre.code code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 .render img{border:1px solid var(--line);border-radius:4px;background:#fff;max-width:100%;}
 .status{color:#999;font-size:.9rem;font-style:italic;}
 .err{color:#b91c1c;font-size:.85rem;margin-top:.4rem;font-family:ui-monospace,monospace;}
+/* ── Interactive challenges ─────────────────────────────────────────────── */
+.challenge{margin:1.5rem 0 2rem;border:1px solid var(--in-border);border-radius:10px;
+  background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.chal-head{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap;
+  padding:.85rem 1rem;background:linear-gradient(#f6f8fa,#eef1f5);border-bottom:1px solid var(--line);}
+.chal-badge{flex:0 0 auto;font-size:.7rem;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:#fff;background:var(--prompt);padding:.2rem .5rem;border-radius:999px;}
+.chal-prompt{flex:1 1 16rem;color:var(--ink);}
+.chal-prompt code{background:#eef1f4;padding:.1em .35em;border-radius:4px;font-size:.9em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+.chal-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:1.1rem;padding:1rem;}
+@media (max-width:640px){.chal-grid{grid-template-columns:1fr;}}
+.panel-label{font-size:.74rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 .4rem;}
+.your-label{margin-top:.9rem;}
+.chal-goal .goal-render{min-height:56px;}
+.chal-goal .goal-render img{border:2px solid #16a34a;border-radius:6px;background:#fff;max-width:100%;}
+.editor{width:100%;min-height:5.5rem;resize:vertical;display:block;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9rem;line-height:1.55;
+  color:#24292f;background:var(--in-bg);border:1px solid var(--in-border);border-radius:6px;
+  padding:.6rem .75rem;tab-size:2;white-space:pre;overflow-wrap:normal;overflow-x:auto;}
+.editor:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(11,95,255,.12);}
+.chal-controls{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;margin:.6rem 0 0;}
+.run-btn{font:inherit;font-weight:600;font-size:.9rem;color:#fff;background:var(--accent);
+  border:none;border-radius:6px;padding:.4rem .95rem;cursor:pointer;}
+.run-btn:hover{background:#0a4fd6;} .run-btn:disabled{opacity:.55;cursor:default;}
+.reset-btn{font:inherit;font-size:.85rem;color:var(--muted);background:transparent;
+  border:1px solid var(--in-border);border-radius:6px;padding:.35rem .7rem;cursor:pointer;}
+.reset-btn:hover{color:var(--ink);border-color:#b6bdc6;}
+.verdict{font-size:.88rem;font-weight:600;}
+.verdict.ok{color:#16a34a;} .verdict.no{color:#d1451b;}
+.status.muted{color:#aab;}
+.chal-work .your-render{min-height:56px;}
 .pager{max-width:52rem;margin:2rem auto 3rem;padding:1.2rem 1.25rem 0;
   border-top:1px solid var(--line);display:flex;justify-content:space-between;
   gap:1rem;font-size:.95rem;}

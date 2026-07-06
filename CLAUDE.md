@@ -28,7 +28,7 @@ The file is organized in labeled sections (search for `─── SECTION ──�
 Key mechanics to preserve when editing:
 
 - **Frame capture is driven by a callback list.** Every mutating Karel action (`move`, `turnLeft`, `putBeeper`, `pickBeeper`, `paintCorner`) calls `this._notify()`, which invokes every function in `this._callbacks`. `runKarel` pushes a `capture()` callback that snapshots a canvas frame. **This is how the animation is built** — one GIF frame per action, plus an initial frame. If you add a new action, it must call `_notify()` or it won't animate.
-- **Errors are soft.** `runKarel` wraps `mainFunc` in try/catch. A thrown error (e.g. Karel hitting a wall) does not reject the promise — the partial animation still renders and the message is attached to `img.dataset.error` and `img.title`. Preserve this behavior; lessons rely on it to show mistakes.
+- **Errors are soft.** `runKarel` wraps `mainFunc` in try/catch. A thrown error (e.g. Karel hitting a wall) does not reject the promise — the partial animation still renders, a final frame marks the offending corner with a red X (`renderFrame`'s `errorMark` flag, drawn by `drawErrorMarker`), and the message is attached to `img.dataset.error` and `img.title`. Preserve this behavior; lessons rely on it to show mistakes.
 - **`mainFunc` may be sync or async**, and `runKarel` calls it as `mainFunc(karel)` — passing the `KarelProgram` instance. Both `function main(k) { k.move(); }` and the destructured `function main({ move, turnLeft }) { move(); }` forms work.
 - **Public methods are bound to the instance in the constructor** (a loop over `KarelProgram.prototype` binds every non-`_` method). This is what makes the destructured, prefix-free form work — detached calls would otherwise lose `this`. If you add a public method it's bound automatically; if you rename this binding loop or prefix a public method with `_`, the destructure form breaks, so verify it.
 - **Direction maps** (`TURN_LEFT_MAP`, `TURN_RIGHT_MAP`, `OPPOSITE_MAP`, `DELTA_MAP`) are the single source of truth for orientation math. Reuse them; don't hand-roll direction logic.
@@ -72,7 +72,15 @@ Colors are the named constants (e.g. `"Red"`), not CSS/hex — `CSS_COLORS` maps
 
 ## Adding / editing a lesson
 
-Lessons are static HTML using `renderNotebook(cells)` from `lessons/lesson.js`. Each cell is either `{ md }` (HTML prose) or `{ world, code, opts }` where `code` is a `function main(k) {...}` whose **source is displayed** (via `Function.prototype.toString`) and then executed. Keep `code` bodies clean and readable — the learner sees them verbatim. New lessons: copy an existing `NN-*.html`, wire the prev/next `.pager` links, and add an entry to the `<ol class="toc">` in `index.html`.
+Lessons are static HTML using `renderNotebook(cells)` from `lessons/lesson.js`. A cell is one of three shapes:
+
+- `{ md }` — HTML prose (raw `innerHTML`). Code snippets shown here are hand-written `<pre class="code">…</pre>`; they are **not** run and get no syntax highlighting.
+- `{ world, code, opts? }` — a read-only demo. `code` is the **entire program as a source string** (helper functions, if any, followed by `function main(k) { … }`). It is shown verbatim (`dedent` + `highlight`) and compiled with `new Function` the exact same way a challenge compiles the reader's code — so what's displayed is what runs; `lesson.js` never fabricates the `main` wrapper. Conventions: **write the program flush-left** (helpers and `main` at column 0, 2-space body indent); **never nest helper functions inside `main`** — define them as siblings and pass the robot in as a parameter (`function turnRight(k) { … }`, called as `turnRight(k)`). Keep it clean and readable — the learner sees it verbatim.
+- `{ world, solution, prompt, check?, starter?, opts? }` — an **interactive challenge**. The reader types into an editor and presses ▶ Run; their code is compiled with `new Function` and run against `world`. `solution` is a `function main(k) {...}` used only to (a) render the green-outlined **goal GIF** and (b) compute the target end-state — its **source is never shown**. Grading compares the reader's final world state to the solution's via the aspects in `check` (default `["beepers","position","direction"]`; e.g. `["position"]` ignores beepers and final facing). `prompt` is the task HTML (may embed a `<pre class="code">` block, e.g. a program to retype). `starter` seeds the editor and overrides the default `function main(k) { … }` stub — pass `""` for an empty editor. State capture is library-change-free: `runKarel` awaits `mainFunc` before rendering, so a wrapper grabs the live `KarelProgram` and snapshots `.world.beepers` + Karel's pose.
+
+`opts` (any cell) defaults to `{ cellSize: 46, delay: 150 }`. Cells render top-to-bottom; `md` are synchronous, `code`/`challenge` are awaited so animations build in order.
+
+New lessons: copy an existing `NN-*.html`, wire the prev/next `.pager` links, and add an entry to the `<ol class="toc">` in `index.html`. The challenge machinery lives entirely in `lesson.js`/`lesson.css`, so any lesson can add challenge cells.
 
 ## Verifying changes (no test runner)
 

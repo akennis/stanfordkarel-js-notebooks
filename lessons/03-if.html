@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3 · Making Decisions with <code>if</code> — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 3 of 10</div>
+    <h1>3 · Making Decisions with <code>if</code></h1>
+    <p class="lead">Let Karel sense the world and run commands only when a condition is true.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./02-functions.html">← Functions</a><span class="spacer"></span><a href="./04-for-loops.html">for loops →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>Conditions are true or false</h2>
+      <p>So far every program has done exactly the same thing every time it runs. Real programs need to
+      <em>react</em> to what they find. That starts with a <strong>condition</strong>: a question with a
+      yes/no answer. In JavaScript "yes" is <code>true</code> and "no" is <code>false</code> — the two
+      values are called <strong>booleans</strong>.</p>
+      <p>Karel answers questions about its surroundings with built-in <em>sensing</em> commands. Each one
+      hands back a boolean. For example <code>k.beepersPresent()</code> is <code>true</code> when there's a
+      beeper on Karel's current corner and <code>false</code> when there isn't.</p>` },
+
+      { md: `<h2>The <code>if</code> statement</h2>
+      <p>An <code>if</code> statement runs a block of commands <em>only</em> when its condition is
+      <code>true</code>. If the condition is <code>false</code>, Karel skips the whole block and carries on.
+      This is how a program makes a decision.</p>
+      <div class="callout"><strong>Anatomy of an if</strong>
+      <code>if (condition) { ...commands... }</code><br>
+      • the keyword <code>if</code><br>
+      • a <em>condition</em> in <code>( )</code> — a boolean, usually one of Karel's sensors<br>
+      • a block in <code>{ }</code> that runs only when the condition is <code>true</code></div>
+      <p>Why bother? Because some commands <strong>crash</strong> when they're used at the wrong moment —
+      <code>pickBeeper()</code> fails if there's no beeper, <code>move()</code> fails into a wall. An
+      <code>if</code> lets Karel <em>look before it leaps</em>.</p>` },
+
+      { md: `<h2>Karel's four senses</h2>
+      <p>Karel's sensing commands fall into four families. The rest of this lesson takes them one at a
+      time — a decision for walls, for beepers underfoot, for the beeper bag, and for direction.</p>
+      <div class="callout"><strong>The sensing menu, by family</strong>
+      • <strong>Walls:</strong> <code>frontIsClear()</code> / <code>frontIsBlocked()</code>,
+      <code>leftIsClear()</code> / <code>leftIsBlocked()</code>,
+      <code>rightIsClear()</code> / <code>rightIsBlocked()</code><br>
+      • <strong>Beepers on the corner:</strong> <code>beepersPresent()</code> /
+      <code>noBeepersPresent()</code><br>
+      • <strong>Beepers in the bag:</strong> <code>beepersInBag()</code> / <code>noBeepersInBag()</code><br>
+      • <strong>Direction:</strong> <code>facingNorth()</code>, <code>facingEast()</code>,
+      <code>facingSouth()</code>, <code>facingWest()</code></div>` },
+
+      { md: `<h2>1 · Sensing walls</h2>
+      <p>Karel can feel for walls in three directions: straight ahead (<code>frontIsClear</code>), to its
+      <code>left</code>, and to its <code>right</code>. Each comes with an <code>…IsBlocked</code> opposite
+      for when you'd rather ask the negative. Below Karel walks east until a wall blocks its path midway
+      across the room. Sensing the wall with <code>frontIsBlocked()</code>, it turns left to face north and
+      climbs two cells up — steering around the obstacle instead of crashing into it.</p>` },
+      { world: `Dimension: (5, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Wall: (3, 1); east`, code: `function main(k) {
+  k.move();
+  k.move();
+  if (k.frontIsBlocked()) {
+    k.turnLeft();
+    k.move();
+    k.move();
+  }
+}` },
+      { md: `<h3>Challenge · Mark the wall</h3>
+      <p>Karel walks east across a wide room until a wall stops it. Fill in the helper
+      <code>movePutBeeperAtWall</code> so that each call steps forward and — only if a wall is now blocking
+      the way — drops a beeper. Then call it enough times in <code>main</code> to reach the wall at avenue 4
+      and mark it.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Wall: (4, 1); east`,
+        prompt: `Complete <code>movePutBeeperAtWall(k)</code> — <code>move()</code>, then
+        <code>if (k.frontIsBlocked())</code> <code>putBeeper()</code>. Call it from <code>main</code> until
+        Karel reaches the wall; it should finish on avenue 4 with one beeper marking the wall.`,
+        starter: `function movePutBeeperAtWall(k) {
+  // move forward one step
+  // then, if a wall is now ahead, drop a beeper to mark it
+}
+
+function main(k) {
+  movePutBeeperAtWall(k);
+  // call it again as many times as needed to reach the wall
+}`,
+        solution: function main(k) {
+          function movePutBeeperAtWall(k) {
+            k.move();
+            if (k.frontIsBlocked()) {
+              k.putBeeper();
+            }
+          }
+          movePutBeeperAtWall(k);
+          movePutBeeperAtWall(k);
+          movePutBeeperAtWall(k);
+        } },
+
+      { md: `<h2>2 · Sensing beepers on the corner</h2>
+      <p><code>beepersPresent()</code> is <code>true</code> when a beeper sits on Karel's current corner.
+      It's the guard that makes <code>pickBeeper()</code> safe: check first, and Karel only reaches down
+      when there's actually something to pick up. Wrapping that decision in a function —
+      <code>collectAndMove</code>, which picks up a beeper <em>if</em> one is present and then steps east —
+      gives us one reusable move we can apply to every corner. Some corners have beepers, some don't; the
+      <code>if</code> inside handles both cases.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: 0
+Beeper: (2, 1); 1
+Beeper: (4, 1); 1`, code: `function collectAndMove(k) {
+  if (k.beepersPresent()) {
+    k.pickBeeper();
+  }
+  k.move();
+}
+
+function main(k) {
+  collectAndMove(k);
+  collectAndMove(k);
+  collectAndMove(k);
+  collectAndMove(k);
+}` },
+      { md: `<h3>Challenge · Sweep the row</h3>
+      <p>A longer row this time, with beepers scattered on some corners and bare on others. Write a
+      <code>collectAndMove</code> helper that picks up a beeper only when one is present and then moves on,
+      and call it once per corner to sweep the whole row clean.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: 0
+Beeper: (2, 1); 1
+Beeper: (3, 1); 1
+Beeper: (5, 1); 1`,
+        prompt: `Complete <code>collectAndMove(k)</code> — <code>if (k.beepersPresent())</code>
+        <code>pickBeeper()</code>, then <code>move()</code>. Call it from <code>main</code> once per corner
+        so Karel sweeps every beeper and ends on avenue 6 with the row empty.`,
+        starter: `function collectAndMove(k) {
+  // if a beeper is here, pick it up
+  // then move forward one step
+}
+
+function main(k) {
+  collectAndMove(k);
+  // call it again for each remaining corner
+}`,
+        solution: function main(k) {
+          function collectAndMove(k) {
+            if (k.beepersPresent()) {
+              k.pickBeeper();
+            }
+            k.move();
+          }
+          collectAndMove(k);
+          collectAndMove(k);
+          collectAndMove(k);
+          collectAndMove(k);
+          collectAndMove(k);
+        } },
+
+      { md: `<h2>3 · Sensing the beeper bag</h2>
+      <p>Karel carries beepers in a bag. <code>beepersInBag()</code> is <code>true</code> while the bag
+      still holds at least one; <code>noBeepersInBag()</code> is its opposite. (When the world gives Karel
+      an <code>INFINITY</code> bag it's always <code>true</code>.) Guarding <code>putBeeper()</code> with
+      it means Karel stops placing beepers the instant it runs out, instead of crashing. This Karel has
+      only <strong>two</strong> beepers, so its trail stops short:</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: 2`, code: `function main(k) {
+  if (k.beepersInBag()) {
+    k.putBeeper();
+  }
+  k.move();
+  if (k.beepersInBag()) {
+    k.putBeeper();
+  }
+  k.move();
+  if (k.beepersInBag()) {
+    k.putBeeper();
+  }
+}` },
+      { md: `<h3>Challenge · Spend every beeper</h3>
+      <p>Karel starts with exactly <strong>three</strong> beepers and a five-corner row to walk. Drop a
+      beeper on each corner as you go, but check the bag first every time — once it's empty, Karel should
+      keep walking without trying to place a beeper it doesn't have.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: 3`,
+        prompt: `At each of the five corners, <code>if (k.beepersInBag())</code> then
+        <code>putBeeper()</code>, moving east between corners. The first three corners get a beeper; the
+        last two stay bare, and Karel finishes on avenue 5.`,
+        starter: `function main(k) {
+  if (k.beepersInBag()) {
+    k.putBeeper();
+  }
+  k.move();
+  // …four more corners
+}`,
+        solution: function main(k) {
+          if (k.beepersInBag()) {
+            k.putBeeper();
+          }
+          k.move();
+          if (k.beepersInBag()) {
+            k.putBeeper();
+          }
+          k.move();
+          if (k.beepersInBag()) {
+            k.putBeeper();
+          }
+          k.move();
+          if (k.beepersInBag()) {
+            k.putBeeper();
+          }
+          k.move();
+          if (k.beepersInBag()) {
+            k.putBeeper();
+          }
+        } },
+
+      { md: `<h2>4 · Sensing direction</h2>
+      <p>Finally, Karel can check which way it's pointing with <code>facingNorth()</code>,
+      <code>facingEast()</code>, <code>facingSouth()</code>, and <code>facingWest()</code>. This lets one
+      program correct its heading no matter how it started. Here Karel is facing east, but wants to head
+      north: <code>if (k.facingEast())</code> it turns left first, <em>then</em> moves — and it would
+      leave itself alone if it were already pointing north.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  if (k.facingEast()) {
+    k.turnLeft();
+  }
+  k.move();
+}` },
+      { md: `<h3>Challenge · Point north and climb</h3>
+      <p>Karel starts in the bottom-left corner facing <strong>east</strong>, but needs to travel
+      <em>north</em> to the top of its column. Use a direction sensor to turn Karel to face north, then
+      climb to street 3.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `<code>if (k.facingEast())</code> turn left so Karel faces north, then <code>move()</code>
+        twice. Karel should finish on <strong>(1, 3)</strong> facing <strong>north</strong>.`,
+        starter: `function main(k) {
+  if ( /* facing east? */ ) {
+    // turn to face north
+  }
+  // climb to street 3
+}`,
+        check: ["position", "direction"],
+        solution: function main(k) {
+          if (k.facingEast()) {
+            k.turnLeft();
+          }
+          k.move();
+          k.move();
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      An <code>if</code> statement runs its block only when a condition is <code>true</code>, and
+      conditions are booleans (<code>true</code>/<code>false</code>). Karel senses its world in four
+      families — <strong>walls</strong>, <strong>beepers on the corner</strong>, <strong>beepers in the
+      bag</strong>, and <strong>direction</strong> — and an <code>if</code> turns any of those answers into
+      a decision. Guarding a risky command with the right sensor is how Karel looks before it leaps. In the
+      next lessons you'll put these decisions <em>inside loops</em>, where they become far more powerful.</div>` },
+    ];
+
+    renderNotebook(cells);
+  </script>
+</body>
+</html>

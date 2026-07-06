@@ -10,7 +10,7 @@
   <header class="course">
     <div class="crumb">Learning JavaScript with Karel · Lesson 1 of 10</div>
     <h1>1 · Commands &amp; Sequencing</h1>
-    <p class="lead">A program is just a list of commands, carried out one at a time, in order.</p>
+    <p class="lead">A program is a list of commands wrapped inside <code>main</code>, carried out one at a time, in order.</p>
   </header>
 
   <main id="notebook"></main>
@@ -37,44 +37,144 @@
       <div class="callout"><strong>How to read this book</strong>
       Each grey box below is real JavaScript code. The picture beneath it is what happens when Karel
       runs that code. The code isn't editable here — read it, predict what Karel will do, then check
-      the animation.</div>` },
-      { md: `<h2>Calling a command</h2>
-      <p>Every command ends with a pair of parentheses <code>()</code> and a semicolon <code>;</code>.
-      The parentheses mean "do it now"; the semicolon marks the end of the statement. Here Karel takes
-      three steps to the east.</p>` },
+      the animation.</div>
+      <div class="callout tip"><strong>Your turn: challenges</strong>
+      Every so often you'll hit a <em>Challenge</em>. It shows a <strong>goal animation</strong> (outlined
+      in green) and gives you an editable code box. Type your commands, press <strong>▶ Run</strong>, and
+      Karel runs your code. Match the goal and you'll get a green ✓. Get it wrong and nothing breaks —
+      tweak your code and run again.</div>` },
+      { md: `<h2>The shape of a program</h2>
+      <p>Commands never float on their own. Every program you write has the same outer shape — a
+      container named <code>main</code> that holds your commands between a pair of curly braces:</p>
+      <pre class="code"><code>function main(k) {
+  // your commands go here, one per line
+}</code></pre>
+      <p>Read it as: <em>"Here is my program, called <code>main</code>. It is handed a robot, which I'll
+      call <code>k</code>. Everything between the <code>{</code> and the <code>}</code> is the list of
+      commands I want <code>k</code> to carry out."</em></p>
+      <ul>
+        <li><code>function main(k) {</code> — the opening line. <code>k</code> is your name for Karel;
+          you'll use it to give every command.</li>
+        <li>the lines in the middle — your commands, one per line, run from top to bottom.</li>
+        <li><code>}</code> — the closing brace that marks the end of the program.</li>
+      </ul>
+      <p>From here on, <strong>every</strong> code box shows the whole program — wrapper and all. Here is
+      a complete one that walks Karel three steps to the east:</p>` },
       { world: `Dimension: (5, 5)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
+BeeperBag: INFINITY`, code: `function main(k) {
+  k.move();
+  k.move();
+  k.move();
+}` },
+      { md: `<h2>Reading a line of code</h2>
+      <p>Look at the three lines <em>inside</em> <code>main</code> above. Each one is a single
+      <strong>command</strong>, and every command has the same anatomy:</p>
+      <ul>
+        <li><code>k</code> — the robot you're commanding.</li>
+        <li><code>.move</code> — the command's name, joined to <code>k</code> with a dot.</li>
+        <li><code>()</code> — the parentheses mean "do it now."</li>
+        <li><code>;</code> — the semicolon marks the end of the statement.</li>
+      </ul>
+      <p>So <code>k.move();</code> reads as "robot, move — now." The program above says it three times,
+      so Karel takes three steps east.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `<strong>Walk to the wall.</strong> Karel starts on the south-west corner facing east.
+        Fill in the commands inside <code>main</code> so Karel ends up on the far-east corner
+        <code>(5, 1)</code>. (How many steps is that?)`,
+        check: ["position"],
+        solution: function main(k) {
           k.move();
           k.move();
           k.move();
-      } },
+          k.move();
+        } },
       { md: `<h2>One after another</h2>
-      <p>The computer runs your commands <strong>top to bottom</strong>, one line at a time. Below,
-      Karel drops a beeper, steps forward, and drops another. Follow along line by line.</p>` },
+      <p>The computer runs the commands inside <code>main</code> <strong>top to bottom</strong>, one line
+      at a time. Below, Karel drops a beeper, steps forward, and drops another. Follow along line by
+      line.</p>` },
       { world: `Dimension: (5, 5)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
+BeeperBag: INFINITY`, code: `function main(k) {
+  k.putBeeper();
+  k.move();
+  k.putBeeper();
+  k.move();
+  k.putBeeper();
+}` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `<strong>Lay a beeper trail.</strong> Drop a beeper on each of the first three corners —
+        <code>(1, 1)</code>, <code>(2, 1)</code>, and <code>(3, 1)</code>. You'll need to alternate
+        <code>k.putBeeper()</code> and <code>k.move()</code> inside <code>main</code>. (Where Karel
+        finishes doesn't matter here.)`,
+        check: ["beepers"],
+        solution: function main(k) {
           k.putBeeper();
           k.move();
           k.putBeeper();
           k.move();
           k.putBeeper();
-      } },
+        } },
       { md: `<h2>Order matters</h2>
       <p>Because commands run in order, changing the order changes the result. Here Karel steps once,
       then turns left (now facing north), then steps again — carving an "L" shaped path.</p>` },
       { world: `Dimension: (5, 5)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
+BeeperBag: INFINITY`, code: `function main(k) {
+  k.move();
+  k.turnLeft();
+  k.move();
+  k.move();
+}` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `<strong>Turn the corner.</strong> Send Karel two steps east, then two steps north, so it
+        finishes on corner <code>(3, 3)</code> <em>facing north</em>. Remember that <code>k.turnLeft()</code>
+        turns Karel from east to north — and that order matters.`,
+        check: ["position", "direction"],
+        solution: function main(k) {
+          k.move();
           k.move();
           k.turnLeft();
           k.move();
           k.move();
-      } },
+        } },
+      { md: `<h2>Type the whole program</h2>
+      <p>Now write a complete program from scratch — the <code>function main(k) {</code> line, the
+      commands, and the closing <code>}</code>. Below is the exact program to reproduce. Type every line
+      into the empty box, matching it character for character, then press <strong>▶ Run</strong>.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        starter: "",
+        prompt: `<strong>Retype this program.</strong> Copy the whole thing — including the
+        <code>function main(k) {</code> opening line and the closing <code>}</code> — into your (empty)
+        code box exactly as shown:
+        <pre class="code"><code>function main(k) {
+  k.move();
+  k.putBeeper();
+  k.turnLeft();
+  k.move();
+  k.move();
+  k.putBeeper();
+}</code></pre>`,
+        solution: function main(k) {
+          k.move();
+          k.putBeeper();
+          k.turnLeft();
+          k.move();
+          k.move();
+          k.putBeeper();
+        } },
       { md: `<div class="callout tip"><strong>You learned</strong>
-      A program is a sequence of commands. Each command is a call like <code>k.move();</code>. They run
-      in order, so the order you write them in is the order Karel obeys.</div>` },
+      A program lives inside <code>function main(k) { … }</code>. Between its braces you list commands
+      like <code>k.move();</code>, one per line. They run in order, top to bottom, so the order you write
+      them in is the order Karel obeys.</div>` },
     ];
 
     renderNotebook(cells);

@@ -493,14 +493,33 @@ function drawKarelIcon(ctx, direction, kx, ky, cellSize, icon) {
 }
 
 /**
+ * Draw a red X centered on (cx, cy) to mark the spot of an illegal action
+ * (hitting a wall, or an empty-handed put/pick). Drawn on top of Karel.
+ */
+function drawErrorMarker(ctx, cx, cy, cellSize) {
+  const r = cellSize * 0.35;
+  ctx.save();
+  ctx.strokeStyle = "red";
+  ctx.lineWidth = Math.max(3, cellSize * 0.08);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(cx - r, cy - r); ctx.lineTo(cx + r, cy + r);
+  ctx.moveTo(cx + r, cy - r); ctx.lineTo(cx - r, cy + r);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
  * Render the current state of the world + Karel to a canvas element.
  * @param {KarelWorld} world
  * @param {KarelProgram} karel
  * @param {number} cellSize  Pixels per cell
  * @param {string} icon      "karel" (default) or "simple"
+ * @param {boolean} [errorMark=false]  Draw a red X on Karel's corner to mark
+ *   an illegal action (wall collision, empty-bag put, no-beeper pick).
  * @returns {HTMLCanvasElement}
  */
-function renderFrame(world, karel, cellSize, icon = "karel") {
+function renderFrame(world, karel, cellSize, icon = "karel", errorMark = false) {
   const imgW  = 2 * BORDER_OFFSET + world.numAvenues * cellSize;
   const imgH  = 2 * BORDER_OFFSET + world.numStreets * cellSize;
   const leftX = BORDER_OFFSET;
@@ -596,6 +615,11 @@ function renderFrame(world, karel, cellSize, icon = "karel") {
   // ── Karel robot ───────────────────────────────────────────────────────────
   drawKarelIcon(ctx, karel.direction, cornerX(karel.avenue), cornerY(karel.street), cellSize, icon);
 
+  // ── Illegal-action marker ─────────────────────────────────────────────────
+  if (errorMark) {
+    drawErrorMarker(ctx, cornerX(karel.avenue), cornerY(karel.street), cellSize);
+  }
+
   return canvas;
 }
 
@@ -652,7 +676,8 @@ async function loadGifDeps() {
  * @param {"karel"|"simple"} [options.icon="karel"]  Robot icon style
  * @returns {Promise<HTMLImageElement>} Resolves with the animated GIF image.
  *   If the Karel program throws (e.g. hitting a wall), the promise still
- *   resolves with the partial animation; the error message is available on
+ *   resolves with the partial animation; a final frame marks the offending
+ *   corner with a red X, and the error message is available on
  *   `img.dataset.error` and as the element's tooltip (`img.title`).
  */
 export async function runKarel(worldText, mainFunc, options = {}) {
@@ -685,6 +710,10 @@ export async function runKarel(worldText, mainFunc, options = {}) {
     await mainFunc(karel);
   } catch (err) {
     programError = err;
+    // Karel's pose is unchanged by a failed action (move throws before it
+    // steps; put/pick throw before touching beepers), so its current corner
+    // is the point of the error. Add a final frame marking it with a red X.
+    frames.push(renderFrame(world, karel, cellSize, icon, true));
   }
 
   const { GIF, workerBlob } = await loadGifDeps();

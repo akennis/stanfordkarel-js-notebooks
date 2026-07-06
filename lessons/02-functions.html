@@ -10,13 +10,13 @@
   <header class="course">
     <div class="crumb">Learning JavaScript with Karel · Lesson 2 of 10</div>
     <h1>2 · Functions</h1>
-    <p class="lead">Teach Karel a new word by bundling commands into a function you can reuse.</p>
+    <p class="lead">Teach Karel a new word by bundling commands into a function you can name, reuse, and build on.</p>
   </header>
 
   <main id="notebook"></main>
 
   <nav class="pager">
-    <a href="./01-commands.html">← Commands</a><span class="spacer"></span><a href="./03-for-loops.html">for loops →</a>
+    <a href="./01-commands.html">← Commands</a><span class="spacer"></span><a href="./03-if.html">if statements →</a>
   </nav>
 
   <script type="module">
@@ -24,61 +24,211 @@
 
     const cells = [
       { md: `<h2>Karel can't turn right</h2>
-      <p>Karel only knows <code>turnLeft()</code>. To turn <em>right</em>, Karel has to turn left three
-      times (left + left + left = right). It works, but it's noisy and easy to get wrong.</p>` },
+      <p>Karel knows only four commands — <code>move()</code>, <code>turnLeft()</code>,
+      <code>putBeeper()</code>, and <code>pickBeeper()</code>. There is no <code>turnRight()</code>.
+      So to turn <em>right</em>, Karel has to turn left three times (left + left + left ends up facing
+      the same way as a single right turn). It works, but watch how noisy it gets:</p>` },
       { world: `Dimension: (5, 5)
 Karel: (1, 1); north
-BeeperBag: INFINITY`, code: function main(k) {
-          k.move();
-          k.move();
-          k.turnLeft();
-          k.turnLeft();
-          k.turnLeft();
-          k.move();
-      } },
+BeeperBag: INFINITY`, code: `function main(k) {
+  k.move();
+  k.move();
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+  k.move();
+}` },
+      { md: `<p>Three <code>turnLeft()</code> calls in a row don't <em>say</em> "turn right" — you have to
+      read them and work out what they add up to. Every time you need a right turn you copy those three
+      lines again, and if you miscount you get a bug that's hard to spot. There has to be a better way to
+      express an idea once and reuse it. There is: a <strong>function</strong>.</p>` },
+
       { md: `<h2>Define your own command</h2>
-      <p>A <strong>function</strong> lets you give a name to a group of commands, so you can use that
-      name as if it were a brand-new command. This is how we teach Karel the word <code>turnRight</code>:</p>
+      <p>A <strong>function</strong> lets you give a <em>name</em> to a group of commands, so you can use
+      that name as if it were a brand-new command. We define it <em>next to</em> <code>main</code> — never
+      inside it — and hand it the robot <code>k</code> so it can command Karel. This is how we teach Karel
+      the word <code>turnRight</code>:</p>
       <div class="callout"><strong>The shape of a function</strong>
-      <code>function name() { ...commands... }</code> — the word <code>function</code>, a name you choose,
-      empty <code>()</code>, then the commands in curly braces <code>{ }</code>. Defining a function does
-      <em>not</em> run it; you run it later by <em>calling</em> it: <code>turnRight();</code></div>` },
+      <code>function name(k) { ...commands... }</code> — the word <code>function</code>, a name you choose,
+      the robot <code>k</code> inside the <code>()</code>, then the commands in curly braces <code>{ }</code>.
+      Defining a function does <em>not</em> run it; <code>main</code> runs it later by <em>calling</em> it
+      and passing the robot along: <code>turnRight(k);</code></div>` },
       { world: `Dimension: (5, 5)
 Karel: (1, 1); north
-BeeperBag: INFINITY`, code: function main(k) {
-          function turnRight() {
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  k.move();
+  k.move();
+  turnRight(k);
+  k.move();
+  k.move();
+}` },
+      { md: `<div class="callout"><strong>Define vs. call — the two halves of a function</strong>
+      <em>Defining</em> a function (<code>function turnRight(k) { … }</code>) writes down the recipe but
+      cooks nothing. <em>Calling</em> it (<code>turnRight(k);</code>) is when Karel actually turns.
+      A function you define but never call does nothing at all; a well-named function you call reads almost
+      like a sentence — Karel <code>turnRight</code>, then <code>move</code>.</div>` },
+
+      { md: `<h2>Define once, call as often as you like</h2>
+      <p>The real payoff arrives the <em>second</em> time you need a right turn. You wrote the three
+      <code>turnLeft()</code> calls once, gave them a name, and now every right turn costs a single tidy
+      line. Here Karel turns right twice while tracing a path — and not a stray <code>turnLeft()</code> in
+      sight:</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); north
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  k.move();
+  k.move();
+  turnRight(k);
+  k.move();
+  k.move();
+  turnRight(k);
+  k.move();
+}` },
+      { md: `<div class="callout tip"><strong>Don't Repeat Yourself (DRY)</strong>
+      When the same steps show up more than once, that's a signal to wrap them in a function. You write the
+      logic in <em>one</em> place, so there's only one place to read it, one place to fix it, and no chance
+      of two copies drifting out of sync.</div>` },
+
+      { md: `<h3>Challenge · Teach Karel to turn right</h3>
+      <p>Karel starts at the bottom-left facing <strong>north</strong>, but the beeper needs to go two
+      squares to the <em>east</em>. Define your own <code>turnRight</code> and use it to point Karel east
+      before moving.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); north
+BeeperBag: INFINITY`,
+        prompt: `Define <code>function turnRight(k) { … }</code> (three <code>turnLeft()</code> calls),
+        then in <code>main</code> turn right so Karel faces east and move to <strong>avenue 3</strong>.`,
+        starter: `function turnRight(k) {
+  // three turnLeft() calls
+}
+
+function main(k) {
+  // face east, then move twice
+}`,
+        check: ["position", "direction"],
+        solution: function main(k) {
+          function turnRight(k) {
             k.turnLeft();
             k.turnLeft();
             k.turnLeft();
           }
-          
+          turnRight(k);
           k.move();
           k.move();
-          turnRight();
-          k.move();
-          k.move();
-      } },
+        } },
+
       { md: `<h2>Why functions are worth it</h2>
-      <p>Functions let you say <em>what</em> you mean instead of <em>how</em> to do it. Once
-      <code>dropAndGo</code> exists, the main program reads like plain English — and if you ever change
-      how it works, you only change it in one place.</p>` },
+      <p>Functions don't just save typing — they let you say <em>what</em> you mean instead of <em>how</em>
+      to do it. A name like <code>dropAndGo</code> tells the reader the intent at a glance, where
+      <code>putBeeper(); move();</code> makes them decode it. Once the function exists, <code>main</code>
+      reads like plain English, and if you ever change how the job is done you change it in exactly one
+      place.</p>` },
       { world: `Dimension: (5, 5)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
-          function dropAndGo() {
+BeeperBag: INFINITY`, code: `function dropAndGo(k) {
+  k.putBeeper();
+  k.move();
+}
+
+function main(k) {
+  dropAndGo(k);
+  dropAndGo(k);
+  dropAndGo(k);
+  dropAndGo(k);
+}` },
+      { md: `<div class="callout"><strong>Naming is the whole point</strong>
+      A good function name describes the <em>job</em>, not the mechanics — <code>turnRight</code>,
+      <code>dropAndGo</code>, <code>faceHome</code>. When you read <code>main</code> later, well-chosen
+      names let you follow the plan without opening every function to see inside.</div>` },
+
+      { md: `<h2>Functions can call other functions</h2>
+      <p>Once you've taught Karel a word, bigger functions can <em>use</em> it. Here
+      <code>moveAndTurn</code> is built out of <code>move()</code> and our own <code>turnRight</code>.
+      Calling <code>moveAndTurn</code> four times walks Karel around a small square and back to where it
+      started — you're describing the whole journey in four short, readable lines.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); north
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function moveAndTurn(k) {
+  k.move();
+  turnRight(k);
+}
+
+function main(k) {
+  moveAndTurn(k);
+  moveAndTurn(k);
+  moveAndTurn(k);
+  moveAndTurn(k);
+}` },
+      { md: `<div class="callout tip"><strong>Building blocks stack up</strong>
+      Small, well-named functions are like Lego bricks: <code>turnRight</code> is used by
+      <code>moveAndTurn</code>, and <code>moveAndTurn</code> is used by <code>main</code>. Layering simple
+      pieces into bigger ones — <em>composition</em> — is how large programs stay understandable.</div>` },
+
+      { md: `<h3>Challenge · Beepers around a square</h3>
+      <p>Karel starts at the top-left of a small world facing <strong>east</strong>. Drop a beeper, take a
+      step, and turn right — do that four times to lay a beeper at each corner of a little square and
+      return Karel to its starting corner. This is a job for a helper function that <em>uses</em> your
+      <code>turnRight</code>.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 3); east
+BeeperBag: INFINITY`,
+        prompt: `Define <code>turnRight(k)</code>, then a <code>side(k)</code> helper that
+        <code>putBeeper()</code>, <code>move()</code>s once, and calls <code>turnRight(k)</code>.
+        Call <code>side(k)</code> four times from <code>main</code> to trace the square.`,
+        starter: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function side(k) {
+  // put a beeper, move once, turn right
+}
+
+function main(k) {
+  // call side(k) four times
+}`,
+        solution: function main(k) {
+          function turnRight(k) {
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+          }
+          function side(k) {
             k.putBeeper();
             k.move();
+            turnRight(k);
           }
-          
-          dropAndGo();
-          dropAndGo();
-          dropAndGo();
-          dropAndGo();
-      } },
+          side(k);
+          side(k);
+          side(k);
+          side(k);
+        } },
+
       { md: `<div class="callout tip"><strong>You learned</strong>
-      A function gives a name to a sequence of commands. <em>Define</em> it once with
-      <code>function name() { … }</code>, then <em>call</em> it as many times as you like with
-      <code>name();</code>. Good function names describe the job, which makes programs easier to read.</div>` },
+      A function gives a name to a sequence of commands. <em>Define</em> it once, next to
+      <code>main</code>, with <code>function name(k) { … }</code>, then <em>call</em> it as many times as
+      you like with <code>name(k);</code>. Functions can call other functions, so you build big behaviours
+      out of small, well-named pieces. Naming the job and writing it once (Don't Repeat Yourself) makes
+      programs shorter, clearer, and easier to fix.</div>` },
     ];
 
     renderNotebook(cells);

@@ -16,7 +16,7 @@
   <main id="notebook"></main>
 
   <nav class="pager">
-    <a href="./05-if.html">← if statements</a><span class="spacer"></span><a href="./07-parameters.html">Parameters →</a>
+    <a href="./05-while-loops.html">← while loops</a><span class="spacer"></span><a href="./07-parameters.html">Parameters →</a>
   </nav>
 
   <script type="module">
@@ -35,36 +35,36 @@ Karel: (1, 1); east
 BeeperBag: INFINITY
 Beeper: (1, 1); 1
 Beeper: (3, 1); 1
-Beeper: (5, 1); 1`, code: function main(k) {
-          for (let i = 0; i < 4; i++) {
-            if (k.beepersPresent()) {
-              k.pickBeeper();
-            } else {
-              k.putBeeper();
-            }
-            k.move();
-          }
-          if (k.beepersPresent()) {
-            k.pickBeeper();
-          } else {
-            k.putBeeper();
-          }
-      } },
+Beeper: (5, 1); 1`, code: `function main(k) {
+  for (let i = 0; i < 4; i++) {
+    if (k.beepersPresent()) {
+      k.pickBeeper();
+    } else {
+      k.putBeeper();
+    }
+    k.move();
+  }
+  if (k.beepersPresent()) {
+    k.pickBeeper();
+  } else {
+    k.putBeeper();
+  }
+}` },
       { md: `<h2>Deciding how to move</h2>
       <p><code>if</code> / <code>else</code> is the heart of navigation. Here Karel's front is blocked by
       the edge of a narrow world, so the condition is <code>false</code> and the <code>else</code> branch
       runs — Karel turns instead of stepping into the wall.</p>` },
       { world: `Dimension: (1, 4)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
-          if (k.frontIsClear()) {
-            k.move();
-          } else {
-            k.turnLeft();
-          }
-          k.move();
-          k.move();
-      } },
+BeeperBag: INFINITY`, code: `function main(k) {
+  if (k.frontIsClear()) {
+    k.move();
+  } else {
+    k.turnLeft();
+  }
+  k.move();
+  k.move();
+}` },
       { md: `<div class="callout tip"><strong>You learned</strong>
       <code>if (condition) { … } else { … }</code> chooses between two actions: the first block runs when
       the condition is true, the second when it's false. Exactly one branch always runs.</div>` },

@@ -28,23 +28,24 @@
       hand an answer back to whoever called it. A function that returns <code>true</code> or
       <code>false</code> lets us invent our own conditions with meaningful names.</p>
       <div class="callout"><strong>The <code>return</code> keyword</strong>
-      <code>function atWall() { return k.frontIsBlocked(); }</code> — calling <code>atWall()</code> now
-      gives back <code>true</code> or <code>false</code>, so it can be used anywhere a condition can.</div>` },
+      <code>function atWall(k) { return k.frontIsBlocked(); }</code> — defined next to <code>main</code>
+      and handed the robot <code>k</code>, calling <code>atWall(k)</code> now gives back <code>true</code>
+      or <code>false</code>, so it can be used anywhere a condition can.</div>` },
       { md: `<h2>The NOT operator</h2>
-      <p>The <code>!</code> symbol means "not": it flips a boolean. <code>!atWall()</code> reads as "not
+      <p>The <code>!</code> symbol means "not": it flips a boolean. <code>!atWall(k)</code> reads as "not
       at a wall". Combining a custom boolean function with <code>!</code> makes the loop read almost like
       English: keep moving while not at a wall.</p>` },
       { world: `Dimension: (6, 1)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
-          function atWall() {
-            return k.frontIsBlocked();
-          }
-          
-          while (!atWall()) {
-            k.move();
-          }
-      } },
+BeeperBag: INFINITY`, code: `function atWall(k) {
+  return k.frontIsBlocked();
+}
+
+function main(k) {
+  while (!atWall(k)) {
+    k.move();
+  }
+}` },
       { md: `<h2>Combining conditions with OR</h2>
       <p>Two more operators combine booleans: <code>&&</code> means "and" (both must be true) and
       <code>||</code> means "or" (at least one is true). Here Karel walks forward until it either lands on
@@ -52,18 +53,18 @@ BeeperBag: INFINITY`, code: function main(k) {
       { world: `Dimension: (6, 1)
 Karel: (1, 1); east
 BeeperBag: 0
-Beeper: (4, 1); 1`, code: function main(k) {
-          function shouldStop() {
-            return k.beepersPresent() || k.frontIsBlocked();
-          }
-          
-          while (!shouldStop()) {
-            k.move();
-          }
-          if (k.beepersPresent()) {
-            k.pickBeeper();
-          }
-      } },
+Beeper: (4, 1); 1`, code: `function shouldStop(k) {
+  return k.beepersPresent() || k.frontIsBlocked();
+}
+
+function main(k) {
+  while (!shouldStop(k)) {
+    k.move();
+  }
+  if (k.beepersPresent()) {
+    k.pickBeeper();
+  }
+}` },
       { md: `<div class="callout tip"><strong>You learned</strong>
       <code>return</code> hands a value back from a function, so you can write your own boolean tests.
       Combine booleans with <code>!</code> (not), <code>&&</code> (and), and <code>||</code> (or) to build

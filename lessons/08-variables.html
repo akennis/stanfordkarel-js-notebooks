@@ -40,37 +40,37 @@ Karel: (1, 1); east
 BeeperBag: 0
 Beeper: (1, 1); 1
 Beeper: (3, 1); 1
-Beeper: (5, 1); 1`, code: function main(k) {
-          let count = 0;
-          while (k.frontIsClear()) {
-            if (k.beepersPresent()) {
-              k.pickBeeper();
-              count = count + 1;
-            }
-            k.move();
-          }
-          if (k.beepersPresent()) {
-            k.pickBeeper();
-            count++;
-          }
-          for (let i = 0; i < count; i++) {
-            k.putBeeper();
-          }
-      } },
+Beeper: (5, 1); 1`, code: `function main(k) {
+  let count = 0;
+  while (k.frontIsClear()) {
+    if (k.beepersPresent()) {
+      k.pickBeeper();
+      count = count + 1;
+    }
+    k.move();
+  }
+  if (k.beepersPresent()) {
+    k.pickBeeper();
+    count++;
+  }
+  for (let i = 0; i < count; i++) {
+    k.putBeeper();
+  }
+}` },
       { md: `<h2>A variable can steer a loop</h2>
       <p>Variables often control how a loop behaves. Here <code>beepersLeft</code> starts at 4 and
       counts <em>down</em>; the while loop keeps running as long as it's above zero. When it hits zero,
       Karel stops.</p>` },
       { world: `Dimension: (5, 1)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
-          let beepersLeft = 4;
-          while (beepersLeft > 0) {
-            k.putBeeper();
-            k.move();
-            beepersLeft = beepersLeft - 1;
-          }
-      } },
+BeeperBag: INFINITY`, code: `function main(k) {
+  let beepersLeft = 4;
+  while (beepersLeft > 0) {
+    k.putBeeper();
+    k.move();
+    beepersLeft = beepersLeft - 1;
+  }
+}` },
       { md: `<div class="callout tip"><strong>You learned</strong>
       Declare a variable with <code>let name = value;</code>, read it by name, and update it with
       <code>name = …</code> or <code>name++</code>. Variables give your program a memory — essential for

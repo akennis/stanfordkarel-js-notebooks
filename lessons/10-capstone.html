@@ -28,22 +28,22 @@
       loop</strong> — a loop inside another loop — plus functions, conditions, and a variable. Everything
       from the previous nine lessons comes together here.</p>` },
       { md: `<h2>Step 1: plant one row</h2>
-      <p>First a helper. <code>plantRow</code> uses a while loop to lay a beeper on each square across a
-      row until it reaches the wall. Because it stops at a wall on its own, it works for a row of any
-      length.</p>` },
+      <p>First a helper, defined beside <code>main</code> and handed the robot <code>k</code>.
+      <code>plantRow(k)</code> uses a while loop to lay a beeper on each square across a row until it
+      reaches the wall. Because it stops at a wall on its own, it works for a row of any length.</p>` },
       { world: `Dimension: (4, 4)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
-          function plantRow() {
-            while (k.frontIsClear()) {
-              k.putBeeper();
-              k.move();
-            }
-            k.putBeeper();
-          }
-          
-          plantRow();
-      } },
+BeeperBag: INFINITY`, code: `function plantRow(k) {
+  while (k.frontIsClear()) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+}
+
+function main(k) {
+  plantRow(k);
+}` },
       { md: `<h2>Step 2: every row, snaking up</h2>
       <p>Now the outer loop. After planting a row, Karel steps up to the next one and reverses direction,
       snaking back and forth so it never has to backtrack. A <code>facingEast</code> variable remembers
@@ -53,38 +53,38 @@ BeeperBag: INFINITY`, code: function main(k) {
       (8) — all at once.</p>` },
       { world: `Dimension: (4, 4)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
-          function turnRight() {
-            k.turnLeft();
-            k.turnLeft();
-            k.turnLeft();
-          }
-          
-          function plantRow() {
-            while (k.frontIsClear()) {
-              k.putBeeper();
-              k.move();
-            }
-            k.putBeeper();
-          }
-          
-          let facingEast = true;
-          for (let row = 0; row < 4; row++) {
-            plantRow();
-            if (row < 3) {
-              if (facingEast) {
-                k.turnLeft();
-                k.move();
-                k.turnLeft();
-              } else {
-                turnRight();
-                k.move();
-                turnRight();
-              }
-              facingEast = !facingEast;
-            }
-          }
-      }, opts: { cellSize: 46, delay: 110 } },
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function plantRow(k) {
+  while (k.frontIsClear()) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+}
+
+function main(k) {
+  let facingEast = true;
+  for (let row = 0; row < 4; row++) {
+    plantRow(k);
+    if (row < 3) {
+      if (facingEast) {
+        k.turnLeft();
+        k.move();
+        k.turnLeft();
+      } else {
+        turnRight(k);
+        k.move();
+        turnRight(k);
+      }
+      facingEast = !facingEast;
+    }
+  }
+}`, opts: { cellSize: 46, delay: 110 } },
       { md: `<div class="callout tip"><strong>You did it</strong>
       You've gone from a single <code>k.move()</code> to a program that decomposes a big task into
       functions, repeats work with loops, makes decisions with conditions, and remembers state in a

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>5 · The <code>while</code> Loop — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 5 of 10</div>
+    <h1>5 · The <code>while</code> Loop</h1>
+    <p class="lead">Repeat until a condition changes — even when you don't know the count ahead of time.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./04-for-loops.html">← for loops</a><span class="spacer"></span><a href="./06-if-else.html">if / else →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>When you don't know how far</h2>
+      <p>A <code>for</code> loop is perfect when you know the count. But what if Karel should walk to a
+      wall that might be near or far? For that we use a <strong>while loop</strong>, which keeps going
+      <em>as long as a condition is true</em>.</p>
+      <p>Karel can sense its surroundings. One such <em>condition</em> is <code>k.frontIsClear()</code>,
+      which is <code>true</code> when there's no wall directly ahead.</p>
+      <div class="callout"><strong>for vs. while — which loop?</strong>
+      Reach for a <code>for</code> loop when you can say <em>how many</em> times up front ("move 5 times").
+      Reach for a <code>while</code> loop when you can only say <em>when to stop</em> ("move until you hit a
+      wall"). The count loop knows the number; the condition loop discovers it.</div>` },
+      { md: `<h2>Walk until blocked</h2>
+      <p>Read this as: "while the front is clear, move." Karel keeps stepping and re-checks before each
+      step; the moment a wall is ahead, the loop stops. This works no matter how wide the world is.</p>` },
+      { world: `Dimension: (7, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  while (k.frontIsClear()) {
+    k.move();
+  }
+}` },
+      { md: `<h2>Karel's senses</h2>
+      <p>A while loop is only as useful as the questions it can ask. Karel has a whole menu of
+      <em>true/false</em> sensing commands — the same ones you met with <code>if</code> in Lesson 3 — that
+      you can drop into a <code>while</code>:</p>
+      <div class="callout"><strong>What Karel can sense</strong>
+      • <code>frontIsClear()</code> / <code>frontIsBlocked()</code> — wall ahead?<br>
+      • <code>leftIsClear()</code> / <code>rightIsClear()</code> — wall to the side?<br>
+      • <code>beepersPresent()</code> / <code>noBeepersPresent()</code> — beeper on this corner?<br>
+      • <code>beepersInBag()</code> / <code>noBeepersInBag()</code> — anything left to place?<br>
+      • <code>facingNorth()</code>, <code>facingEast()</code>, <code>facingSouth()</code>,
+      <code>facingWest()</code> — which way am I pointing?</div>
+      <div class="callout tip"><strong>The test comes first</strong>
+      A while loop checks its condition <em>before</em> each pass, including the very first one. So if the
+      condition is already <code>false</code> — Karel is facing a wall the moment the loop begins — the
+      body runs <em>zero</em> times. A while loop can safely do nothing at all.</div>` },
+      { md: `<h2>Work along the way</h2>
+      <p>Just like a for loop, a while loop can do several things each pass. Here Karel fills an entire
+      row with beepers, however long the row happens to be, then drops one on the final square.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  while (k.frontIsClear()) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+}` },
+      { md: `<h3>Challenge · March to the wall</h3>
+      <p>Karel starts at the west end of a room of unknown width, facing <strong>east</strong>. Walk to the
+      wall and drop a single beeper on the last square. Because you don't know how wide the room is, a
+      <code>for</code> loop won't do — you need a <code>while</code> loop that stops at the wall.</p>` },
+      { world: `Dimension: (7, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Move east <code>while (k.frontIsClear())</code>, then <code>putBeeper()</code> once Karel
+        reaches the wall. Exactly one beeper should sit on the final corner.`,
+        starter: `function main(k) {
+  while (k.frontIsClear()) {
+    // walk east
+  }
+  // drop one beeper at the wall
+}`,
+        solution: function main(k) {
+          while (k.frontIsClear()) {
+            k.move();
+          }
+          k.putBeeper();
+        } },
+      { md: `<h2>Emptying a pile</h2>
+      <p>Conditions don't have to be about walls. A corner can hold a whole <em>stack</em> of beepers, and
+      <code>pickBeeper()</code> removes just one at a time. To scoop up the entire pile — without knowing
+      how tall it is — loop <code>while (k.beepersPresent())</code>. Each pass removes one beeper, and when
+      the corner is finally empty the condition turns <code>false</code> and the loop stops.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: 0
+Beeper: (1, 1); 4`, code: `function main(k) {
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+  }
+}` },
+      { md: `<h3>Challenge · Clear the corner</h3>
+      <p>Karel is standing on a corner buried under a pile of beepers. Pick them all up so the corner is
+      completely empty. You don't know how many there are — so loop until the corner reports no beepers
+      left.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: 0
+Beeper: (1, 1); 5`,
+        prompt: `Loop <code>while (k.beepersPresent())</code> and <code>pickBeeper()</code> each pass until
+        the corner is bare.`,
+        starter: `function main(k) {
+  while (k.beepersPresent()) {
+    // pick one beeper
+  }
+}`,
+        check: ["beepers"],
+        solution: function main(k) {
+          while (k.beepersPresent()) {
+            k.pickBeeper();
+          }
+        } },
+      { md: `<h2>Reaching a corner</h2>
+      <p>Combining while loops lets Karel navigate. Below, Karel walks east to the wall, turns to face
+      north, then walks up to the far corner — without knowing the grid's size in advance.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+}` },
+      { md: `<h3>Challenge · There and back</h3>
+      <p>Karel starts at the west wall facing <strong>east</strong> in a room of unknown width. Walk all
+      the way to the east wall, turn around, and walk all the way back — finishing on the starting corner
+      <strong>(1, 1)</strong>, now facing <strong>west</strong>. Two while loops and a turn-around will do
+      it.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Walk east <code>while (k.frontIsClear())</code>; turn around (two <code>turnLeft()</code>s);
+        then walk back <code>while (k.frontIsClear())</code>. Karel should end on <strong>(1, 1)</strong>
+        facing <strong>west</strong>.`,
+        starter: `function main(k) {
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  // turn around, then walk back to the start
+}`,
+        check: ["position", "direction"],
+        solution: function main(k) {
+          while (k.frontIsClear()) {
+            k.move();
+          }
+          k.turnLeft();
+          k.turnLeft();
+          while (k.frontIsClear()) {
+            k.move();
+          }
+        } },
+      { md: `<div class="callout warn"><strong>Watch out</strong>
+      A while loop only stops when its condition becomes <code>false</code>. If the condition can never
+      change, Karel loops forever. Always make sure something inside the loop moves you toward stopping —
+      a <code>move()</code> toward a wall, a <code>pickBeeper()</code> that empties a pile.</div>` },
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      A <code>while</code> loop repeats as long as a condition is <code>true</code>, checking that
+      condition before every pass. Pair it with sensing commands — <code>frontIsClear()</code>,
+      <code>beepersPresent()</code>, and the rest — when you don't know the exact number of repetitions.
+      Just make sure each pass moves Karel closer to making the condition <code>false</code>, or the loop
+      never ends.</div>` },
+    ];
+
+    renderNotebook(cells);
+  </script>
+</body>
+</html>

@@ -28,47 +28,49 @@
       input listed inside a function's parentheses. When you <em>call</em> the function you pass an
       <strong>argument</strong> — an actual value — and the function uses it.</p>
       <div class="callout"><strong>Parameter vs. argument</strong>
-      In <code>function moveN(n) { … }</code>, <code>n</code> is the parameter (a placeholder). In the
-      call <code>moveN(3)</code>, the <code>3</code> is the argument that fills in for <code>n</code>.</div>` },
+      In <code>function moveN(k, n) { … }</code>, <code>k</code> is the robot and <code>n</code> is the
+      parameter we care about (a placeholder). In the call <code>moveN(k, 3)</code>, the <code>3</code> is
+      the argument that fills in for <code>n</code>.</div>` },
       { md: `<h2>Move any number of steps</h2>
-      <p>Here <code>moveN</code> combines a parameter with a <code>for</code> loop from Lesson 3. One
-      definition now handles any distance — <code>moveN(3)</code>, <code>moveN(2)</code>, and so on.</p>` },
+      <p>Here <code>moveN</code> combines a parameter with a <code>for</code> loop from Lesson 3. It sits
+      next to <code>main</code> and takes the robot <code>k</code> plus a count <code>n</code>. One
+      definition now handles any distance — <code>moveN(k, 3)</code>, <code>moveN(k, 2)</code>, and so on.</p>` },
       { world: `Dimension: (5, 5)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
-          function moveN(n) {
-            for (let i = 0; i < n; i++) {
-              k.move();
-            }
-          }
-          
-          moveN(3);
-          k.turnLeft();
-          moveN(2);
-      } },
+BeeperBag: INFINITY`, code: `function moveN(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.move();
+  }
+}
+
+function main(k) {
+  moveN(k, 3);
+  k.turnLeft();
+  moveN(k, 2);
+}` },
       { md: `<h2>Building a bar chart</h2>
-      <p>Parameters shine when the value changes each call. <code>dropBeepers(n)</code> stacks
+      <p>Parameters shine when the value changes each call. <code>dropBeepers(k, n)</code> stacks
       <code>n</code> beepers on the current square; calling it with 1, then 2, then 3 draws a little
       ascending chart.</p>` },
       { world: `Dimension: (3, 1)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: function main(k) {
-          function dropBeepers(n) {
-            for (let i = 0; i < n; i++) {
-              k.putBeeper();
-            }
-          }
-          
-          dropBeepers(1);
-          k.move();
-          dropBeepers(2);
-          k.move();
-          dropBeepers(3);
-      } },
+BeeperBag: INFINITY`, code: `function dropBeepers(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.putBeeper();
+  }
+}
+
+function main(k) {
+  dropBeepers(k, 1);
+  k.move();
+  dropBeepers(k, 2);
+  k.move();
+  dropBeepers(k, 3);
+}` },
       { md: `<div class="callout tip"><strong>You learned</strong>
       A parameter lets a function accept input. You supply an argument when calling it, and the same
-      function can produce different results — <code>moveN(3)</code> vs. <code>moveN(10)</code> — from a
-      single definition.</div>` },
+      function can produce different results — <code>moveN(k, 3)</code> vs. <code>moveN(k, 10)</code> — from
+      a single definition.</div>` },
     ];
 
     renderNotebook(cells);
