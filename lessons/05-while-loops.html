@@ -183,7 +183,9 @@ BeeperBag: INFINITY`,
       never ends.</div>` },
     ];
 
-    renderNotebook(cells);
+    // isolate: run reader-submitted challenge code in a Web Worker so a mistake
+    // like an endless loop can't freeze the page (grading is unchanged).
+    renderNotebook(cells, undefined, { isolate: true });
   </script>
 </body>
 </html>

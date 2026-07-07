@@ -154,6 +154,7 @@ If the program throws (e.g. Karel hits a wall), the promise still resolves with 
 | `finalFrameDelay` | `number` | `1000` | Extra pause on the last frame (ms) |
 | `icon` | `"karel"` \| `"simple"` | `"karel"` | Robot sprite style |
 | `gifWorkers` | `number` | `2` | Web workers used by gif.js |
+| `maxFrames` | `number` | `2000` | Cap on captured frames. Each Karel action yields one frame, so hitting the cap ends the run with a soft error (red final frame + `img.dataset.error`) — a guard against loops that call Karel actions. A loop that never acts (`while (true) {}`) still hangs the main thread; use [`runKarelInWorker`](#runkarelinworkerworldtext-programtext-options) for that. |
 | `solution` | `Function` | — | Optional reference program. Its final state (run on a fresh copy of the world) is compared to this run's; an extra final frame draws Karel **green** on a match (with `img.dataset.solved` set to `"true"`) or **red** on a mismatch. |
 | `check` | `string[]` | `["beepers","position","direction"]` | Which aspects the `solution` comparison grades on |
 | `end` | `{ avenue?, street?, direction? }` | — | Optional explicit end pose. When given, Karel must finish at the specified avenue/street/direction (any subset) to count as solved. ANDs with the `solution` check when both are supplied; either alone drives the green frame and `img.dataset.solved`. |
@@ -161,6 +162,37 @@ If the program throws (e.g. Karel hits a wall), the promise still resolves with 
 \* If the world includes a `Speed:` directive, that value sets the default delay (`delay = round(100 / speed)` ms, so Speed 2.0 → 50 ms, Speed 0.5 → 200 ms). An explicit `delay` option always takes precedence.
 
 When a `solution` and/or an explicit `end` pose is supplied and the run satisfies every supplied check, the promise resolves with `img.dataset.solved === "true"` and the animation ends on a green Karel; if a check is supplied but not satisfied, `img.dataset.solved` is unset and the animation ends on a red Karel. `statesMatch(reader, goal, aspects)` and `matchesEnd(state, end)` are also exported for comparing states directly.
+
+---
+
+## `runKarelInWorker(worldText, programText, options?)`
+
+Same result as `runKarel` — a `Promise<HTMLImageElement>` — but the program runs inside a **Web Worker**, so an infinite loop can never freeze the page. The Worker simulates Karel and streams a world snapshot per action back to the main thread, which renders those snapshots into the GIF and can hard-kill a runaway program by terminating the Worker.
+
+The program is passed as a **source string**, not a function: a function can't cross a Worker boundary (structured clone rejects functions and closures don't transfer). The string must define `function main(k)` — helpers may sit alongside it, and `main` may be `async` or use the destructured form `function main({ move, turnLeft }) { … }`.
+
+```javascript
+import { runKarelInWorker } from "https://esm.sh/stanfordkarel-js-notebooks/stanfordkarel.js";
+
+const img = await runKarelInWorker(
+  `Dimension: (5, 5)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
+  `function main(k) {
+     while (true) k.turnLeft();   // never freezes — stopped by maxFrames / timeout
+   }`,
+  { maxFrames: 500, timeout: 2000 }
+);
+document.body.appendChild(img);
+```
+
+It accepts the same rendering options as `runKarel` (`cellSize`, `delay`, `finalFrameDelay`, `gifWorkers`, `icon`, `maxFrames`) plus one more:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `timeout` | `number` | `3000` | Wall-clock budget (ms) before the Worker is terminated. This is the backstop for a spin that never captures a frame (e.g. `while (true) {}` with no Karel call) and so can't trip `maxFrames`. |
+
+Whether the program hits a wall, exhausts `maxFrames`, or blows the `timeout`, the promise still resolves with the partial animation, ending on a red Karel at its last known corner; the message is on `img.dataset.error` / `img.title`.
+
+> Requires a browser Worker environment with cross-origin ES-module import (the Worker imports `stanfordkarel.js` from the same URL the library was loaded from). `runKarel` remains the choice for Node, `solution`/`end` grading, or passing a live function.
 
 ---
 

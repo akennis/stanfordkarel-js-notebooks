@@ -1,4 +1,4 @@
-import { runKarel } from "https://esm.sh/stanfordkarel-js-notebooks/stanfordkarel.js";
+import { runKarel, runKarelInWorker } from "https://esm.sh/stanfordkarel-js-notebooks/stanfordkarel.js";
 
 const esc = s => s.replace(/[&<>]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;" }[c]));
 
@@ -70,7 +70,13 @@ function handleTab(e) {
 //     opts? }                       goal GIF. `solution` source is NEVER shown.
 //                                   `end` optionally pins the required final
 //                                   pose ({ avenue, street, direction }).
-export async function renderNotebook(cells, mount = document.getElementById("notebook")) {
+//
+// Options (third arg):
+//   { isolate }  — when true, the reader's challenge code runs in a Web Worker
+//                  via runKarelInWorker, so an infinite loop can't freeze the
+//                  page. Grading (the green ✓) is unchanged. Read-only demo and
+//                  goal cells still run in-thread (their code is trusted).
+export async function renderNotebook(cells, mount = document.getElementById("notebook"), { isolate = false } = {}) {
   let counter = 0;
   const nb = mount;
 
@@ -180,6 +186,9 @@ export async function renderNotebook(cells, mount = document.getElementById("not
       yourRender.replaceChildren(
         Object.assign(document.createElement("span"), { className: "status", textContent: "Running…" })
       );
+      // Compile once up front as a cheap validity check — this only *parses* the
+      // code (it never runs it, so a loop here is harmless) and yields a friendly
+      // message for syntax errors or a missing main() before we bother running.
       let fn;
       try {
         fn = compileMain(editor.value);
@@ -189,11 +198,15 @@ export async function renderNotebook(cells, mount = document.getElementById("not
         return;
       }
       try {
-        // The library runs the (never shown) solution, compares final states,
-        // enforces any explicit end pose, and reports the result on
-        // img.dataset.solved — grading it green.
-        const img = await runKarel(cell.world, fn,
-          { ...opts, solution: cell.solution, check: aspects, end: cell.end });
+        // Grade the run: the library runs the (never shown) solution, compares
+        // final states, enforces any explicit end pose, and reports the result on
+        // img.dataset.solved. When isolate is on, the reader's (untrusted, maybe
+        // infinite) code runs in a Web Worker — passed as source text — so it
+        // can't freeze the page; otherwise it runs in-thread from the compiled fn.
+        const gradeOpts = { ...opts, solution: cell.solution, check: aspects, end: cell.end };
+        const img = isolate
+          ? await runKarelInWorker(cell.world, editor.value, gradeOpts)
+          : await runKarel(cell.world, fn, gradeOpts);
         yourRender.replaceChildren(img);
         if (img.dataset.error) {
           const e = document.createElement("div");

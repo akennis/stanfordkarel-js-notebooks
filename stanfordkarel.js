@@ -608,6 +608,45 @@ function renderFrame(world, karel, cellSize, icon = "karel", outline = "black") 
   return canvas;
 }
 
+/**
+ * A structured-cloneable snapshot of the render-relevant *mutable* world state
+ * plus Karel's pose. Static geometry (dimensions, walls) is deliberately omitted
+ * — a runKarelInWorker caller already has it from the world text — so these are
+ * cheap to stream out of a Worker, one per action.
+ * @param {KarelWorld} world
+ * @param {KarelProgram} karel
+ * @returns {{avenue:number, street:number, direction:string,
+ *            beepers:[string,number][], cornerColors:[string,string][]}}
+ */
+function renderSnapshot(world, karel) {
+  return {
+    avenue: karel.avenue,
+    street: karel.street,
+    direction: karel.direction,
+    beepers: [...world.beepers.entries()],
+    cornerColors: [...world.cornerColors.entries()],
+  };
+}
+
+/**
+ * Render one snapshot (see renderSnapshot) to a canvas by applying its mutable
+ * state onto `world` — which supplies the static geometry — and drawing Karel at
+ * the snapshot's pose. Mutates `world.beepers`/`world.cornerColors`; callers
+ * render snapshots sequentially so reusing a single world is safe.
+ * @param {KarelWorld} world
+ * @param {ReturnType<typeof renderSnapshot>} snap
+ * @param {number} cellSize
+ * @param {string} [icon="karel"]
+ * @param {string} [outline="black"]
+ * @returns {HTMLCanvasElement}
+ */
+function renderSnapshotFrame(world, snap, cellSize, icon = "karel", outline = "black") {
+  world.beepers = new Map(snap.beepers);
+  world.cornerColors = new Map(snap.cornerColors);
+  const karel = { avenue: snap.avenue, street: snap.street, direction: snap.direction };
+  return renderFrame(world, karel, cellSize, icon, outline);
+}
+
 // ─────────────────────────── GIF.JS LOADER ──────────────────────────────────
 
 // gif.js consists of two runtime artifacts that must be loaded separately:
@@ -643,6 +682,54 @@ async function loadGifDeps() {
   return _gifDeps;
 }
 
+/**
+ * Encode an array of canvas frames into an animated GIF and return it as an
+ * <img>. The final frame is held longer (finalFrameDelay) so the end state is
+ * readable. A non-null `error` is surfaced on img.dataset.error / img.title; a
+ * truthy `solved` sets img.dataset.solved. Shared by runKarel and
+ * runKarelInWorker.
+ * @param {HTMLCanvasElement[]} frames  Non-empty list of rendered frames.
+ * @param {object} opts
+ * @param {number} opts.delay            Per-frame delay (ms).
+ * @param {number} opts.finalFrameDelay  Extra hold on the last frame (ms).
+ * @param {number} opts.gifWorkers       gif.js worker count.
+ * @param {string|null} [opts.error]     Error message to attach, if any.
+ * @param {boolean} [opts.solved]        Whether to mark the run solved.
+ * @returns {Promise<HTMLImageElement>}
+ */
+async function encodeFrames(frames, { delay, finalFrameDelay, gifWorkers, error = null, solved = false }) {
+  const { GIF, workerBlob } = await loadGifDeps();
+  const workerUrl = URL.createObjectURL(workerBlob);
+
+  const { width, height } = frames[0];
+  const gif = new GIF({ workers: gifWorkers, quality: 10, width, height, workerScript: workerUrl });
+
+  for (const frame of frames) {
+    gif.addFrame(frame.getContext("2d"), { copy: true, delay });
+  }
+  // Hold on the final frame longer so the viewer can see the end state
+  gif.addFrame(
+    frames[frames.length - 1].getContext("2d"),
+    { copy: true, delay: finalFrameDelay }
+  );
+
+  return new Promise((resolve, reject) => {
+    gif.on("finished", (blob) => {
+      URL.revokeObjectURL(workerUrl);
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(blob);
+      if (error) {
+        img.dataset.error = error;
+        img.title = `Karel error: ${error}`;
+      }
+      if (solved) img.dataset.solved = "true";
+      resolve(img);
+    });
+    gif.on("error", reject);
+    gif.render();
+  });
+}
+
 // ─────────────────────────── SOLUTION CHECK ─────────────────────────────────
 
 // Aspects a challenge can grade on. A caller passes some subset of these to
@@ -663,6 +750,23 @@ function snapshotState(karel) {
     .sort()
     .join(",");
   return { avenue: karel.avenue, street: karel.street, direction: karel.direction, beepers };
+}
+
+/**
+ * Build the same gradable snapshot as snapshotState, but from a render snapshot
+ * (see renderSnapshot) streamed out of a Worker rather than a live KarelProgram.
+ * Lets runKarelInWorker grade against a solution without re-running the reader's
+ * program on the main thread.
+ * @param {ReturnType<typeof renderSnapshot>} snap
+ * @returns {ReturnType<typeof snapshotState>}
+ */
+function gradeSnapshot(snap) {
+  const beepers = snap.beepers
+    .filter(([, count]) => count > 0)
+    .map(([key, count]) => `${key}=${count}`)
+    .sort()
+    .join(",");
+  return { avenue: snap.avenue, street: snap.street, direction: snap.direction, beepers };
 }
 
 /**
@@ -716,6 +820,19 @@ async function computeSolutionState(worldText, solution) {
   return snapshotState(karel);
 }
 
+// ─────────────────────────── RUN LIMITS ─────────────────────────────────────
+
+// Default cap on captured animation frames. Every mutating Karel action yields
+// one frame, so this doubles as an infinite-loop guard: once the cap is hit the
+// run stops with a soft error (a red final frame + img.dataset.error), exactly
+// like a wall collision. Override per call with the `maxFrames` option.
+const DEFAULT_MAX_FRAMES = 2000;
+
+// Default wall-clock budget (ms) for a program run via runKarelInWorker. A pure
+// CPU spin (`while (true) {}`) never yields and never captures a frame, so only
+// terminating the Worker can stop it; this is that deadline.
+const DEFAULT_WORKER_TIMEOUT = 3000;
+
 // ─────────────────────────── MAIN API ───────────────────────────────────────
 
 /**
@@ -731,6 +848,11 @@ async function computeSolutionState(worldText, solution) {
  *   Speed 2.0 → 50 ms, Speed 0.5 → 200 ms), otherwise 100 ms.
  * @param {number} [options.finalFrameDelay=1000] Extra pause on the last frame
  * @param {number} [options.gifWorkers=2]         Web workers for gif.js
+ * @param {number} [options.maxFrames=2000]       Cap on captured frames. Since
+ *   each Karel action yields one frame, hitting the cap stops the run with a
+ *   soft error (red final frame + img.dataset.error), guarding against loops
+ *   that call Karel actions. (A loop that never acts, e.g. `while (true) {}`,
+ *   still hangs the main thread — use runKarelInWorker for that.)
  * @param {"karel"|"simple"} [options.icon="karel"]  Robot icon style
  * @param {Function} [options.solution]  Optional reference program. When given,
  *   its final state (run on a fresh copy of the world) is compared to this
@@ -760,6 +882,7 @@ export async function runKarel(worldText, mainFunc, options = {}) {
     finalFrameDelay = 1000,
     gifWorkers      = 2,
     icon            = "karel",
+    maxFrames       = DEFAULT_MAX_FRAMES,
     solution        = null,
     check           = DEFAULT_CHECK_ASPECTS,
     end             = null,
@@ -767,9 +890,15 @@ export async function runKarel(worldText, mainFunc, options = {}) {
 
   const karel = new KarelProgram(world);
 
-  // Collect one canvas frame per action (plus initial state)
+  // Collect one canvas frame per action (plus initial state). Capture throws
+  // once maxFrames is reached; the throw unwinds through the Karel action into
+  // the try/catch below, so a runaway loop ends like any other soft error.
   const frames = [];
-  const capture = () => frames.push(renderFrame(world, karel, cellSize, icon));
+  const capture = () => {
+    if (frames.length >= maxFrames)
+      throw new Error(`Exceeded maxFrames (${maxFrames}) — possible infinite loop`);
+    frames.push(renderFrame(world, karel, cellSize, icon));
+  };
 
   capture();                        // frame 0: initial state
   karel._callbacks.push(capture);   // frame N: after each action
@@ -809,36 +938,217 @@ export async function runKarel(worldText, mainFunc, options = {}) {
     frames.push(renderFrame(world, karel, cellSize, icon, solved ? "green" : "red"));
   }
 
-  const { GIF, workerBlob } = await loadGifDeps();
-  const workerUrl = URL.createObjectURL(workerBlob);
-
-  const { width, height } = frames[0];
-  const gif = new GIF({ workers: gifWorkers, quality: 10, width, height, workerScript: workerUrl });
-
-  for (const frame of frames) {
-    gif.addFrame(frame.getContext("2d"), { copy: true, delay });
-  }
-  // Hold on the final frame longer so the viewer can see the end state
-  gif.addFrame(
-    frames[frames.length - 1].getContext("2d"),
-    { copy: true, delay: finalFrameDelay }
-  );
-
-  return new Promise((resolve, reject) => {
-    gif.on("finished", (blob) => {
-      URL.revokeObjectURL(workerUrl);
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(blob);
-      if (programError) {
-        img.dataset.error = programError.message;
-        img.title = `Karel error: ${programError.message}`;
-      }
-      if (solved) img.dataset.solved = "true";
-      resolve(img);
-    });
-    gif.on("error", reject);
-    gif.render();
+  return encodeFrames(frames, {
+    delay,
+    finalFrameDelay,
+    gifWorkers,
+    error: programError ? programError.message : null,
+    solved,
   });
+}
+
+// ─────────────────────── WORKER-ISOLATED EXECUTION ──────────────────────────
+
+/**
+ * Worker-side entry point. Compiles a program from source, runs it against a
+ * freshly parsed world, and streams a render snapshot per Karel action out
+ * through `onFrame`, finishing with `onDone(errorMessageOrNull)`.
+ *
+ * Exported only so the Worker built in runProgramInWorker can import it: that
+ * Worker is a module Worker pointed at this very file (import.meta.url), so
+ * KarelWorld/KarelProgram are reused rather than duplicated as a string. Not
+ * part of the public API — call runKarelInWorker instead.
+ *
+ * The program text must define `function main(k)` (helpers may sit beside it);
+ * it is compiled with `new Function`, the same way the in-thread path compiles a
+ * reader's code. Capture is capped at `maxFrames`: the (maxFrames+1)th action
+ * throws, which — like a wall collision — surfaces as a soft error.
+ *
+ * @param {string} worldText
+ * @param {string} programText
+ * @param {number} maxFrames
+ * @param {(snap: ReturnType<typeof renderSnapshot>) => void} onFrame
+ * @param {(error: string|null) => void} onDone
+ */
+export async function _simulateForWorker(worldText, programText, maxFrames, onFrame, onDone) {
+  const world = new KarelWorld();
+  world.loadFromText(worldText);
+  const karel = new KarelProgram(world);
+
+  let count = 0;
+  const capture = () => {
+    count++;
+    if (count > maxFrames)
+      throw new Error(`Exceeded maxFrames (${maxFrames}) — possible infinite loop`);
+    onFrame(renderSnapshot(world, karel));
+  };
+
+  let error = null;
+  try {
+    capture();                       // frame 0: initial state
+    karel._callbacks.push(capture);  // frame N: after each action
+    const main = new Function(`${programText}\n;return main;`)();
+    if (typeof main !== "function")
+      throw new Error("Program must define a function named main");
+    await main(karel);
+  } catch (err) {
+    error = err && err.message ? err.message : String(err);
+  }
+  onDone(error);
+}
+
+/**
+ * Run `programText` inside a module Worker and collect the snapshots it streams
+ * back, resolving once the program finishes, hits the frame cap, errors, or
+ * blows the time budget. The Worker is the only thing that can be hard-killed,
+ * so a genuine `while (true) {}` — which never yields and never captures a frame
+ * beyond the initial one — is stopped by `timeout` + terminate(); loops that
+ * *do* act are stopped sooner by the maxFrames cap inside the Worker.
+ *
+ * postMessage from the Worker enqueues to this thread without the Worker needing
+ * to yield, so snapshots emitted before a kill are already in hand when we
+ * terminate.
+ * @param {string} worldText
+ * @param {string} programText
+ * @param {{maxFrames:number, timeout:number}} limits
+ * @returns {Promise<{snapshots: object[], error: string|null}>}
+ */
+function runProgramInWorker(worldText, programText, { maxFrames, timeout }) {
+  return new Promise((resolve) => {
+    // A module Worker that imports this very file so it reuses the simulator
+    // instead of shipping a duplicate copy of it as a string.
+    const moduleUrl = import.meta.url;
+    const workerSrc =
+      `import { _simulateForWorker } from ${JSON.stringify(moduleUrl)};\n` +
+      `self.onmessage = (e) => {\n` +
+      `  const { worldText, programText, maxFrames } = e.data;\n` +
+      `  _simulateForWorker(worldText, programText, maxFrames,\n` +
+      `    (snap) => self.postMessage({ type: "frame", snap }),\n` +
+      `    (error) => self.postMessage({ type: "done", error }));\n` +
+      `};`;
+    const blobUrl = URL.createObjectURL(new Blob([workerSrc], { type: "text/javascript" }));
+    const worker = new Worker(blobUrl, { type: "module" });
+
+    const snapshots = [];
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      worker.terminate();
+      URL.revokeObjectURL(blobUrl);
+      resolve({ snapshots, error });
+    };
+
+    const timer = setTimeout(
+      () => finish(`Program exceeded the ${timeout} ms time limit — possible infinite loop`),
+      timeout
+    );
+
+    worker.onmessage = (e) => {
+      const msg = e.data;
+      if (msg.type === "frame") snapshots.push(msg.snap);
+      else if (msg.type === "done") finish(msg.error);
+    };
+    worker.onerror = (e) => finish(e.message || "Worker error");
+
+    worker.postMessage({ worldText, programText, maxFrames });
+  });
+}
+
+/**
+ * Run a Karel program supplied as **source text** inside a Web Worker and return
+ * a Promise resolving to an animated <img> — the same output as runKarel, but
+ * immune to infinite loops. The program runs off the main thread; the main
+ * thread scrapes the per-action world snapshots the Worker streams back and
+ * renders them into the GIF, and can hard-kill a runaway program by terminating
+ * the Worker.
+ *
+ * Because a function cannot cross a Worker boundary, the program is passed as a
+ * string (which is also how the lesson editor already holds reader code). It
+ * must define `function main(k)`; helper functions may sit alongside it, and
+ * `main` may be async or use the destructured form `function main({ move }) {}`.
+ *
+ * @param {string} worldText    World file contents (same format as .w files).
+ * @param {string} programText  Program source. Must define `function main(k)`.
+ * @param {object} [options]
+ * @param {number} [options.cellSize=50]          Pixels per grid cell.
+ * @param {number} [options.delay]                Milliseconds per frame; defaults
+ *   to the world's Speed: directive (else 100 ms), like runKarel.
+ * @param {number} [options.finalFrameDelay=1000] Extra pause on the last frame.
+ * @param {number} [options.gifWorkers=2]         Web workers for gif.js.
+ * @param {"karel"|"simple"} [options.icon="karel"]  Robot icon style.
+ * @param {number} [options.maxFrames=2000]       Cap on captured frames; hitting
+ *   it stops the run with a soft error (red final frame + img.dataset.error).
+ * @param {number} [options.timeout=3000]         Wall-clock budget in ms before
+ *   the Worker is terminated — the backstop for a spin that never captures a
+ *   frame and so can't trip maxFrames.
+ * @param {Function} [options.solution]  Optional reference program, graded
+ *   exactly as in runKarel (green final frame + img.dataset.solved on a match).
+ *   It runs on the **main thread** — it's the trusted answer key, not the
+ *   untrusted program — so pass it as a function, not text.
+ * @param {string[]} [options.check=["beepers","position","direction"]]  Aspects
+ *   the solution comparison grades on. Only used when `solution` is set.
+ * @param {{avenue?:number, street?:number, direction?:string}} [options.end]
+ *   Optional explicit end pose, ANDed with the `solution` check as in runKarel.
+ * @returns {Promise<HTMLImageElement>} The animated GIF. On any error — wall
+ *   collision, frame cap, or timeout — the promise still resolves with the
+ *   partial animation; a red final frame marks Karel's last corner and the
+ *   message is on img.dataset.error / img.title.
+ */
+export async function runKarelInWorker(worldText, programText, options = {}) {
+  const world = new KarelWorld();
+  world.loadFromText(worldText);
+
+  const {
+    cellSize        = 50,
+    delay           = world.karelSpeed != null ? Math.round(100 / world.karelSpeed) : 100,
+    finalFrameDelay = 1000,
+    gifWorkers      = 2,
+    icon            = "karel",
+    maxFrames       = DEFAULT_MAX_FRAMES,
+    timeout         = DEFAULT_WORKER_TIMEOUT,
+    solution        = null,
+    check           = DEFAULT_CHECK_ASPECTS,
+    end             = null,
+  } = options;
+
+  const { snapshots, error } =
+    await runProgramInWorker(worldText, programText, { maxFrames, timeout });
+
+  // Replay the streamed snapshots through the main-thread renderer. `world`
+  // supplies the static geometry; each snapshot supplies the mutable state.
+  const frames = snapshots.map((snap) => renderSnapshotFrame(world, snap, cellSize, icon));
+  const last = snapshots.length ? snapshots[snapshots.length - 1] : null;
+
+  // Grade the run, mirroring runKarel: on error mark Karel's last corner red;
+  // otherwise, if a reference solution or explicit end pose was supplied, compare
+  // the streamed final state and mark the verdict green (solved) or red.
+  let solved = false;
+  if (error && last) {
+    frames.push(renderSnapshotFrame(world, last, cellSize, icon, "red"));
+  } else if (!error && last && (solution || end)) {
+    let ok = true;
+    if (solution) {
+      try {
+        const target = await computeSolutionState(worldText, solution);
+        ok = statesMatch(gradeSnapshot(last), target, check);
+      } catch {
+        ok = false;   // a solution that can't run can't be matched
+      }
+    }
+    if (ok && end) ok = matchesEnd(last, end);
+    solved = ok;
+    frames.push(renderSnapshotFrame(world, last, cellSize, icon, solved ? "green" : "red"));
+  }
+
+  // Guarantee something to encode even if the Worker was killed before it
+  // streamed a single frame: fall back to the parsed initial state.
+  if (!frames.length) {
+    frames.push(renderFrame(world, new KarelProgram(world), cellSize, icon, error ? "red" : "black"));
+  }
+
+  return encodeFrames(frames, { delay, finalFrameDelay, gifWorkers, error, solved });
 }
 
 /**

@@ -42,7 +42,8 @@
       Every so often you'll hit a <em>Challenge</em>. It shows a <strong>goal animation</strong> (outlined
       in green) and gives you an editable code box. Type your commands, press <strong>▶ Run</strong>, and
       Karel runs your code. Match the goal and you'll get a green ✓. Get it wrong and nothing breaks —
-      tweak your code and run again.</div>` },
+      tweak your code and run again. Your code runs in a protected sandbox, so even a mistake like an
+      endless loop won't freeze the page: Karel simply stops and shows you how far it got.</div>` },
       { md: `<h2>The shape of a program</h2>
       <p>Commands never float on their own. Every program you write has the same outer shape — a
       container named <code>main</code> that holds your commands between a pair of curly braces:</p>
@@ -177,7 +178,9 @@ BeeperBag: INFINITY`,
       them in is the order Karel obeys.</div>` },
     ];
 
-    renderNotebook(cells);
+    // isolate: run reader-submitted challenge code in a Web Worker so a mistake
+    // like an endless loop can't freeze the page (grading is unchanged).
+    renderNotebook(cells, undefined, { isolate: true });
   </script>
 </body>
 </html>
