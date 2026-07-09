@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>7 · Parameters — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 7 of 10</div>
+    <h1>7 · Parameters</h1>
+    <p class="lead">Write one flexible function that takes an input and behaves differently each time.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./06-if-else.html">← if / else</a><span class="spacer"></span><a href="./08-variables.html">Variables →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>Functions that take input</h2>
+      <p>In Lesson 2 our functions always did the same thing. A <strong>parameter</strong> is a named
+      input listed inside a function's parentheses. When you <em>call</em> the function you pass an
+      <strong>argument</strong> — an actual value — and the function uses it.</p>
+      <div class="callout"><strong>Parameter vs. argument</strong>
+      In <code>function moveN(k, n) { … }</code>, <code>k</code> is the robot and <code>n</code> is the
+      parameter we care about (a placeholder). In the call <code>moveN(k, 3)</code>, the <code>3</code> is
+      the argument that fills in for <code>n</code>.</div>` },
+      { md: `<h2>Move any number of steps</h2>
+      <p>Here <code>moveN</code> combines a parameter with a <code>for</code> loop from Lesson 3. It sits
+      next to <code>main</code> and takes the robot <code>k</code> plus a count <code>n</code>. One
+      definition now handles any distance — <code>moveN(k, 3)</code>, <code>moveN(k, 2)</code>, and so on.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function moveN(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.move();
+  }
+}
+
+function main(k) {
+  moveN(k, 3);
+  k.turnLeft();
+  moveN(k, 2);
+}` },
+      { md: `<h2>Building a bar chart</h2>
+      <p>Parameters shine when the value changes each call. <code>dropBeepers(k, n)</code> stacks
+      <code>n</code> beepers on the current square; calling it with 1, then 2, then 3 draws a little
+      ascending chart.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function dropBeepers(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.putBeeper();
+  }
+}
+
+function main(k) {
+  dropBeepers(k, 1);
+  k.move();
+  dropBeepers(k, 2);
+  k.move();
+  dropBeepers(k, 3);
+}` },
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      A parameter lets a function accept input. You supply an argument when calling it, and the same
+      function can produce different results — <code>moveN(k, 3)</code> vs. <code>moveN(k, 10)</code> — from
+      a single definition.</div>` },
+    ];
+
+    renderNotebook(cells);
+  </script>
+</body>
+</html>

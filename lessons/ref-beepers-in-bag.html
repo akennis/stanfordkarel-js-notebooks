@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.beepersInBag() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Condition</div>
+    <h1><code>k.beepersInBag()</code></h1>
+    <p class="lead">Ask whether Karel still has at least one beeper in its bag.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-beepers-present.html">← k.beepersPresent()</a><span class="spacer"></span>
+    <a href="./ref-facing-north.html">k.facingNorth() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.beepersInBag()</code> returns <code>true</code> when Karel's bag holds at least one
+      beeper, and <code>false</code> when the bag is empty. It asks about the <em>bag</em> Karel carries,
+      not the corner it stands on. It only reports; nothing changes.</p>
+      <p>Its opposite is <code>k.noBeepersInBag()</code> (<code>true</code> when the bag is empty). The
+      starting bag comes from the world's <code>BeeperBag:</code> line — a number, or
+      <code>INFINITY</code>.</p>
+      <div class="callout warn"><strong>Careful with an infinite bag</strong>
+      If the bag is <code>INFINITY</code>, <code>beepersInBag()</code> is always <code>true</code>, so a
+      loop like <code>while (k.beepersInBag()) k.putBeeper();</code> would never end. Only loop on it when
+      the bag is a finite number.</div>
+      <p><strong>See also:</strong> <a href="./ref-beepers-present.html"><code>beepersPresent()</code></a>
+      asks about the corner instead of the bag.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>Karel starts with a bag of 3 beepers. It drops one and steps forward, over and over, until the
+      bag runs out. The condition is what makes it stop after exactly three.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: 3`, code: `function main(k) {
+  while (k.beepersInBag()) {
+    k.putBeeper();
+    k.move();
+  }
+}` },
+      { md: `<p>Beepers land on <code>(1,1)</code>, <code>(2,1)</code>, <code>(3,1)</code>. After the
+      third put the bag is empty, <code>beepersInBag()</code> turns <code>false</code>, and the loop ends
+      with Karel on <code>(4, 1)</code>.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>The bag can be filled by picking up, then emptied again. Here Karel first gathers a stack of 3
+      beepers off its starting corner (so the bag holds 3), then walks on and re-plants them one per
+      corner until <code>beepersInBag()</code> goes false.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: 0
+Beeper: (1, 1); 3`, code: `function main(k) {
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+  }
+  k.move();
+  while (k.beepersInBag()) {
+    k.putBeeper();
+    k.move();
+  }
+}` },
+      { md: `<p>The first loop empties the corner into the bag (now 3). The second loop plants one beeper
+      each on <code>(2,1)</code>, <code>(3,1)</code>, <code>(4,1)</code>, stopping when the bag empties.
+      Karel finishes on <code>(5, 1)</code>.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: 2`,
+        prompt: `<strong>Empty the bag in place.</strong> Karel's bag holds 2 beepers. Drop them all on
+        the starting corner (without moving), leaving a stack of 2 on <code>(1, 1)</code>. Use a
+        <code>while</code> loop on <code>beepersInBag()</code>.`,
+        check: ["beepers"],
+        solution: function main(k) {
+          while (k.beepersInBag()) {
+            k.putBeeper();
+          }
+        } },
+
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: 4`,
+        prompt: `<strong>One per corner, until you run out.</strong> Karel carries 4 beepers. Using the
+        bag as your counter, drop exactly one beeper on each corner as you walk, stopping when the bag is
+        empty — so beepers end on <code>(1,1)</code> through <code>(4,1)</code>. (Guard the move with
+        <code>frontIsClear()</code> so Karel doesn't walk off the end.)`,
+        check: ["beepers"],
+        solution: function main(k) {
+          while (k.beepersInBag()) {
+            k.putBeeper();
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.beepersInBag()</code> is <code>true</code> while the bag holds beepers;
+      <code>noBeepersInBag()</code> is its opposite. It's the counter for "keep going until I run out" —
+      but never loop on it with an <code>INFINITY</code> bag.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

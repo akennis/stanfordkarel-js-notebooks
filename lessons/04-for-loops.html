@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4 · The <code>for</code> Loop — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 4 of 10</div>
+    <h1>4 · The <code>for</code> Loop</h1>
+    <p class="lead">Repeat a command a fixed number of times without writing it out over and over.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./03-if.html">← if statements</a><span class="spacer"></span><a href="./05-while-loops.html">while loops →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>Repetition, the hard way</h2>
+      <p>To cross five squares, we could write <code>k.move()</code> five times. That works, but what
+      about fifty squares? Copy-pasting is tedious and error-prone.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  k.move();
+  k.move();
+  k.move();
+  k.move();
+  k.move();
+}` },
+      { md: `<h2>The <code>for</code> loop</h2>
+      <p>A <strong>for loop</strong> repeats code a set number of times. Read this one as: "start a
+      counter <code>i</code> at 0; keep going while <code>i</code> is less than 5; add 1 to <code>i</code>
+      each time." That's exactly 5 repetitions.</p>
+      <div class="callout"><strong>Anatomy of a for loop</strong>
+      <code>for (let i = 0; i &lt; 5; i++) { … }</code><br>
+      • <code>let i = 0</code> — start the counter<br>
+      • <code>i &lt; 5</code> — the condition to keep looping<br>
+      • <code>i++</code> — add one to the counter after each pass</div>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  for (let i = 0; i < 5; i++) {
+    k.move();
+  }
+}` },
+      { md: `<h2>How the counter really works</h2>
+      <p>The three parts of the header run at different times. The <em>start</em> (<code>let i = 0</code>)
+      happens once, before anything. Then, before every pass, JavaScript checks the <em>condition</em>
+      (<code>i &lt; 5</code>): if it's true the body runs, if it's false the loop ends. After each pass the
+      <em>update</em> (<code>i++</code>) runs. So <code>i</code> takes the values 0, 1, 2, 3, 4 — five
+      passes — and the loop stops when <code>i</code> reaches 5.</p>
+      <div class="callout tip"><strong>The count is a dial</strong>
+      The number after <code>i &lt;</code> is the number of repetitions. Want ten moves instead of five?
+      Change one <code>5</code> to a <code>10</code>. Starting at 0 and using <code>&lt;</code> (not
+      <code>&lt;=</code>) is the standard pattern — it means "repeat exactly this many times" without
+      off-by-one surprises.</div>` },
+      { md: `<h2>Doing more each time</h2>
+      <p>Anything inside the curly braces repeats. Here Karel lays a beeper <em>and</em> moves on every
+      pass, leaving a neat trail. Change the <code>5</code> and the whole behaviour changes with it.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  for (let i = 0; i < 5; i++) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+}` },
+      { md: `<h3>Challenge · Cross the room</h3>
+      <p>The room is eight squares wide and Karel starts on the far west, facing <strong>east</strong>.
+      Use a single <code>for</code> loop to walk Karel all the way to <strong>avenue 8</strong>. Count
+      carefully: how many moves does it take to get from avenue 1 to avenue 8?</p>` },
+      { world: `Dimension: (8, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Fill in the loop so Karel ends on <strong>avenue 8</strong>. (Hint: it's fewer moves than
+        there are avenues.)`,
+        starter: `function main(k) {
+  for (let i = 0; i < 0; i++) {
+    // move Karel
+  }
+}`,
+        check: ["position"],
+        solution: function main(k) {
+          for (let i = 0; i < 7; i++) {
+            k.move();
+          }
+        } },
+      { md: `<h2>Loops love functions</h2>
+      <p>The body of a loop can call your own functions, so functions and loops combine naturally. Here we
+      teach Karel <code>turnRight</code> once, then let a loop repeat "move, then turn right" four times —
+      tracing a small square and landing back where it started. The loop handles the <em>repetition</em>;
+      the function handles the <em>meaning</em>.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); north
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  for (let i = 0; i < 4; i++) {
+    k.move();
+    turnRight(k);
+  }
+}` },
+      { md: `<h3>Challenge · Lay a beeper trail</h3>
+      <p>Karel starts at the west end of a six-square room facing <strong>east</strong>. Use a loop to
+      drop a beeper on each of the <strong>first five</strong> corners as Karel walks east. Karel should
+      finish standing on avenue 6 (with no beeper there).</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop five times: on each pass, <code>putBeeper()</code> and then <code>move()</code>.
+        Beepers should end up on avenues 1 through 5, with Karel resting on avenue 6.`,
+        starter: `function main(k) {
+  for (let i = 0; i < 5; i++) {
+    // drop a beeper, then step east
+  }
+}`,
+        solution: function main(k) {
+          for (let i = 0; i < 5; i++) {
+            k.putBeeper();
+            k.move();
+          }
+        } },
+      { md: `<h2>Loops inside loops</h2>
+      <p>A loop body can hold <em>another</em> loop. This is how you repeat a repeated task. To trace a
+      square, the <strong>outer</strong> loop runs once per side (four times), and the <strong>inner</strong>
+      loop walks the length of each side (three moves) before Karel turns the corner. Read it as: "for each
+      of the four sides, take three steps, then turn."</p>
+      <div class="callout"><strong>Reading nested loops</strong>
+      The inner loop finishes <em>completely</em> on every single pass of the outer loop. Four outer passes
+      × three inner moves = twelve moves in total, plus four turns.</div>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  for (let side = 0; side < 4; side++) {
+    for (let step = 0; step < 3; step++) {
+      k.move();
+    }
+    k.turnLeft();
+  }
+}` },
+      { md: `<h3>Challenge · Trace a square</h3>
+      <p>Karel starts in the corner of a big room facing <strong>east</strong>. Using loops, walk Karel
+      around a square path so it returns to its starting corner still facing <strong>east</strong>. Each
+      side of your square should be three moves long.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Use a nested loop: an outer loop for the four sides, and an inner loop of three
+        <code>move()</code>s per side, with a <code>turnLeft()</code> at each corner. Karel must end back
+        on <strong>(1, 1)</strong> facing <strong>east</strong>.`,
+        starter: `function main(k) {
+  for (let side = 0; side < 4; side++) {
+    // walk one side, then turn the corner
+  }
+}`,
+        check: ["position", "direction"],
+        solution: function main(k) {
+          for (let side = 0; side < 4; side++) {
+            for (let step = 0; step < 3; step++) {
+              k.move();
+            }
+            k.turnLeft();
+          }
+        } },
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      Use a <code>for</code> loop to repeat code a known number of times. The number after
+      <code>i &lt;</code> controls how many passes run, and everything inside <code>{ }</code> happens on
+      every pass. A loop body can call your functions <em>and</em> hold other loops, so a few lines can
+      describe a lot of work — five moves, a beeper trail, or a full lap around a square.</div>` },
+    ];
+
+    // isolate: run reader-submitted challenge code in a Web Worker so a mistake
+    // like an endless loop can't freeze the page (grading is unchanged).
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.beepersPresent() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Condition</div>
+    <h1><code>k.beepersPresent()</code></h1>
+    <p class="lead">Ask whether the corner Karel is standing on has any beepers.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-right-is-clear.html">← k.rightIsClear()</a><span class="spacer"></span>
+    <a href="./ref-beepers-in-bag.html">k.beepersInBag() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.beepersPresent()</code> returns <code>true</code> when there is at least one beeper on
+      Karel's current corner, and <code>false</code> when the corner is empty. It checks the
+      <em>corner</em>, not the bag. Nothing changes — it only reports.</p>
+      <p>Its opposite is <code>k.noBeepersPresent()</code> (<code>true</code> when the corner is empty).</p>
+      <p>The natural partner is <a href="./ref-pick-beeper.html"><code>pickBeeper()</code></a>, which is
+      an error on an empty corner — so guard it:</p>
+      <pre class="code"><code>if (k.beepersPresent()) {
+  k.pickBeeper();
+}</code></pre>
+      <p><strong>See also:</strong> <a href="./ref-beepers-in-bag.html"><code>beepersInBag()</code></a>
+      asks about the <em>bag</em> instead of the corner.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>A beeper sits under Karel. The <code>if</code> is true, so Karel safely picks it up. Had the
+      corner been empty, the guard would skip the pick and avoid an error.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+Beeper: (1, 1); 1`, code: `function main(k) {
+  if (k.beepersPresent()) {
+    k.pickBeeper();
+  }
+}` },
+      { md: `<p>The beeper on <code>(1, 1)</code> is lifted into the bag and the corner goes empty.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>Some corners have a beeper, some don't. Karel walks the whole row and picks up only where one is
+      present — the guard makes it safe to visit empty corners without crashing.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+Beeper: (2, 1); 1
+Beeper: (4, 1); 1`, code: `function main(k) {
+  for (let i = 0; i < 5; i++) {
+    if (k.beepersPresent()) {
+      k.pickBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+      { md: `<p>On <code>(2, 1)</code> and <code>(4, 1)</code> the condition is true and Karel picks up;
+      on the empty corners it just moves on. The street ends up clear.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+Beeper: (1, 1); 1`,
+        prompt: `<strong>Safe pickup.</strong> <em>If</em> a beeper is present on Karel's corner, pick it
+        up. There is one here, so the corner should end empty.`,
+        check: ["beepers"],
+        solution: function main(k) {
+          if (k.beepersPresent()) {
+            k.pickBeeper();
+          }
+        } },
+
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+Beeper: (1, 1); 1
+Beeper: (3, 1); 1
+Beeper: (5, 1); 1`,
+        prompt: `<strong>Sweep the street.</strong> Beepers are scattered along the row (you don't know
+        exactly where). Walk the whole street and collect every beeper, picking up only where one is
+        present so Karel never errors on an empty corner. Every corner should end empty.`,
+        check: ["beepers"],
+        solution: function main(k) {
+          for (let i = 0; i < 5; i++) {
+            if (k.beepersPresent()) {
+              k.pickBeeper();
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.beepersPresent()</code> is <code>true</code> when the current corner has a beeper;
+      <code>noBeepersPresent()</code> is its opposite. Use it to guard <code>pickBeeper()</code> so Karel
+      never picks from an empty corner.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

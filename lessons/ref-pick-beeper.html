@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.pickBeeper() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Command</div>
+    <h1><code>k.pickBeeper()</code></h1>
+    <p class="lead">Pick one beeper up off the current corner and put it into Karel's bag.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-put-beeper.html">← k.putBeeper()</a><span class="spacer"></span>
+    <a href="./ref-paint-corner.html">k.paintCorner() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.pickBeeper()</code> takes one beeper off the corner Karel is standing on and adds it to
+      the bag. If the corner had a stack, the count drops by one; if it had a single beeper, the corner
+      becomes empty. Karel does not move.</p>
+      <div class="callout warn"><strong>Careful</strong>
+      Karel can only pick up a beeper that is actually there. Picking from an empty corner is an error.
+      Guard it with <a href="./ref-beepers-present.html"><code>beepersPresent()</code></a> whenever you
+      aren't certain a beeper is present.</div>
+      <p><strong>See also:</strong> <a href="./ref-put-beeper.html"><code>putBeeper()</code></a> is the
+      reverse operation.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>The world starts with one beeper sitting on <code>(1, 1)</code>, right where Karel is standing.
+      One <code>pickBeeper</code> lifts it into the bag and the corner goes empty.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+Beeper: (1, 1); 1`, code: `function main(k) {
+  k.pickBeeper();
+}` },
+      { md: `<p>The diamond marker on <code>(1, 1)</code> disappears — it's now in Karel's bag.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>Three beepers sit in a row. Alternating <code>pickBeeper</code> and <code>move</code> sweeps
+      them all up, leaving a clean street behind Karel.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+Beeper: (1, 1); 1
+Beeper: (2, 1); 1
+Beeper: (3, 1); 1`, code: `function main(k) {
+  k.pickBeeper();
+  k.move();
+  k.pickBeeper();
+  k.move();
+  k.pickBeeper();
+}` },
+      { md: `<p>Karel collects the beeper under it, steps to the next, and repeats. All three corners end
+      up empty and Karel finishes on <code>(3, 1)</code>.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+Beeper: (1, 1); 1`,
+        prompt: `<strong>Pick it up.</strong> One beeper is under Karel on <code>(1, 1)</code>. Pick it
+        up so the corner is empty.`,
+        check: ["beepers"],
+        solution: function main(k) {
+          k.pickBeeper();
+        } },
+
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+Beeper: (1, 1); 1
+Beeper: (2, 1); 1
+Beeper: (3, 1); 1
+Beeper: (4, 1); 1`,
+        prompt: `<strong>Clear the street.</strong> There is a beeper on each of the first four corners.
+        Collect every one of them so the whole street is empty.`,
+        check: ["beepers"],
+        solution: function main(k) {
+          k.pickBeeper();
+          k.move();
+          k.pickBeeper();
+          k.move();
+          k.pickBeeper();
+          k.move();
+          k.pickBeeper();
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.pickBeeper()</code> lifts one beeper from the current corner into the bag and never moves
+      Karel. Picking from an empty corner is an error — check <code>beepersPresent()</code> first.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

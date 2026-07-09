@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>6 · <code>if</code> / <code>else</code> — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 6 of 10</div>
+    <h1>6 · <code>if</code> / <code>else</code></h1>
+    <p class="lead">Choose between two different actions depending on a condition.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./05-while-loops.html">← while loops</a><span class="spacer"></span><a href="./07-parameters.html">Parameters →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>This <em>or</em> that</h2>
+      <p>Often you want one action when a condition is true and a <em>different</em> action when it's
+      false. That's what <code>else</code> is for: <code>if</code> handles the true case, <code>else</code>
+      handles everything else. Exactly one of the two blocks runs.</p>` },
+      { md: `<h2>Toggling a row of beepers</h2>
+      <p>At each square Karel asks: is a beeper here? If so, pick it up; otherwise, put one down. The
+      row starts with beepers on squares 1, 3, and 5 — watch how every square flips to its opposite.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 1
+Beeper: (3, 1); 1
+Beeper: (5, 1); 1`, code: `function main(k) {
+  for (let i = 0; i < 4; i++) {
+    if (k.beepersPresent()) {
+      k.pickBeeper();
+    } else {
+      k.putBeeper();
+    }
+    k.move();
+  }
+  if (k.beepersPresent()) {
+    k.pickBeeper();
+  } else {
+    k.putBeeper();
+  }
+}` },
+      { md: `<h2>Deciding how to move</h2>
+      <p><code>if</code> / <code>else</code> is the heart of navigation. Here Karel's front is blocked by
+      the edge of a narrow world, so the condition is <code>false</code> and the <code>else</code> branch
+      runs — Karel turns instead of stepping into the wall.</p>` },
+      { world: `Dimension: (1, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  if (k.frontIsClear()) {
+    k.move();
+  } else {
+    k.turnLeft();
+  }
+  k.move();
+  k.move();
+}` },
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      <code>if (condition) { … } else { … }</code> chooses between two actions: the first block runs when
+      the condition is true, the second when it's false. Exactly one branch always runs.</div>` },
+    ];
+
+    renderNotebook(cells);
+  </script>
+</body>
+</html>

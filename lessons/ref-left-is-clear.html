@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.leftIsClear() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Condition</div>
+    <h1><code>k.leftIsClear()</code></h1>
+    <p class="lead">Ask whether the square to Karel's left is open.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-front-is-clear.html">← k.frontIsClear()</a><span class="spacer"></span>
+    <a href="./ref-right-is-clear.html">k.rightIsClear() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.leftIsClear()</code> returns <code>true</code> when the square 90° to Karel's
+      <em>left</em> is open — no wall between and inside the world — and <code>false</code> otherwise. It
+      only looks; it does not turn Karel. "Left" is relative to Karel's facing: facing east, left is
+      north; facing north, left is west, and so on.</p>
+      <p>Its opposite is <code>k.leftIsBlocked()</code> (<code>true</code> when the left is not clear).</p>
+      <p><strong>See also:</strong> <a href="./ref-right-is-clear.html"><code>rightIsClear()</code></a>
+      for the other side and <a href="./ref-front-is-clear.html"><code>frontIsClear()</code></a> for
+      straight ahead.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>Karel faces east on <code>(1, 1)</code>; its left is north, which is open. The <code>if</code>
+      is true, so Karel turns left and steps into that opening, ending on <code>(1, 2)</code> facing
+      north.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east`, code: `function main(k) {
+  if (k.leftIsClear()) {
+    k.turnLeft();
+    k.move();
+  }
+}` },
+      { md: `<p>If a wall had been on Karel's left, the condition would be <code>false</code> and Karel
+      would have stayed put.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p><code>leftIsClear()</code> is perfect for spotting a gap in a wall. Here a wall runs along the
+      north side of the street, but with one gap above <code>(3, 1)</code>. Karel walks the row and drops
+      a beeper wherever its left opens up.</p>` },
+      { world: `Dimension: (5, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Wall: (1, 1); north
+Wall: (2, 1); north
+Wall: (4, 1); north
+Wall: (5, 1); north`, code: `function main(k) {
+  for (let i = 0; i < 5; i++) {
+    if (k.leftIsClear()) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+      { md: `<p>On corners 1, 2, 4, and 5 the wall makes the left blocked, so no beeper. Only on
+      <code>(3, 1)</code> — under the gap — is the left clear, so exactly one beeper is dropped there.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east`,
+        prompt: `<strong>Step into the opening.</strong> Karel faces east on <code>(1, 1)</code>.
+        <em>If</em> its left is clear, turn left and take one step; otherwise do nothing. Here the left is
+        open, so Karel should finish on <code>(1, 2)</code> facing north.`,
+        check: ["position", "direction"],
+        solution: function main(k) {
+          if (k.leftIsClear()) {
+            k.turnLeft();
+            k.move();
+          }
+        } },
+
+      { world: `Dimension: (5, 3)
+Karel: (1, 1); east
+Wall: (1, 1); north
+Wall: (2, 1); north
+Wall: (4, 1); north
+Wall: (5, 1); north`,
+        prompt: `<strong>Escape through the gap.</strong> A wall runs along Karel's left with a single
+        gap. Walk east until the left opens up, then turn through the gap and take one step north. Karel
+        should finish on <code>(3, 2)</code> facing north. (Use <code>leftIsBlocked()</code> to keep
+        walking while the wall is there.)`,
+        check: ["position", "direction"],
+        solution: function main(k) {
+          while (k.leftIsBlocked()) {
+            k.move();
+          }
+          k.turnLeft();
+          k.move();
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.leftIsClear()</code> tests the square to Karel's left (relative to its facing) and returns
+      a boolean without turning; <code>leftIsBlocked()</code> is its opposite. It's the go-to check for
+      finding openings on the left.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

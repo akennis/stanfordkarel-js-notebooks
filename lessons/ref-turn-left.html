@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.turnLeft() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Command</div>
+    <h1><code>k.turnLeft()</code></h1>
+    <p class="lead">Rotate Karel 90° to the left (counter-clockwise) without moving.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-move.html">← k.move()</a><span class="spacer"></span>
+    <a href="./ref-put-beeper.html">k.putBeeper() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.turnLeft()</code> spins Karel a quarter-turn counter-clockwise <em>in place</em>. Karel
+      stays on the same corner; only its facing direction changes. The cycle is:</p>
+      <p><code>east → north → west → south → east …</code></p>
+      <p>There is deliberately <strong>no</strong> <code>turnRight</code> command. To turn right, turn
+      left three times — you'll build that below.</p>
+      <p><strong>See also:</strong> the facing conditions
+      (<a href="./ref-facing-north.html"><code>facingNorth()</code></a> and friends) to test which way
+      Karel points, and <a href="./ref-move.html"><code>move()</code></a> to step in the new direction.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>Karel starts facing east. A single <code>turnLeft</code> leaves it on the same corner, now
+      facing north. Watch the robot pivot without stepping.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (3, 3); east`, code: `function main(k) {
+  k.turnLeft();
+}` },
+      { md: `<p>East turned counter-clockwise is north. Karel is still on <code>(3, 3)</code> — turning
+      never changes position.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>Since there is no built-in right turn, we make our own by turning left three times. We write it
+      as a separate helper function <code>turnRight(k)</code> and call it from <code>main</code>. Karel
+      starts facing east; one "right turn" leaves it facing south.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (3, 3); east`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  turnRight(k);
+}` },
+      { md: `<p>Three left turns (east → north → west → south) add up to one right turn. Bundling them in
+      <code>turnRight</code> means the rest of your program can read as if a right turn existed.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 5)
+Karel: (3, 3); east`,
+        prompt: `<strong>Face north.</strong> Karel is standing on <code>(3, 3)</code> facing east. Turn
+        it so it faces <em>north</em>. It should not move off its corner.`,
+        check: ["direction"],
+        solution: function main(k) {
+          k.turnLeft();
+        } },
+
+      { world: `Dimension: (5, 5)
+Karel: (3, 3); east`,
+        prompt: `<strong>Turn right.</strong> Karel faces east. Make it face <em>south</em> — a right
+        turn — using only <code>k.turnLeft()</code>. (How many left turns equal one right turn?)`,
+        check: ["direction"],
+        solution: function main(k) {
+          k.turnLeft();
+          k.turnLeft();
+          k.turnLeft();
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.turnLeft()</code> rotates Karel 90° counter-clockwise and never moves it. There is no
+      <code>turnRight</code>; three left turns make a right turn.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

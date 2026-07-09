@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.putBeeper() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Command</div>
+    <h1><code>k.putBeeper()</code></h1>
+    <p class="lead">Take one beeper out of Karel's bag and drop it on the current corner.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-turn-left.html">← k.turnLeft()</a><span class="spacer"></span>
+    <a href="./ref-pick-beeper.html">k.pickBeeper() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.putBeeper()</code> removes one beeper from Karel's bag and leaves it on the corner Karel
+      is standing on. If the corner already has beepers, the count goes up by one (a stack). Karel does
+      not move.</p>
+      <div class="callout warn"><strong>Careful</strong>
+      Karel can only put a beeper if its bag isn't empty. The world sets the starting bag with
+      <code>BeeperBag: n</code> (or <code>BeeperBag: INFINITY</code> for an endless supply). Putting from
+      an empty bag is an error. Check with <a href="./ref-beepers-in-bag.html"><code>beepersInBag()</code></a>
+      when the bag is limited.</div>
+      <p><strong>See also:</strong> <a href="./ref-pick-beeper.html"><code>pickBeeper()</code></a> is the
+      reverse, and <a href="./ref-beepers-present.html"><code>beepersPresent()</code></a> tests whether a
+      corner already has any.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>With an infinite bag, Karel drops a single beeper on its starting corner. Nothing else changes —
+      same position, same direction.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  k.putBeeper();
+}` },
+      { md: `<p>A diamond marker appears on <code>(1, 1)</code>. That's a beeper.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>Alternating <code>putBeeper</code> and <code>move</code> lays a trail. Karel drops a beeper,
+      steps east, drops another, and so on — leaving a line of markers behind it.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  k.putBeeper();
+  k.move();
+  k.putBeeper();
+  k.move();
+  k.putBeeper();
+}` },
+      { md: `<p>Three beepers land on <code>(1, 1)</code>, <code>(2, 1)</code>, and <code>(3, 1)</code>.
+      Karel finishes on the last one. Dropping two beepers on the <em>same</em> corner instead would
+      show the number "2" — the stack count.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `<strong>Drop one beeper.</strong> Leave a single beeper on Karel's starting corner
+        <code>(1, 1)</code>. That's the whole task.`,
+        check: ["beepers"],
+        solution: function main(k) {
+          k.putBeeper();
+        } },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `<strong>Beeper trail of four.</strong> Put exactly one beeper on each of the first four
+        corners: <code>(1, 1)</code>, <code>(2, 1)</code>, <code>(3, 1)</code>, and <code>(4, 1)</code>.
+        You'll alternate <code>putBeeper</code> and <code>move</code>.`,
+        check: ["beepers"],
+        solution: function main(k) {
+          k.putBeeper();
+          k.move();
+          k.putBeeper();
+          k.move();
+          k.putBeeper();
+          k.move();
+          k.putBeeper();
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.putBeeper()</code> drops one beeper from the bag onto the current corner and never moves
+      Karel. Repeated puts on one corner stack up; an empty bag makes it an error.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

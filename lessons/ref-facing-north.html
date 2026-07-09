@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.facingNorth() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Condition</div>
+    <h1><code>k.facingNorth()</code></h1>
+    <p class="lead">Ask whether Karel is currently facing north.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-beepers-in-bag.html">← k.beepersInBag()</a><span class="spacer"></span>
+    <a href="./ref-facing-east.html">k.facingEast() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.facingNorth()</code> returns <code>true</code> when Karel is pointing north and
+      <code>false</code> otherwise. It only reports the direction — it never turns Karel. (North is
+      "up" on the grid, toward higher street numbers.)</p>
+      <p>Its opposite is <code>k.notFacingNorth()</code> (<code>true</code> when Karel points any other
+      way). That's the key to the "turn until you face north" idiom shown below.</p>
+      <p><strong>See also:</strong> the sibling conditions
+      <a href="./ref-facing-east.html"><code>facingEast()</code></a>,
+      <a href="./ref-facing-south.html"><code>facingSouth()</code></a>,
+      <a href="./ref-facing-west.html"><code>facingWest()</code></a>, and
+      <a href="./ref-turn-left.html"><code>turnLeft()</code></a> to change facing.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>Karel is placed facing north to start. The <code>if</code> is true, so it drops a beeper to
+      confirm it. (Change the world's direction and the beeper would not appear.)</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); north
+BeeperBag: INFINITY`, code: `function main(k) {
+  if (k.facingNorth()) {
+    k.putBeeper();
+  }
+}` },
+      { md: `<p>Because Karel really is facing north, a beeper lands on <code>(1, 1)</code>.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>The most useful pattern: no matter which way Karel starts, spin it until it faces north. Keep
+      turning left <em>while</em> it is not yet facing north. Here Karel starts facing south and ends up
+      facing north after two turns.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); south`, code: `function main(k) {
+  while (k.notFacingNorth()) {
+    k.turnLeft();
+  }
+}` },
+      { md: `<p>South → east → north: the loop turns left twice and then stops, because
+      <code>notFacingNorth()</code> becomes false the moment Karel points north. This works from
+      <em>any</em> starting direction.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east`,
+        prompt: `<strong>Face north.</strong> Karel starts facing east. Turn it so it faces north. (Which
+        single turn gets you there?)`,
+        check: ["direction"],
+        solution: function main(k) {
+          k.turnLeft();
+        } },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); west`,
+        prompt: `<strong>Face north from anywhere.</strong> Karel starts facing west <em>this</em> time —
+        but write code that would end facing north <strong>no matter</strong> which way it started, using
+        a <code>while</code> loop with <code>notFacingNorth()</code> (don't just hard-code the turns).`,
+        check: ["direction"],
+        solution: function main(k) {
+          while (k.notFacingNorth()) {
+            k.turnLeft();
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.facingNorth()</code> reports whether Karel points north; <code>notFacingNorth()</code> is
+      its opposite. Loop <code>while (k.notFacingNorth()) k.turnLeft();</code> to face north from any
+      start.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

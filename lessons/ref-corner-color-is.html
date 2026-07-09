@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.cornerColorIs(color) — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Condition</div>
+    <h1><code>k.cornerColorIs(color)</code></h1>
+    <p class="lead">Ask whether the corner Karel is on is painted a given color.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-facing-west.html">← k.facingWest()</a><span class="spacer"></span>
+    <a href="./reference.html">All reference pages →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.cornerColorIs(color)</code> returns <code>true</code> when Karel's current corner is
+      painted the color you name, and <code>false</code> otherwise. You pass the color as a string, using
+      the same names as <a href="./ref-paint-corner.html"><code>paintCorner</code></a> (e.g.
+      <code>"Red"</code>, <code>"Blue"</code>, <code>"Green"</code>). An unpainted corner matches
+      <code>""</code> (the empty string).</p>
+      <p>Corners get their color from the world's <code>Color:</code> lines or from an earlier
+      <code>paintCorner</code> call. This condition only reads — it changes nothing.</p>
+      <p><strong>See also:</strong> <a href="./ref-paint-corner.html"><code>paintCorner(color)</code></a>
+      writes the color that this condition reads back.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>The starting corner is painted red by the world. Karel checks the color and, finding it red,
+      drops a beeper. (On any other color the beeper would be skipped.)</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red`, code: `function main(k) {
+  if (k.cornerColorIs("Red")) {
+    k.putBeeper();
+  }
+}` },
+      { md: `<p>Because <code>(1, 1)</code> is red, the condition is true and a beeper appears there.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>The corners of this street alternate red and blue. Karel walks the row and marks only the red
+      corners with a beeper — the color check decides each one.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (2, 1); Blue
+Color: (3, 1); Red
+Color: (4, 1); Blue
+Color: (5, 1); Red`, code: `function main(k) {
+  for (let i = 0; i < 5; i++) {
+    if (k.cornerColorIs("Red")) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+      { md: `<p>Beepers land on the red corners <code>(1,1)</code>, <code>(3,1)</code>, and
+      <code>(5,1)</code> — the blue ones are left bare. Dropping a beeper on <em>every</em> corner would
+      be wrong; the condition is doing real work here.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (2, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Green`,
+        prompt: `<strong>Mark the green corner.</strong> This street has two corners; only some are
+        green. Walk across and drop a beeper <em>only</em> on green corners. (Here just <code>(1, 1)</code>
+        is green, so only it should get a beeper — don't drop on both.)`,
+        check: ["beepers"],
+        solution: function main(k) {
+          for (let i = 0; i < 2; i++) {
+            if (k.cornerColorIs("Green")) {
+              k.putBeeper();
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (2, 1); Blue
+Color: (3, 1); Red
+Color: (4, 1); Blue
+Color: (5, 1); Red`,
+        prompt: `<strong>Beeper on every red.</strong> The corners alternate red and blue. Walk the whole
+        street and put a beeper on <em>every red corner only</em>, leaving the blue ones empty. Use
+        <code>cornerColorIs("Red")</code> to decide each corner.`,
+        check: ["beepers"],
+        solution: function main(k) {
+          for (let i = 0; i < 5; i++) {
+            if (k.cornerColorIs("Red")) {
+              k.putBeeper();
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.cornerColorIs(color)</code> returns <code>true</code> when the current corner is painted the
+      named color (<code>""</code> for unpainted). It reads back what <code>paintCorner</code> and the
+      world's <code>Color:</code> lines set.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

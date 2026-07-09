@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>10 · Putting It All Together — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 10 of 10</div>
+    <h1>10 · Putting It All Together</h1>
+    <p class="lead">Nested loops and everything so far, working as one program to plant a whole field.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./09-booleans-return.html">← Return values</a><span class="spacer"></span><span></span>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>The goal</h2>
+      <p>Let's plant a beeper on <em>every</em> square of a grid. This calls for a <strong>nested
+      loop</strong> — a loop inside another loop — plus functions, conditions, and a variable. Everything
+      from the previous nine lessons comes together here.</p>` },
+      { md: `<h2>Step 1: plant one row</h2>
+      <p>First a helper, defined beside <code>main</code> and handed the robot <code>k</code>.
+      <code>plantRow(k)</code> uses a while loop to lay a beeper on each square across a row until it
+      reaches the wall. Because it stops at a wall on its own, it works for a row of any length.</p>` },
+      { world: `Dimension: (4, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function plantRow(k) {
+  while (k.frontIsClear()) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+}
+
+function main(k) {
+  plantRow(k);
+}` },
+      { md: `<h2>Step 2: every row, snaking up</h2>
+      <p>Now the outer loop. After planting a row, Karel steps up to the next one and reverses direction,
+      snaking back and forth so it never has to backtrack. A <code>facingEast</code> variable remembers
+      which way Karel is pointing, and <code>if</code> / <code>else</code> picks the right turns.</p>
+      <p>This one program uses <strong>functions</strong> (Lesson 2), a <strong>for loop</strong> (3), a
+      <strong>while loop</strong> (4), <strong>if / else</strong> (5–6), and a <strong>variable</strong>
+      (8) — all at once.</p>` },
+      { world: `Dimension: (4, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function plantRow(k) {
+  while (k.frontIsClear()) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+}
+
+function main(k) {
+  let facingEast = true;
+  for (let row = 0; row < 4; row++) {
+    plantRow(k);
+    if (row < 3) {
+      if (facingEast) {
+        k.turnLeft();
+        k.move();
+        k.turnLeft();
+      } else {
+        turnRight(k);
+        k.move();
+        turnRight(k);
+      }
+      facingEast = !facingEast;
+    }
+  }
+}`, opts: { cellSize: 46, delay: 110 } },
+      { md: `<div class="callout tip"><strong>You did it</strong>
+      You've gone from a single <code>k.move()</code> to a program that decomposes a big task into
+      functions, repeats work with loops, makes decisions with conditions, and remembers state in a
+      variable. That's the core of programming — and it's the same JavaScript used to build real
+      software.</div>
+      <p>From here, try changing the numbers and worlds in your head and predicting the result, then
+      imagine how you'd teach Karel to <em>harvest</em> the field by picking every beeper back up.</p>` },
+    ];
+
+    renderNotebook(cells);
+  </script>
+</body>
+</html>
