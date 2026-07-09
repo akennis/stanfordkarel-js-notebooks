@@ -33,10 +33,10 @@
       <code>"Gray"</code>, <code>"Green"</code>, <code>"Light Gray"</code>, <code>"Magenta"</code>,
       <code>"Orange"</code>, <code>"Pink"</code>, <code>"White"</code>, <code>"Blue"</code>,
       <code>"Yellow"</code>.</p>
-      <div class="callout warn"><strong>About grading on this page</strong>
-      The auto-grader only checks beepers, position, and direction — it does <em>not</em> compare corner
-      colors. So the challenges below are graded on where Karel finishes; for the paint itself, compare
-      your result against the green goal animation by eye.</div>
+      <div class="callout tip"><strong>About grading on this page</strong>
+      The auto-grader compares corner colors too, alongside beepers, position, and direction. So the
+      challenges below check that every corner ends up the right color — match the green goal exactly,
+      including the paint.</div>
       <p><strong>See also:</strong> <a href="./ref-corner-color-is.html"><code>cornerColorIs(color)</code></a>
       reads a corner's color back.</p>` },
 
@@ -67,11 +67,10 @@ Karel: (1, 1); east`, code: `function main(k) {
 
       { world: `Dimension: (5, 1)
 Karel: (1, 1); east`,
-        prompt: `<strong>Two-color step.</strong> Paint the starting corner <code>(1, 1)</code> one color,
-        then move east and paint <code>(2, 1)</code> a different color. Finish standing on
-        <code>(2, 1)</code>. <em>(Grading checks that you end on <code>(2, 1)</code>; match the colors to
-        the goal by eye.)</em>`,
-        check: ["position"],
+        prompt: `<strong>Two-color step.</strong> Paint the starting corner <code>(1, 1)</code> red,
+        then move east and paint <code>(2, 1)</code> blue. Finish standing on
+        <code>(2, 1)</code>. <em>(Grading checks both where you finish and that each corner is the right
+        color — match the goal exactly.)</em>`,
         solution: function main(k) {
           k.paintCorner("Red");
           k.move();
@@ -80,10 +79,10 @@ Karel: (1, 1); east`,
 
       { world: `Dimension: (5, 1)
 Karel: (1, 1); east`,
-        prompt: `<strong>Paint the whole street.</strong> Paint every corner of this five-corner street a
-        color as Karel walks across it, finishing on the far corner <code>(5, 1)</code>. <em>(Grading
-        checks the final position <code>(5, 1)</code>; compare the colors with the goal by eye.)</em>`,
-        check: ["position"],
+        prompt: `<strong>Paint the whole street.</strong> Walk across this five-corner street painting a
+        rainbow: <code>(1, 1)</code> red, <code>(2, 1)</code> orange, <code>(3, 1)</code> yellow,
+        <code>(4, 1)</code> green, <code>(5, 1)</code> blue. Finish on the far corner <code>(5, 1)</code>.
+        <em>(Grading checks the final position and every corner's color — match the goal exactly.)</em>`,
         solution: function main(k) {
           k.paintCorner("Red");
           k.move();

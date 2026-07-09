@@ -733,15 +733,27 @@ async function encodeFrames(frames, { delay, finalFrameDelay, gifWorkers, error 
 // ─────────────────────────── SOLUTION CHECK ─────────────────────────────────
 
 // Aspects a challenge can grade on. A caller passes some subset of these to
-// runKarel's `check` option; the default grades all three.
-const DEFAULT_CHECK_ASPECTS = ["beepers", "position", "direction"];
+// runKarel's `check` option; the default grades all four.
+const DEFAULT_CHECK_ASPECTS = ["beepers", "position", "direction", "colors"];
+
+// Serialize a corner-color map into a canonical, comparable string. Erased
+// corners (empty-string color) are dropped so they compare equal to never-
+// painted ones. Shared by snapshotState and gradeSnapshot.
+function serializeColors(entries) {
+  return [...entries]
+    .filter(([, color]) => color)
+    .map(([key, color]) => `${key}=${color}`)
+    .sort()
+    .join(",");
+}
 
 /**
- * A canonical, comparable snapshot of a program's final state: Karel's pose and
- * the world's beeper layout. Two runs "match" when the aspects a challenge
- * cares about are equal (see statesMatch).
+ * A canonical, comparable snapshot of a program's final state: Karel's pose,
+ * the world's beeper layout, and its painted corner colors. Two runs "match"
+ * when the aspects a challenge cares about are equal (see statesMatch).
  * @param {KarelProgram} karel
- * @returns {{avenue:number, street:number, direction:string, beepers:string}}
+ * @returns {{avenue:number, street:number, direction:string,
+ *            beepers:string, colors:string}}
  */
 function snapshotState(karel) {
   const beepers = [...karel.world.beepers.entries()]
@@ -749,7 +761,8 @@ function snapshotState(karel) {
     .map(([key, count]) => `${key}=${count}`)
     .sort()
     .join(",");
-  return { avenue: karel.avenue, street: karel.street, direction: karel.direction, beepers };
+  const colors = serializeColors(karel.world.cornerColors.entries());
+  return { avenue: karel.avenue, street: karel.street, direction: karel.direction, beepers, colors };
 }
 
 /**
@@ -766,13 +779,14 @@ function gradeSnapshot(snap) {
     .map(([key, count]) => `${key}=${count}`)
     .sort()
     .join(",");
-  return { avenue: snap.avenue, street: snap.street, direction: snap.direction, beepers };
+  const colors = serializeColors(snap.cornerColors);
+  return { avenue: snap.avenue, street: snap.street, direction: snap.direction, beepers, colors };
 }
 
 /**
  * Compare two state snapshots on only the requested aspects ("beepers",
- * "position", "direction"). Letting a challenge ignore Karel's final pose when
- * only the beeper layout matters, or vice versa.
+ * "position", "direction", "colors"). Letting a challenge ignore Karel's final
+ * pose when only the beeper layout matters, or vice versa.
  * @param {ReturnType<typeof snapshotState>|null} reader
  * @param {ReturnType<typeof snapshotState>|null} goal
  * @param {string[]} aspects
@@ -784,6 +798,7 @@ export function statesMatch(reader, goal, aspects = DEFAULT_CHECK_ASPECTS) {
   if (aspects.includes("position") &&
       (reader.avenue !== goal.avenue || reader.street !== goal.street)) return false;
   if (aspects.includes("direction") && reader.direction !== goal.direction) return false;
+  if (aspects.includes("colors") && reader.colors !== goal.colors) return false;
   return true;
 }
 
@@ -858,8 +873,9 @@ const DEFAULT_WORKER_TIMEOUT = 3000;
  *   its final state (run on a fresh copy of the world) is compared to this
  *   run's final state; an extra final frame draws Karel green on a match (with
  *   `img.dataset.solved` set to `"true"`) or red on a mismatch.
- * @param {string[]} [options.check=["beepers","position","direction"]]  Which
- *   aspects the solution comparison grades on. Only used when `solution` is set.
+ * @param {string[]} [options.check=["beepers","position","direction","colors"]]
+ *   Which aspects the solution comparison grades on. Only used when `solution`
+ *   is set.
  * @param {{avenue?:number, street?:number, direction?:string}} [options.end]
  *   Optional explicit end pose. When given, Karel must finish at the specified
  *   avenue/street/direction (any subset) for the run to count as solved. ANDs
@@ -1087,8 +1103,8 @@ function runProgramInWorker(worldText, programText, { maxFrames, timeout }) {
  *   exactly as in runKarel (green final frame + img.dataset.solved on a match).
  *   It runs on the **main thread** — it's the trusted answer key, not the
  *   untrusted program — so pass it as a function, not text.
- * @param {string[]} [options.check=["beepers","position","direction"]]  Aspects
- *   the solution comparison grades on. Only used when `solution` is set.
+ * @param {string[]} [options.check=["beepers","position","direction","colors"]]
+ *   Aspects the solution comparison grades on. Only used when `solution` is set.
  * @param {{avenue?:number, street?:number, direction?:string}} [options.end]
  *   Optional explicit end pose, ANDed with the `solution` check as in runKarel.
  * @returns {Promise<HTMLImageElement>} The animated GIF. On any error — wall

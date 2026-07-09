@@ -156,7 +156,7 @@ If the program throws (e.g. Karel hits a wall), the promise still resolves with 
 | `gifWorkers` | `number` | `2` | Web workers used by gif.js |
 | `maxFrames` | `number` | `2000` | Cap on captured frames. Each Karel action yields one frame, so hitting the cap ends the run with a soft error (red final frame + `img.dataset.error`) — a guard against loops that call Karel actions. A loop that never acts (`while (true) {}`) still hangs the main thread; use [`runKarelInWorker`](#runkarelinworkerworldtext-programtext-options) for that. |
 | `solution` | `Function` | — | Optional reference program. Its final state (run on a fresh copy of the world) is compared to this run's; an extra final frame draws Karel **green** on a match (with `img.dataset.solved` set to `"true"`) or **red** on a mismatch. |
-| `check` | `string[]` | `["beepers","position","direction"]` | Which aspects the `solution` comparison grades on |
+| `check` | `string[]` | `["beepers","position","direction","colors"]` | Which aspects the `solution` comparison grades on (`"colors"` compares painted corner colors) |
 | `end` | `{ avenue?, street?, direction? }` | — | Optional explicit end pose. When given, Karel must finish at the specified avenue/street/direction (any subset) to count as solved. ANDs with the `solution` check when both are supplied; either alone drives the green frame and `img.dataset.solved`. |
 
 \* If the world includes a `Speed:` directive, that value sets the default delay (`delay = round(100 / speed)` ms, so Speed 2.0 → 50 ms, Speed 0.5 → 200 ms). An explicit `delay` option always takes precedence.
