@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.rightIsClear() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Condition</div>
+    <h1><code>k.rightIsClear()</code></h1>
+    <p class="lead">Ask whether the square to Karel's right is open.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-left-is-clear.html">← k.leftIsClear()</a><span class="spacer"></span>
+    <a href="./ref-beepers-present.html">k.beepersPresent() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.rightIsClear()</code> returns <code>true</code> when the square 90° to Karel's
+      <em>right</em> is open, and <code>false</code> when a wall or the world's edge is there. It only
+      looks — Karel does not turn. "Right" is relative to Karel's facing: facing east, right is south;
+      facing north, right is east, and so on.</p>
+      <p>Its opposite is <code>k.rightIsBlocked()</code> (<code>true</code> when the right is not clear).</p>
+      <p><strong>See also:</strong> <a href="./ref-left-is-clear.html"><code>leftIsClear()</code></a> for
+      the other side and <a href="./ref-front-is-clear.html"><code>frontIsClear()</code></a> for ahead.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>Karel faces east on <code>(1, 3)</code>; its right is south, which is open. The condition is
+      true, so Karel drops a beeper to mark it. (Notice Karel doesn't turn — <code>rightIsClear()</code>
+      just reports.)</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 3); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  if (k.rightIsClear()) {
+    k.putBeeper();
+  }
+}` },
+      { md: `<p>Had Karel been on the bottom row facing east, its right (south) would be the world's edge
+      and the condition would be <code>false</code>.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>Mirror of the left-side gap hunt. A wall runs along the <em>south</em> side of the top street
+      with one gap below <code>(3, 3)</code>. Karel walks the row and marks wherever its right opens.</p>` },
+      { world: `Dimension: (5, 3)
+Karel: (1, 3); east
+BeeperBag: INFINITY
+Wall: (1, 3); south
+Wall: (2, 3); south
+Wall: (4, 3); south
+Wall: (5, 3); south`, code: `function main(k) {
+  for (let i = 0; i < 5; i++) {
+    if (k.rightIsClear()) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+      { md: `<p>Only <code>(3, 3)</code> sits over the gap, so that's the one corner where the right is
+      clear and a beeper is dropped.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 3); east
+BeeperBag: INFINITY`,
+        prompt: `<strong>Mark the open side.</strong> Karel faces east on <code>(1, 3)</code>. <em>If</em>
+        the right side is clear, drop a beeper where Karel stands; otherwise do nothing. (The right is
+        open here, so a beeper should land on <code>(1, 3)</code>.)`,
+        check: ["beepers"],
+        solution: function main(k) {
+          if (k.rightIsClear()) {
+            k.putBeeper();
+          }
+        } },
+
+      { world: `Dimension: (5, 3)
+Karel: (1, 3); east
+Wall: (1, 3); south
+Wall: (2, 3); south
+Wall: (4, 3); south
+Wall: (5, 3); south`,
+        prompt: `<strong>Drop through the gap.</strong> A wall runs along Karel's right with one gap. Walk
+        east until the right opens up, then turn right and step through it once. Karel should finish on
+        <code>(3, 2)</code> facing south. (Remember: a right turn is three left turns.)`,
+        check: ["position", "direction"],
+        solution: function main(k) {
+          while (k.rightIsBlocked()) {
+            k.move();
+          }
+          k.turnLeft();
+          k.turnLeft();
+          k.turnLeft();
+          k.move();
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.rightIsClear()</code> tests the square to Karel's right (relative to its facing) and returns
+      a boolean without turning; <code>rightIsBlocked()</code> is its opposite.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.facingSouth() — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Condition</div>
+    <h1><code>k.facingSouth()</code></h1>
+    <p class="lead">Ask whether Karel is currently facing south.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-facing-east.html">← k.facingEast()</a><span class="spacer"></span>
+    <a href="./ref-facing-west.html">k.facingWest() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.facingSouth()</code> returns <code>true</code> when Karel is pointing south and
+      <code>false</code> otherwise. It only reports the direction; it never turns Karel. (South is
+      "down" on the grid, toward lower street numbers.)</p>
+      <p>Its opposite is <code>k.notFacingSouth()</code> (<code>true</code> when Karel points any other
+      way), which drives the "turn until facing south" idiom below.</p>
+      <p><strong>See also:</strong> the sibling conditions
+      <a href="./ref-facing-north.html"><code>facingNorth()</code></a>,
+      <a href="./ref-facing-east.html"><code>facingEast()</code></a>,
+      <a href="./ref-facing-west.html"><code>facingWest()</code></a>.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>Karel is placed facing south, so the <code>if</code> is true and it drops a beeper to confirm.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 3); south
+BeeperBag: INFINITY`, code: `function main(k) {
+  if (k.facingSouth()) {
+    k.putBeeper();
+  }
+}` },
+      { md: `<p>Karel is facing south, so a beeper lands on <code>(1, 3)</code>.</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>Turn until Karel faces south, whatever its start. Keep turning left <em>while</em> it's not yet
+      facing south. Here Karel begins facing east and needs three left turns to come around to south.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east`, code: `function main(k) {
+  while (k.notFacingSouth()) {
+    k.turnLeft();
+  }
+}` },
+      { md: `<p>East → north → west → south: three left turns, then the loop stops. The same loop handles
+      any other starting direction.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); west`,
+        prompt: `<strong>Face south.</strong> Karel starts facing west. Turn it so it faces south. (One
+        left turn will do it.)`,
+        check: ["direction"],
+        solution: function main(k) {
+          k.turnLeft();
+        } },
+
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); north`,
+        prompt: `<strong>Face south from anywhere.</strong> Karel starts facing north here — but write
+        code that ends facing south <strong>regardless</strong> of the starting direction, using a
+        <code>while</code> loop with <code>notFacingSouth()</code>.`,
+        check: ["direction"],
+        solution: function main(k) {
+          while (k.notFacingSouth()) {
+            k.turnLeft();
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.facingSouth()</code> reports whether Karel points south; <code>notFacingSouth()</code> is
+      its opposite. Loop <code>while (k.notFacingSouth()) k.turnLeft();</code> to face south from any
+      start.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

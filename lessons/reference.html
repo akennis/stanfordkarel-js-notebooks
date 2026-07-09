@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karel Reference</title>
+  <style>
+    :root{ --ink:#1a1a1a; --muted:#666; --line:#e5e7eb; --accent:#0b5fff; }
+    *{box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+      color:var(--ink);background:#fafafa;margin:0;line-height:1.6;}
+    .wrap{max-width:52rem;margin:0 auto;padding:3rem 1.25rem 4rem;}
+    .crumb{font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+    .crumb a{color:var(--muted);text-decoration:none;} .crumb a:hover{text-decoration:underline;}
+    h1{margin:.3rem 0 .4rem;font-size:2.1rem;}
+    .lead{margin:0 0 .5rem;color:var(--muted);font-size:1.1rem;}
+    .intro{margin:1.4rem 0 2rem;}
+    .intro code{background:#eef1f4;padding:.1em .35em;border-radius:4px;font-size:.92em;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+    h2{font-size:1.15rem;margin:2rem 0 .75rem;}
+    ul.ref{list-style:none;margin:0;padding:0;display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.55rem;}
+    ul.ref a{display:block;text-decoration:none;color:inherit;padding:.75rem .9rem;
+      border:1px solid var(--line);border-radius:8px;background:#fff;
+      transition:border-color .15s, box-shadow .15s;}
+    ul.ref a:hover{border-color:var(--accent);box-shadow:0 1px 6px rgba(11,95,255,.08);}
+    ul.ref .sig{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-weight:600;font-size:.95rem;color:var(--accent);}
+    ul.ref .desc{color:var(--muted);font-size:.86rem;margin-top:.15rem;}
+    .foot{margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid var(--line);
+      color:var(--muted);font-size:.9rem;}
+    .foot a{color:var(--accent);text-decoration:none;} .foot a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">Learning JavaScript with Karel</a> · Reference</div>
+    <h1>Karel Reference</h1>
+    <p class="lead">One page per command and condition — each with a simple example, a complex example,
+      and two challenges to try.</p>
+
+    <p class="intro">Every operation and condition Karel understands has its own page below. Each page
+      shows a worked <strong>simple</strong> example and a <strong>complex</strong> example (code plus a
+      live animation and an explanation), then hands you a <strong>trivial</strong> and a
+      <strong>complex</strong> challenge to solve in an editable code box. Reach for these when you want
+      to look up exactly what one command does.</p>
+
+    <h2>Commands — things Karel <em>does</em></h2>
+    <ul class="ref">
+      <li><a href="./ref-move.html"><div class="sig">k.move()</div>
+        <div class="desc">Step one square forward.</div></a></li>
+      <li><a href="./ref-turn-left.html"><div class="sig">k.turnLeft()</div>
+        <div class="desc">Rotate 90° to the left.</div></a></li>
+      <li><a href="./ref-put-beeper.html"><div class="sig">k.putBeeper()</div>
+        <div class="desc">Drop a beeper from the bag.</div></a></li>
+      <li><a href="./ref-pick-beeper.html"><div class="sig">k.pickBeeper()</div>
+        <div class="desc">Pick a beeper up into the bag.</div></a></li>
+      <li><a href="./ref-paint-corner.html"><div class="sig">k.paintCorner(color)</div>
+        <div class="desc">Paint the current corner a color.</div></a></li>
+    </ul>
+
+    <h2>Conditions — things Karel can <em>sense</em></h2>
+    <ul class="ref">
+      <li><a href="./ref-front-is-clear.html"><div class="sig">k.frontIsClear()</div>
+        <div class="desc">Is the way ahead open? (and frontIsBlocked)</div></a></li>
+      <li><a href="./ref-left-is-clear.html"><div class="sig">k.leftIsClear()</div>
+        <div class="desc">Is the square to the left open? (and leftIsBlocked)</div></a></li>
+      <li><a href="./ref-right-is-clear.html"><div class="sig">k.rightIsClear()</div>
+        <div class="desc">Is the square to the right open? (and rightIsBlocked)</div></a></li>
+      <li><a href="./ref-beepers-present.html"><div class="sig">k.beepersPresent()</div>
+        <div class="desc">Any beepers on this corner? (and noBeepersPresent)</div></a></li>
+      <li><a href="./ref-beepers-in-bag.html"><div class="sig">k.beepersInBag()</div>
+        <div class="desc">Any beepers left in the bag? (and noBeepersInBag)</div></a></li>
+      <li><a href="./ref-facing-north.html"><div class="sig">k.facingNorth()</div>
+        <div class="desc">Is Karel facing north? (and notFacingNorth)</div></a></li>
+      <li><a href="./ref-facing-east.html"><div class="sig">k.facingEast()</div>
+        <div class="desc">Is Karel facing east? (and notFacingEast)</div></a></li>
+      <li><a href="./ref-facing-south.html"><div class="sig">k.facingSouth()</div>
+        <div class="desc">Is Karel facing south? (and notFacingSouth)</div></a></li>
+      <li><a href="./ref-facing-west.html"><div class="sig">k.facingWest()</div>
+        <div class="desc">Is Karel facing west? (and notFacingWest)</div></a></li>
+      <li><a href="./ref-corner-color-is.html"><div class="sig">k.cornerColorIs(color)</div>
+        <div class="desc">Is this corner painted a given color?</div></a></li>
+    </ul>
+
+    <div class="foot">
+      New to Karel? Start with the <a href="../index.html">ten-lesson course</a> instead — the reference
+      assumes you already know the basics of <code>if</code>, <code>for</code>, and <code>while</code>.
+    </div>
+  </div>
+</body>
+</html>

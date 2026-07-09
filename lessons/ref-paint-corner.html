@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>k.paintCorner(color) — Karel Reference</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Karel Reference · Command</div>
+    <h1><code>k.paintCorner(color)</code></h1>
+    <p class="lead">Paint the corner Karel is standing on a named color.</p>
+  </header>
+
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./ref-pick-beeper.html">← k.pickBeeper()</a><span class="spacer"></span>
+    <a href="./ref-front-is-clear.html">k.frontIsClear() →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>What it does</h2>
+      <p><code>k.paintCorner(color)</code> fills Karel's current corner with a color. It takes one
+      argument — a color <em>name</em> as a string. Karel does not move. Painting a corner that's already
+      painted just repaints it; passing the empty string <code>""</code> erases the paint.</p>
+      <p>The valid color names are:</p>
+      <p><code>"Red"</code>, <code>"Black"</code>, <code>"Cyan"</code>, <code>"Dark Gray"</code>,
+      <code>"Gray"</code>, <code>"Green"</code>, <code>"Light Gray"</code>, <code>"Magenta"</code>,
+      <code>"Orange"</code>, <code>"Pink"</code>, <code>"White"</code>, <code>"Blue"</code>,
+      <code>"Yellow"</code>.</p>
+      <div class="callout warn"><strong>About grading on this page</strong>
+      The auto-grader only checks beepers, position, and direction — it does <em>not</em> compare corner
+      colors. So the challenges below are graded on where Karel finishes; for the paint itself, compare
+      your result against the green goal animation by eye.</div>
+      <p><strong>See also:</strong> <a href="./ref-corner-color-is.html"><code>cornerColorIs(color)</code></a>
+      reads a corner's color back.</p>` },
+
+      { md: `<h2>Simple example</h2>
+      <p>Karel paints the corner it's standing on red. The whole cell fills with color; Karel stays put.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east`, code: `function main(k) {
+  k.paintCorner("Red");
+}` },
+      { md: `<p>Corner <code>(1, 1)</code> turns red. Note the quotes — the color is a string, and it must
+      be one of the names listed above (an unknown name is an error).</p>` },
+
+      { md: `<h2>Complex example</h2>
+      <p>Combine painting with movement to lay down a colored stripe. Karel paints, steps east, paints a
+      different color, and so on.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east`, code: `function main(k) {
+  k.paintCorner("Red");
+  k.move();
+  k.paintCorner("Blue");
+  k.move();
+  k.paintCorner("Green");
+}` },
+      { md: `<p>Three corners end up red, blue, and green from left to right. Each <code>paintCorner</code>
+      colors only the corner Karel is on at that moment.</p>` },
+
+      { md: `<h2>Challenges</h2>` },
+
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east`,
+        prompt: `<strong>Two-color step.</strong> Paint the starting corner <code>(1, 1)</code> one color,
+        then move east and paint <code>(2, 1)</code> a different color. Finish standing on
+        <code>(2, 1)</code>. <em>(Grading checks that you end on <code>(2, 1)</code>; match the colors to
+        the goal by eye.)</em>`,
+        check: ["position"],
+        solution: function main(k) {
+          k.paintCorner("Red");
+          k.move();
+          k.paintCorner("Blue");
+        } },
+
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east`,
+        prompt: `<strong>Paint the whole street.</strong> Paint every corner of this five-corner street a
+        color as Karel walks across it, finishing on the far corner <code>(5, 1)</code>. <em>(Grading
+        checks the final position <code>(5, 1)</code>; compare the colors with the goal by eye.)</em>`,
+        check: ["position"],
+        solution: function main(k) {
+          k.paintCorner("Red");
+          k.move();
+          k.paintCorner("Orange");
+          k.move();
+          k.paintCorner("Yellow");
+          k.move();
+          k.paintCorner("Green");
+          k.move();
+          k.paintCorner("Blue");
+        } },
+
+      { md: `<div class="callout tip"><strong>Summary</strong>
+      <code>k.paintCorner(color)</code> colors the current corner with a named color string and never
+      moves Karel. Use <code>""</code> to erase. Only the listed color names are valid.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>
