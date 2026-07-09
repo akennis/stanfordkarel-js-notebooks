@@ -1,4 +1,4 @@
-import { runKarel, runKarelInWorker } from "https://esm.sh/stanfordkarel-js-notebooks/stanfordkarel.js";
+import { runKarel, runKarelInWorker } from "../stanfordkarel.js";
 
 const esc = s => s.replace(/[&<>]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;" }[c]));
 
@@ -125,7 +125,7 @@ export async function renderNotebook(cells, mount = document.getElementById("not
   async function renderChallenge(cell) {
     const wrap = document.createElement("div");
     wrap.className = "challenge";
-    const aspects = cell.check || ["beepers", "position", "direction"];
+    const aspects = cell.check || ["beepers", "position", "direction", "colors"];
     const opts = cell.opts || DEFAULT_OPTS;
     wrap.innerHTML =
       `<div class="chal-head"><span class="chal-badge">Challenge</span>` +

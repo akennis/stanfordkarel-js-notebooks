@@ -7,7 +7,7 @@ Guidance for working in this repo. Read this before editing; it captures convent
 A browser-native JavaScript port of Stanford Karel (CS 106A). It ships two things:
 
 1. **The library** — `stanfordkarel.js`, a single self-contained ES module that parses a world, simulates a Karel program, and renders the run as an animated GIF. Returns an `<img>`.
-2. **The course** — `index.html` + `lessons/`, a ten-lesson "Learning JavaScript with Karel" tutorial. Static HTML pages that import the library from a CDN.
+2. **The course** — `index.html` + `lessons/`, a ten-lesson "Learning JavaScript with Karel" tutorial. Static HTML pages served from GitHub Pages (repo root as base). `lessons/lesson.js` imports the library with a **relative path** (`../stanfordkarel.js`) so the course runs against the repo's own source both under `npx serve .` and on Pages — no CDN version-staleness. Relative (not root-absolute) is required: a project Pages site lives under `/<repo>/`.
 
 There is **no build step, no bundler, no transpile, and no test suite.** Source runs as-is in the browser and Node ≥ ES2020. Do not introduce a build pipeline, TypeScript, or a framework unless explicitly asked — the zero-tooling, single-file design is a deliberate feature (it must import cleanly from a raw CDN URL in Observable and plain HTML).
 
@@ -60,7 +60,7 @@ Colors are the named constants (e.g. `"Red"`), not CSS/hex — `CSS_COLORS` maps
 
 - **Match the surrounding style:** 2-space indent, ES modules, `const`/`let`, no semicolintrivia — the file uses semicolons and JSDoc on public functions. Keep exported functions documented with JSDoc `@param`/`@returns`.
 - **Keep it single-file and dependency-light.** The only runtime dependency is `gif.js`, loaded lazily inside `runKarel` (`loadGifDeps`). Don't add npm deps for things achievable with the DOM/Canvas API.
-- **Don't hardcode CDN version numbers** in library source or lesson imports beyond what's already there; when you must reference a version, prefer the unversioned `esm.sh/stanfordkarel-js-notebooks/...` form. The README pins examples to the current `package.json` version — update those together.
+- **Don't hardcode CDN version numbers** in library source beyond what's already there; when you must reference a version, prefer the unversioned `esm.sh/stanfordkarel-js-notebooks/...` form. The README pins examples to the current `package.json` version — update those together. The lesson pages are the exception to CDN imports entirely: they load `../stanfordkarel.js` relatively (see above), not from esm.sh.
 - When changing the public API (`runKarel` options, Karel methods, color constants, world directives), **update `README.md` in the same change** — its API tables are meant to stay authoritative.
 
 ## Adding a world
