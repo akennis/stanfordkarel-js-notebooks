@@ -835,6 +835,119 @@ async function computeSolutionState(worldText, solution) {
   return snapshotState(karel);
 }
 
+// ─────────────────────────── ASSIGNMENTS ────────────────────────────────────
+// Support for graded coursework layered on the simulator. Two concerns live
+// here: (1) a headless grader that runs a program against a world and compares
+// it to a reference solution WITHOUT rendering a GIF — safe to call in Node for
+// a teacher-side batch grade (it never touches canvas or gif.js); and (2) a
+// light reversible cipher so an assignment page can embed its solution in the
+// browser without printing it in plaintext. The cipher is OBFUSCATION, not
+// security: the authoritative grade is the headless re-grade, so a determined
+// student who recovers the key gains nothing gradeable.
+
+/**
+ * Compile Karel program source text into a callable main(). Mirrors the browser
+ * challenge compiler (lessons/lesson.js) so the same source runs identically in
+ * Node and the browser. Throws SyntaxError for malformed code and ReferenceError
+ * when no main() is defined.
+ * @param {string} src
+ * @returns {Function}
+ */
+export function compileProgram(src) {
+  const factory = new Function(`"use strict";\n${src}\n;return typeof main === "function" ? main : null;`);
+  const fn = factory();
+  if (typeof fn !== "function")
+    throw new ReferenceError("Program must define a function called main, e.g. function main(k) { … }");
+  return fn;
+}
+
+// A submission or solution may arrive as a ready function or as source text.
+function asMainFunc(program) {
+  return typeof program === "function" ? program : compileProgram(program);
+}
+
+/**
+ * Grade a Karel program headlessly: run it against a fresh copy of `worldText`
+ * and report whether its final state matches a reference `solution` and/or an
+ * explicit `end` pose. No canvas, no gif.js — usable in Node for batch grading.
+ * Errors are soft (matching runKarel): a throw — a wall collision, a syntax
+ * error, or a submission with no main() — yields { solved:false, error }.
+ *
+ * @param {string} worldText
+ * @param {Function|string} program        The submission — a main() or its source.
+ * @param {Object} [opts]
+ * @param {Function|string} [opts.solution] Reference program to match against.
+ * @param {string[]} [opts.check]           Aspects to compare (see statesMatch).
+ * @param {{avenue?:number, street?:number, direction?:string}} [opts.end]
+ *   Optional pinned end pose, ANDed with the solution check.
+ * @returns {Promise<{solved:boolean, state:object|null, error:string|null}>}
+ */
+export async function gradeKarel(worldText, program, { solution = null, check = DEFAULT_CHECK_ASPECTS, end = null } = {}) {
+  let state;
+  try {
+    state = await computeSolutionState(worldText, asMainFunc(program));
+  } catch (err) {
+    return { solved: false, state: null, error: err.message || String(err) };
+  }
+  let solved = true;
+  if (solution) {
+    let target;
+    try {
+      target = await computeSolutionState(worldText, asMainFunc(solution));
+    } catch (err) {
+      return { solved: false, state, error: "solution failed to run: " + (err.message || String(err)) };
+    }
+    solved = statesMatch(state, target, check);
+  }
+  if (solved && end) solved = matchesEnd(state, end);
+  return { solved, state, error: null };
+}
+
+// Static key used to seal/unseal solutions. Deliberately embedded — this is a
+// speed bump for casual snooping, not a secret. Bump the suffix if you ever want
+// to invalidate previously sealed strings.
+const SOLUTION_KEY = "karel-cs106a-sealed-v1";
+
+// Cross-env base64: browsers have btoa/atob (Latin-1), Node has Buffer.
+function bytesToB64(bytes) {
+  if (typeof Buffer !== "undefined") return Buffer.from(bytes).toString("base64");
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+function b64ToBytes(b64) {
+  if (typeof Buffer !== "undefined") return new Uint8Array(Buffer.from(b64, "base64"));
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+// XOR each byte with the repeating key.
+function xorBytes(bytes, key) {
+  const out = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) out[i] = bytes[i] ^ key.charCodeAt(i % key.length);
+  return out;
+}
+
+/**
+ * Reversibly obfuscate solution source so an assignment page can embed it
+ * without shipping readable plaintext. NOT encryption — see the section note.
+ * @param {string} src
+ * @returns {string} base64 ciphertext
+ */
+export function sealSolution(src) {
+  return bytesToB64(xorBytes(new TextEncoder().encode(src), SOLUTION_KEY));
+}
+
+/**
+ * Recover solution source sealed by sealSolution.
+ * @param {string} cipher
+ * @returns {string}
+ */
+export function unsealSolution(cipher) {
+  return new TextDecoder().decode(xorBytes(b64ToBytes(cipher), SOLUTION_KEY));
+}
+
 // ─────────────────────────── RUN LIMITS ─────────────────────────────────────
 
 // Default cap on captured animation frames. Every mutating Karel action yields

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karel World Formats</title>
+  <style>
+    :root{ --ink:#1a1a1a; --muted:#666; --line:#e5e7eb; --accent:#0b5fff; }
+    *{box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+      color:var(--ink);background:#fafafa;margin:0;line-height:1.6;}
+    .wrap{max-width:52rem;margin:0 auto;padding:3rem 1.25rem 4rem;}
+    .crumb{font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+    .crumb a{color:var(--muted);text-decoration:none;} .crumb a:hover{text-decoration:underline;}
+    h1{margin:.3rem 0 .4rem;font-size:2.1rem;}
+    .lead{margin:0 0 .5rem;color:var(--muted);font-size:1.1rem;}
+    .intro{margin:1.4rem 0 2rem;}
+    code{background:#eef1f4;padding:.1em .35em;border-radius:4px;font-size:.92em;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+    h2{font-size:1.35rem;margin:2.6rem 0 .5rem;padding-top:.6rem;border-top:1px solid var(--line);}
+    h3{font-size:1rem;margin:1.4rem 0 .4rem;color:var(--muted);text-transform:uppercase;
+      letter-spacing:.04em;font-size:.8rem;}
+    .badge{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.05em;
+      text-transform:uppercase;padding:.15em .5em;border-radius:999px;vertical-align:middle;
+      margin-left:.5rem;}
+    .badge.native{background:#e6f0ff;color:var(--accent);}
+    .badge.alt{background:#fff3e0;color:#b35c00;}
+    pre{background:#fff;border:1px solid var(--line);border-radius:8px;padding:.8rem .9rem;
+      overflow-x:auto;font-size:.86rem;line-height:1.5;margin:.4rem 0;}
+    pre code{background:none;padding:0;font-size:inherit;}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;align-items:start;}
+    @media (max-width:620px){ .cols{grid-template-columns:1fr;} }
+    .cols .label{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+      font-weight:700;margin:.2rem 0 .1rem;}
+    table{border-collapse:collapse;width:100%;font-size:.9rem;margin:.5rem 0 .2rem;}
+    table th{text-align:left;color:var(--muted);font-weight:600;font-size:.78rem;
+      text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--line);
+      padding:.35rem .6rem .35rem 0;}
+    table td{padding:.3rem .6rem .3rem 0;vertical-align:top;border-bottom:1px solid #f0f1f3;}
+    table td:first-child,table th:first-child{white-space:nowrap;}
+    table code{white-space:nowrap;}
+    .render{margin:.6rem 0 .2rem;min-height:120px;}
+    .render img{border:1px solid var(--line);border-radius:4px;max-width:100%;height:auto;}
+    .render .status{color:var(--muted);font-size:.9rem;}
+    .note{background:#fffdf5;border:1px solid #f0e6c0;border-radius:8px;padding:.7rem .9rem;
+      font-size:.9rem;margin:1rem 0;}
+    .note strong{color:#8a6d00;}
+    .foot{margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid var(--line);
+      color:var(--muted);font-size:.9rem;}
+    .foot a{color:var(--accent);text-decoration:none;} .foot a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="crumb"><a href="./index.html">Learning JavaScript with Karel</a> · World Formats</div>
+    <h1>Karel World Formats</h1>
+    <p class="lead">How a Karel world is written down — the native format the library reads, and two
+      alternative syntaxes the Playground understands.</p>
+
+    <p class="intro">A “world” is just plain text describing the grid: how big it is, where Karel
+      starts, and where the beepers, walls, and paint are. The library
+      (<code>runKarel</code>) reads exactly one format — the <strong>native <code>.w</code></strong>
+      format below. The <a href="./playground.html">Playground</a> additionally auto-detects and
+      converts two <strong>alternative</strong> formats into <code>.w</code> so you can paste worlds
+      exported by other Karel tools. If you call the library directly, convert to <code>.w</code>
+      first.</p>
+
+    <h3>Coordinate system (shared by every format)</h3>
+    <ul>
+      <li><strong>Avenues</strong> are columns (x, run north–south); <strong>streets</strong> are
+        rows (y, run east–west).</li>
+      <li>Corners are counted from the <strong>south-west</strong>. In the native format they are
+        <strong>1-indexed</strong>, so <code>(1, 1)</code> is the bottom-left corner.</li>
+      <li>Directions are the lowercase words <code>north</code>, <code>south</code>,
+        <code>east</code>, <code>west</code>.</li>
+    </ul>
+
+    <!-- ─────────────────────────── NATIVE .w ─────────────────────────── -->
+    <h2>The native <code>.w</code> format<span class="badge native">Read by the library</span></h2>
+    <p>One directive per line, <code>Keyword: value</code>. This is the same plain-text format used
+      by the Python Stanford Karel. Unrecognized lines and blank lines are ignored; a line needs a
+      colon to be read at all.</p>
+
+    <table>
+      <tr><th>Directive</th><th>Meaning</th></tr>
+      <tr><td><code>Dimension: (a, s)</code></td><td>Grid size: <code>a</code> avenues wide, <code>s</code> streets tall.</td></tr>
+      <tr><td><code>Karel: (a, s); dir</code></td><td>Start corner and facing (<code>north</code>/<code>south</code>/<code>east</code>/<code>west</code>).</td></tr>
+      <tr><td><code>BeeperBag: n</code></td><td>Beepers Karel starts with. Use <code>INFINITY</code> for an unlimited bag.</td></tr>
+      <tr><td><code>Beeper: (a, s); n</code></td><td>Place <code>n</code> beepers on a corner. Repeated lines add up.</td></tr>
+      <tr><td><code>Wall: (a, s); dir</code></td><td>A wall on the <code>dir</code> side of corner <code>(a, s)</code>.</td></tr>
+      <tr><td><code>Color: (a, s); name</code></td><td>Paint a corner. <code>name</code> is a named color (e.g. <code>Red</code>, <code>Blue</code>), not a hex value.</td></tr>
+      <tr><td><code>Speed: n</code></td><td>Animation speed (a positive number; higher is faster).</td></tr>
+    </table>
+
+    <h3>Example</h3>
+    <pre><code>Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (3, 3); 2
+Wall: (2, 1); north
+Color: (4, 4); Blue
+Speed: 3</code></pre>
+    <div class="render" id="w-primary"><span class="status">Rendering…</span></div>
+
+    <!-- ─────────────────────── KarelWorld (lowercase) ─────────────────────── -->
+    <h2>Alternative: the lowercase <code>KarelWorld</code> format<span class="badge alt">Playground only</span></h2>
+    <p>A space-separated, colon-free style (walls are given as spans, not per corner). Coordinates are
+      1-indexed, matching the native format.</p>
+
+    <table>
+      <tr><th>Line</th><th>Native <code>.w</code> equivalent</th></tr>
+      <tr><td><code>streets N</code> / <code>avenues N</code></td><td><code>Dimension: (avenues, streets)</code></td></tr>
+      <tr><td><code>karel a s dir</code></td><td><code>Karel: (a, s); dir</code></td></tr>
+      <tr><td><code>beeperbag N</code> / <code>infinite</code></td><td><code>BeeperBag: N</code> / <code>INFINITY</code></td></tr>
+      <tr><td><code>speed N</code></td><td><code>Speed: N</code></td></tr>
+      <tr><td><code>beepers a s n</code></td><td><code>Beeper: (a, s); n</code></td></tr>
+      <tr><td><code>eastwestwalls street a1 a2</code></td><td>a horizontal wall for each avenue <code>a1…a2</code> → <code>Wall: (a, street); north</code></td></tr>
+      <tr><td><code>northsouthwalls avenue s1 s2</code></td><td>a vertical wall for each street <code>s1…s2</code> → <code>Wall: (avenue, s); east</code></td></tr>
+    </table>
+
+    <div class="cols">
+      <div>
+        <div class="label">Alternative syntax</div>
+        <pre><code>KarelWorld
+streets 5
+avenues 5
+karel 1 1 east
+beepers 3 3 2
+eastwestwalls 1 2 2
+northsouthwalls 4 1 1</code></pre>
+      </div>
+      <div>
+        <div class="label">Converts to <code>.w</code></div>
+        <pre><code>Dimension: (5, 5)
+Karel: (1, 1); east
+Beeper: (3, 3); 2
+Wall: (2, 1); north
+Wall: (4, 1); east</code></pre>
+      </div>
+    </div>
+    <div class="render" id="w-karelworld"><span class="status">Rendering…</span></div>
+
+    <div class="note"><strong>Edge convention.</strong> Whether an
+      <code>eastwestwalls</code>/<code>northsouthwalls</code> line sits on the north/south (or
+      east/west) side of a corner varies between tools. The Playground assumes north and east; if a
+      converted wall lands one cell off, flip <code>EW_SIDE</code>/<code>NS_SIDE</code> near the top
+      of the Playground’s script.</div>
+
+    <!-- ─────────────────────── colon-delimited ─────────────────────── -->
+    <h2>Alternative: the colon-delimited format<span class="badge alt">Playground only</span></h2>
+    <p>A compact <code>keyword:a:b</code> style. Its coordinates are <strong>0-indexed</strong> from
+      the bottom-left, so the Playground adds 1 to every avenue and street when converting (the
+      <code>dimension</code> line is a pair of counts, so it is left as-is).</p>
+
+    <table>
+      <tr><th>Line</th><th>Native <code>.w</code> equivalent</th></tr>
+      <tr><td><code>dimension:a:s</code></td><td><code>Dimension: (a, s)</code> — counts, unchanged</td></tr>
+      <tr><td><code>karel:a:s</code> <span style="color:var(--muted)">(optional <code>:dir</code>)</span></td><td><code>Karel: (a+1, s+1); dir</code> (defaults to <code>east</code>)</td></tr>
+      <tr><td><code>top:a:s</code></td><td><code>Wall: (a+1, s+1); north</code></td></tr>
+      <tr><td><code>bottom:a:s</code></td><td><code>Wall: (a+1, s+1); south</code></td></tr>
+      <tr><td><code>left:a:s</code></td><td><code>Wall: (a+1, s+1); west</code></td></tr>
+      <tr><td><code>right:a:s</code></td><td><code>Wall: (a+1, s+1); east</code></td></tr>
+      <tr><td><code>beeper:a:s</code></td><td><code>Beeper: (a+1, s+1); 1</code> — repeat a line to stack beepers</td></tr>
+    </table>
+
+    <div class="cols">
+      <div>
+        <div class="label">Alternative syntax</div>
+        <pre><code>dimension:4:7
+karel:2:1
+top:3:0
+top:3:1
+right:3:1
+right:3:2
+top:3:3
+top:3:4
+top:3:5
+top:3:6
+beeper:3:2
+beeper:3:2
+beeper:3:2</code></pre>
+      </div>
+      <div>
+        <div class="label">Converts to <code>.w</code></div>
+        <pre><code>Dimension: (4, 7)
+Karel: (3, 2); east
+Beeper: (4, 3); 3
+Wall: (4, 1); north
+Wall: (4, 2); north
+Wall: (4, 2); east
+Wall: (4, 3); east
+Wall: (4, 4); north
+Wall: (4, 5); north
+Wall: (4, 6); north
+Wall: (4, 7); north</code></pre>
+      </div>
+    </div>
+    <div class="render" id="w-colon"><span class="status">Rendering…</span></div>
+
+    <div class="foot">
+      Try any of these in the <a href="./playground.html">Playground</a> — paste a world, watch Karel
+      appear at the start, then write code to solve it. New to Karel? Start with the
+      <a href="./index.html">ten-lesson course</a>.
+    </div>
+  </div>
+
+  <script type="module">
+    import { runKarel } from "./stanfordkarel.js";
+
+    const OPTS = { cellSize: 34, delay: 150 };
+
+    // Each format's example is shown as-written above; here we render the native
+    // .w each one resolves to, so the picture is exactly what the library sees.
+    const primary = `
+Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (3, 3); 2
+Wall: (2, 1); north
+Color: (4, 4); Blue
+Speed: 3`;
+
+    const karelworld = `
+Dimension: (5, 5)
+Karel: (1, 1); east
+Beeper: (3, 3); 2
+Wall: (2, 1); north
+Wall: (4, 1); east`;
+
+    const colon = `
+Dimension: (4, 7)
+Karel: (3, 2); east
+Beeper: (4, 3); 3
+Wall: (4, 1); north
+Wall: (4, 2); north
+Wall: (4, 2); east
+Wall: (4, 3); east
+Wall: (4, 4); north
+Wall: (4, 5); north
+Wall: (4, 6); north
+Wall: (4, 7); north`;
+
+    async function show(id, world) {
+      const el = document.getElementById(id);
+      try {
+        const img = await runKarel(world, () => {}, OPTS);   // no-op → starting frame
+        el.replaceChildren(img);
+      } catch (err) {
+        el.innerHTML = `<span class="status">Render error: ${err.message}</span>`;
+      }
+    }
+
+    await show("w-primary", primary);
+    await show("w-karelworld", karelworld);
+    await show("w-colon", colon);
+  </script>
+</body>
+</html>

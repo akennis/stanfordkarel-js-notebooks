@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karel Playground — paste a world, write code, watch it run</title>
+  <style>
+    :root { --fg: #222; --muted: #888; --border: #ddd; --accent: #2b6cb0; --err: #c53030; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif; color: var(--fg);
+      max-width: 68rem; margin: 2.5rem auto; padding: 0 1rem; line-height: 1.5;
+    }
+    h1 { margin-bottom: 0.25rem; }
+    p.sub { color: #555; margin-top: 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    section { min-width: 0; }
+    .panel-label { font-weight: 600; margin-bottom: 0.4rem; }
+    textarea {
+      width: 100%; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px; line-height: 1.45; padding: 0.6rem 0.7rem;
+      border: 1px solid var(--border); border-radius: 6px; resize: vertical;
+      background: #fafafa; color: var(--fg); tab-size: 2;
+    }
+    #world { min-height: 260px; }
+    #code  { min-height: 260px; }
+    .controls { margin: 0.6rem 0; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    button {
+      font: inherit; font-weight: 600; cursor: pointer;
+      border: 1px solid var(--accent); background: var(--accent); color: #fff;
+      padding: 0.4rem 0.9rem; border-radius: 6px;
+    }
+    button.secondary { background: #fff; color: var(--accent); }
+    button:disabled { opacity: 0.55; cursor: default; }
+    .render { margin-top: 0.6rem; min-height: 200px; }
+    .render img { border: 1px solid var(--border); max-width: 100%; height: auto; }
+    .status { color: var(--muted); }
+    .err {
+      margin-top: 0.6rem; color: var(--err); background: #fff5f5;
+      border: 1px solid #feb2b2; border-radius: 6px; padding: 0.5rem 0.7rem;
+      font-family: ui-monospace, monospace; font-size: 13px; white-space: pre-wrap;
+    }
+    details.ref { margin: 1.5rem 0 0; border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.8rem; }
+    details.ref summary { cursor: pointer; font-weight: 600; }
+    details.ref pre { background: #fafafa; border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 0.7rem; overflow-x: auto; font-size: 13px; }
+    details.ref code { font-family: ui-monospace, monospace; }
+    table { border-collapse: collapse; font-size: 14px; }
+    table td { padding: 0.15rem 0.8rem 0.15rem 0; vertical-align: top; }
+    table td:first-child { font-family: ui-monospace, monospace; white-space: nowrap; }
+    .convert { margin-top: 0.8rem; }
+    .convert-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
+    .convert-head .panel-label { margin-bottom: 0; }
+    .convert pre {
+      margin: 0; background: #fafafa; border: 1px solid var(--border); border-radius: 6px;
+      padding: 0.6rem 0.7rem; overflow-x: auto; font-family: ui-monospace, monospace;
+      font-size: 13px; line-height: 1.45; white-space: pre; color: var(--fg);
+    }
+    .convert .hint { color: var(--muted); font-size: 12px; margin: 0.3rem 0 0; }
+  </style>
+</head>
+<body>
+  <h1>Karel Playground</h1>
+  <p class="sub">Paste a world on the left and Karel appears at the start. Write a <code>main(k)</code> on the right and press ▶ Run to watch it solve. New to the world syntax? See <a href="./world-formats.html" target="_blank" rel="noopener">World Formats</a> (opens in a new tab).</p>
+
+  <div class="grid">
+    <section>
+      <div class="panel-label">World definition</div>
+      <textarea id="world" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+      <div class="controls">
+        <button type="button" id="loadBtn" class="secondary">↻ Load world</button>
+        <span class="status" id="loadStatus"></span>
+      </div>
+      <div class="convert" id="convertOut" hidden>
+        <div class="convert-head">
+          <div class="panel-label">Converted to <code>.w</code> format</div>
+          <button type="button" id="copyConvertBtn" class="secondary">Copy</button>
+        </div>
+        <pre id="convertText"></pre>
+        <p class="hint">Auto-converted from a legacy format. Copy this to use it directly with the main library, and verify walls &amp; start position match your source.</p>
+      </div>
+      <div class="panel-label">Starting position</div>
+      <div class="render" id="worldOut"><span class="status">Loading…</span></div>
+    </section>
+
+    <section>
+      <div class="panel-label">Your code</div>
+      <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+      <div class="controls">
+        <button type="button" id="runBtn">▶ Run</button>
+        <button type="button" id="resetBtn" class="secondary">Reset code</button>
+      </div>
+      <div class="panel-label">Result</div>
+      <div class="render" id="codeOut"><span class="status">Write some code and press Run.</span></div>
+    </section>
+  </div>
+
+  <details class="ref">
+    <summary>Quick reference — world format &amp; Karel commands</summary>
+    <p>Full details of every syntax are on the <a href="./world-formats.html" target="_blank" rel="noopener">World Formats</a> page (opens in a new tab). Two legacy formats are auto-converted on load, so you can paste any of these styles:</p>
+    <ul>
+      <li>the lowercase <code>KarelWorld</code> format (<code>streets</code>/<code>avenues</code>/<code>eastwestwalls</code>/<code>northsouthwalls</code>/<code>beepers</code>) — if a wall lands one cell off, flip <code>EW_SIDE</code>/<code>NS_SIDE</code> in the page source;</li>
+      <li>the colon-delimited, 0-indexed format (<code>dimension:4:7</code>, <code>karel:2:1</code>, <code>top/bottom/left/right:a:s</code>, <code>beeper:a:s</code>).</li>
+    </ul>
+    <p><strong>World file format</strong> (one directive per line, 1-indexed from the bottom-left corner):</p>
+<pre><code>Dimension: (avenues, streets)      # grid width × height
+Karel: (avenue, street); direction # start pose — direction is north/south/east/west
+BeeperBag: n                       # starting beepers (a number or INFINITY)
+Beeper: (avenue, street); count    # beepers on a corner
+Wall: (avenue, street); direction  # wall on that side of the corner
+Color: (avenue, street); colorName # painted corner (e.g. Red, Blue)
+Speed: n                           # animation speed (float)</code></pre>
+    <p><strong>Karel commands</strong> — call them on the <code>k</code> passed to <code>main(k)</code>:</p>
+    <table>
+      <tr><td>k.move()</td><td>Move one corner forward.</td></tr>
+      <tr><td>k.turnLeft()</td><td>Turn 90° left (there is no turnRight — turn left three times).</td></tr>
+      <tr><td>k.putBeeper()</td><td>Drop a beeper on the current corner.</td></tr>
+      <tr><td>k.pickBeeper()</td><td>Pick up a beeper from the current corner.</td></tr>
+      <tr><td>k.paintCorner(color)</td><td>Paint the current corner (e.g. "Red").</td></tr>
+      <tr><td>k.frontIsClear()</td><td>→ boolean: no wall ahead.</td></tr>
+      <tr><td>k.leftIsClear() / k.rightIsClear()</td><td>→ boolean: no wall to the side.</td></tr>
+      <tr><td>k.beepersPresent()</td><td>→ boolean: a beeper is on this corner.</td></tr>
+      <tr><td>k.beepersInBag()</td><td>→ boolean: Karel is carrying beepers.</td></tr>
+      <tr><td>k.facingNorth() / South / East / West</td><td>→ boolean: current direction.</td></tr>
+    </table>
+  </details>
+
+  <script type="module">
+    import { runKarel, worlds } from "./stanfordkarel.js";
+
+    const worldEl   = document.getElementById("world");
+    const codeEl    = document.getElementById("code");
+    const worldOut  = document.getElementById("worldOut");
+    const codeOut   = document.getElementById("codeOut");
+    const loadStatus = document.getElementById("loadStatus");
+    const loadBtn   = document.getElementById("loadBtn");
+    const runBtn    = document.getElementById("runBtn");
+    const resetBtn  = document.getElementById("resetBtn");
+    const convertOut  = document.getElementById("convertOut");
+    const convertText = document.getElementById("convertText");
+    const copyConvertBtn = document.getElementById("copyConvertBtn");
+
+    const STARTER_CODE = `function main(k) {
+  // Try me on the square world: walk east and pick up nothing yet.
+  k.move();
+  k.move();
+}
+`;
+
+    worldEl.value = worlds.square.trim() + "\n";
+    codeEl.value = STARTER_CODE;
+
+    const OPTS = { cellSize: 46, delay: 150 };
+
+    // ─────────────────── legacy "KarelWorld" format support ───────────────────
+    // Some tools export worlds in an older, colon-free style:
+    //
+    //   KarelWorld
+    //   streets 10
+    //   avenues 10
+    //   beepers 9 10 1
+    //   eastwestwalls 6 9 9
+    //   northsouthwalls 9 9 9
+    //
+    // Our parser only reads the `.w` format (Dimension:/Karel:/Wall:/Beeper:…),
+    // so we translate on the fly. The two files describe the same world; only
+    // the spelling differs. Assumptions below are centralized because they can't
+    // be disambiguated from the file alone — VERIFY the render against your
+    // source and flip a constant if a wall lands one cell off.
+    //
+    //   beepers        <avenue> <street> <count>
+    //   eastwestwalls  <street> <ave1> <ave2>   → horizontal wall, one per avenue
+    //   northsouthwalls <avenue> <st1> <st2>    → vertical wall, one per street
+    const EW_SIDE = "north";   // side an east-west wall sits on; flip to "south"
+    const NS_SIDE = "east";    // side a north-south wall sits on; flip to "west"
+
+    function isLegacyWorld(text) {
+      if (/\bDimension\s*:/i.test(text)) return false;   // already .w format
+      return /^\s*KarelWorld\b/m.test(text) ||
+             /^\s*(streets|avenues|eastwestwalls|northsouthwalls)\b/m.test(text);
+    }
+
+    // Translate the legacy format to `.w`. Returns the input unchanged if it
+    // isn't legacy, so it's safe to call on every render.
+    function convertLegacyWorld(text) {
+      if (!isLegacyWorld(text)) return text;
+      const ints = s => (s.match(/-?\d+/g) || []).map(Number);
+      let avenues = null, streets = null, bag = null, speed = null, karel = null;
+      const beepers = [], walls = [];
+
+      for (const raw of text.split("\n")) {
+        const line = raw.trim();
+        if (!line) continue;
+        const [kw, ...rest] = line.split(/\s+/);
+        const nums = ints(rest.join(" "));
+        switch (kw.toLowerCase()) {
+          case "avenues": if (nums[0]) avenues = nums[0]; break;
+          case "streets": if (nums[0]) streets = nums[0]; break;
+          case "speed":   if (rest.length) speed = parseFloat(rest[0]); break;
+          case "beepers":
+            if (nums.length >= 2) beepers.push([nums[0], nums[1], nums[2] ?? 1]);
+            break;
+          case "beeperbag":
+            bag = /inf/i.test(rest.join(" ")) ? "INFINITY" : (nums[0] ?? null);
+            break;
+          case "karel": {
+            const d = (rest.join(" ").match(/north|south|east|west/i) || ["east"])[0];
+            if (nums.length >= 2) karel = [nums[0], nums[1], d.toLowerCase()];
+            break;
+          }
+          case "eastwestwalls": {                 // street, ave1..ave2
+            const [s, a1, a2 = a1] = nums;
+            if (s != null && a1 != null)
+              for (let a = Math.min(a1, a2); a <= Math.max(a1, a2); a++)
+                walls.push([a, s, EW_SIDE]);
+            break;
+          }
+          case "northsouthwalls": {               // avenue, st1..st2
+            const [a, s1, s2 = s1] = nums;
+            if (a != null && s1 != null)
+              for (let s = Math.min(s1, s2); s <= Math.max(s1, s2); s++)
+                walls.push([a, s, NS_SIDE]);
+            break;
+          }
+          // "karelworld" header and any unknown keyword: ignored
+        }
+      }
+
+      const out = [];
+      if (avenues && streets) out.push(`Dimension: (${avenues}, ${streets})`);
+      if (karel) out.push(`Karel: (${karel[0]}, ${karel[1]}); ${karel[2]}`);
+      if (bag !== null) out.push(`BeeperBag: ${bag}`);
+      if (speed != null && !isNaN(speed)) out.push(`Speed: ${speed}`);
+      for (const [a, s, c] of beepers) out.push(`Beeper: (${a}, ${s}); ${c}`);
+      for (const [a, s, d] of walls) out.push(`Wall: (${a}, ${s}); ${d}`);
+      return out.join("\n") + "\n";
+    }
+
+    // ─────────────── colon-delimited "dimension:a:b" format support ───────────
+    // Another exporter uses a colon-delimited, 0-indexed style:
+    //
+    //   dimension:4:7          # 4 avenues × 7 streets (counts, not indices)
+    //   karel:2:1              # start avenue:street (0-indexed), optional :dir
+    //   top:3:6                # wall on the north side of a corner
+    //   right:3:1              # east; also bottom→south, left→west
+    //   beeper:3:2             # one beeper (repeat a line to stack them)
+    //
+    // Coordinates are 0-indexed from the bottom-left; our `.w` is 1-indexed, so
+    // every avenue/street gets +1 (the dimension counts do not). It collides
+    // with the .w detector (it contains "dimension:"), so we handle it first.
+    const COLON_DIRS = { top: "north", bottom: "south", left: "west", right: "east" };
+
+    function isColonWorld(text) {
+      return /^\s*(dimension|karel|beepers?|top|bottom|left|right):\d+(:\d+)?/im.test(text);
+    }
+
+    function convertColonWorld(text) {
+      if (!isColonWorld(text)) return text;
+      let dim = null, karel = null;
+      const beepers = new Map();   // "a,s" → count
+      const walls = [];
+      for (const raw of text.split("\n")) {
+        const line = raw.trim();
+        if (!line) continue;
+        const parts = line.split(":").map(p => p.trim());
+        const kw = parts[0].toLowerCase();
+        const n = parts.slice(1).map(Number);
+        if (kw === "dimension") { if (n.length >= 2) dim = [n[0], n[1]]; }
+        else if (kw === "karel") {
+          if (n.length >= 2) karel = [n[0] + 1, n[1] + 1, (parts[3] || "east").toLowerCase()];
+        } else if (kw === "beeper" || kw === "beepers") {
+          if (n.length >= 2) {
+            const key = `${n[0] + 1},${n[1] + 1}`;
+            const c = (kw === "beepers" && n[2]) ? n[2] : 1;
+            beepers.set(key, (beepers.get(key) || 0) + c);
+          }
+        } else if (kw in COLON_DIRS) {
+          if (n.length >= 2) walls.push([n[0] + 1, n[1] + 1, COLON_DIRS[kw]]);
+        }
+      }
+      const out = [];
+      if (dim) out.push(`Dimension: (${dim[0]}, ${dim[1]})`);
+      if (karel) out.push(`Karel: (${karel[0]}, ${karel[1]}); ${karel[2]}`);
+      for (const [key, c] of beepers) { const [a, s] = key.split(","); out.push(`Beeper: (${a}, ${s}); ${c}`); }
+      for (const [a, s, d] of walls) out.push(`Wall: (${a}, ${s}); ${d}`);
+      return out.join("\n") + "\n";
+    }
+
+    // True when the pasted text is in a non-native format we translate.
+    function isConvertible(text) { return isColonWorld(text) || isLegacyWorld(text); }
+
+    // The world text to actually simulate: converts either legacy format
+    // transparently. The colon format is tried first because it also contains
+    // "dimension:", which would otherwise fool the .w detector.
+    function worldText() {
+      const raw = worldEl.value;
+      if (isColonWorld(raw)) return convertColonWorld(raw);
+      return convertLegacyWorld(raw);
+    }
+
+    // Insert two spaces on Tab so the textareas feel like a code editor.
+    for (const ta of [worldEl, codeEl]) {
+      ta.addEventListener("keydown", (e) => {
+        if (e.key !== "Tab") return;
+        e.preventDefault();
+        const s = ta.selectionStart, end = ta.selectionEnd;
+        ta.value = ta.value.slice(0, s) + "  " + ta.value.slice(end);
+        ta.selectionStart = ta.selectionEnd = s + 2;
+      });
+    }
+
+    function showError(target, message) {
+      const div = document.createElement("div");
+      div.className = "err";
+      div.textContent = message;
+      target.replaceChildren(div);
+    }
+
+    // Reveal (or hide) the panel that shows the translated `.w` source. Pass the
+    // converted text to display it for copying, or null when the pasted world is
+    // already native `.w` and no conversion happened.
+    function showConverted(text) {
+      if (text == null) {
+        convertOut.hidden = true;
+        convertText.textContent = "";
+        return;
+      }
+      convertText.textContent = text.replace(/\n+$/, "") + "\n";
+      convertOut.hidden = false;
+      copyConvertBtn.textContent = "Copy";
+    }
+
+    // Render just the starting position: run a program that does nothing, so
+    // runKarel produces a single-frame GIF of the world as loaded.
+    async function loadWorld() {
+      worldOut.replaceChildren(
+        Object.assign(document.createElement("span"), { className: "status", textContent: "Loading…" })
+      );
+      loadStatus.textContent = "";
+      loadBtn.disabled = true;
+      const converted = isConvertible(worldEl.value);
+      const text = worldText();
+      showConverted(converted ? text : null);
+      try {
+        const img = await runKarel(text, () => {}, OPTS);
+        worldOut.replaceChildren(img);
+        if (img.dataset.error) loadStatus.textContent = img.dataset.error;
+        else if (converted) loadStatus.textContent =
+          "Converted from a legacy world format — check walls and start position match your source.";
+      } catch (err) {
+        showError(worldOut, "Could not load world: " + err.message);
+      } finally {
+        loadBtn.disabled = false;
+      }
+    }
+
+    // Compile the editor text into a main() the same way the lessons do, then
+    // run it against the current world and show the animation.
+    function compileMain(src) {
+      const factory = new Function(`"use strict";\n${src}\n;return typeof main === "function" ? main : null;`);
+      const fn = factory();
+      if (typeof fn !== "function")
+        throw new ReferenceError("Your code must define a function called main, e.g. function main(k) { … }");
+      return fn;
+    }
+
+    async function runCode() {
+      runBtn.disabled = true;
+      codeOut.replaceChildren(
+        Object.assign(document.createElement("span"), { className: "status", textContent: "Running…" })
+      );
+      let main;
+      try {
+        main = compileMain(codeEl.value);
+      } catch (err) {
+        showError(codeOut, err instanceof SyntaxError ? "Syntax error: " + err.message : err.message);
+        runBtn.disabled = false;
+        return;
+      }
+      try {
+        const img = await runKarel(worldText(), main, OPTS);
+        codeOut.replaceChildren(img);
+        if (img.dataset.error) {
+          const e = document.createElement("div");
+          e.className = "err";
+          e.textContent = "Karel stopped early: " + img.dataset.error;
+          codeOut.appendChild(e);
+        }
+      } catch (err) {
+        showError(codeOut, "Error: " + err.message);
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    loadBtn.addEventListener("click", loadWorld);
+    runBtn.addEventListener("click", runCode);
+    resetBtn.addEventListener("click", () => { codeEl.value = STARTER_CODE; codeEl.focus(); });
+    copyConvertBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(convertText.textContent);
+        copyConvertBtn.textContent = "Copied!";
+        setTimeout(() => { copyConvertBtn.textContent = "Copy"; }, 1500);
+      } catch {
+        // Clipboard API unavailable (e.g. non-secure context): select the text
+        // so the user can copy it manually with the keyboard.
+        const range = document.createRange();
+        range.selectNodeContents(convertText);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    });
+
+    loadWorld();
+  </script>
+</body>
+</html>

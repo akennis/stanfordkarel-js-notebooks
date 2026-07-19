@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Ada Lovelace",
+    "github": "ada",
+    "repoUrl": "https://github.com/ada/karel-assignments.git"
+  },
+  {
+    "name": "Alan Turing",
+    "github": "aturing",
+    "repoUrl": "https://github.com/aturing/karel-assignments.git"
+  }
+]

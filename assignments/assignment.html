@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assignment — Karel JS</title>
+  <link rel="stylesheet" href="../lessons/lesson.css">
+  <style>
+    /* Assignment-only additions on top of the shared lesson styles. */
+    .points{color:var(--muted);font-weight:600;white-space:nowrap;}
+    .submit-panel{border-top:1px solid var(--in-border);padding:1rem;}
+    .submit-help{margin:.2rem 0 .6rem;color:var(--ink);}
+    .submit-help code,.submit-how code{background:#eef1f4;padding:.1em .35em;border-radius:4px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;}
+    textarea.submission{width:100%;min-height:5rem;resize:vertical;display:block;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem;
+      line-height:1.5;color:#334;background:#f6f8fa;border:1px solid var(--in-border);
+      border-radius:6px;padding:.55rem .7rem;}
+    .submit-controls{display:flex;gap:.6rem;align-items:center;margin:.55rem 0 0;}
+    .copy-btn{font:inherit;font-weight:600;font-size:.88rem;color:#fff;background:#16a34a;
+      border:none;border-radius:6px;padding:.4rem .8rem;cursor:pointer;}
+    .copy-btn:hover{background:#128a3c;}
+    .copy-note{font-size:.85rem;color:var(--muted);}
+    .submit-how{margin:.8rem 0 0;font-size:.9rem;color:var(--muted);}
+    .submit-how summary{cursor:pointer;font-weight:600;color:var(--ink);}
+    .submit-how p{margin:.5rem 0 .3rem;}
+    .submit-note{font-style:italic;}
+  </style>
+</head>
+<body>
+  <header class="course">
+    <div class="crumb"><a href="./index.html" style="color:inherit;text-decoration:none;">Karel Assignments</a></div>
+    <h1 id="title">Assignment</h1>
+    <p class="lead" id="lead">Write your solution, run it to check against the goal, then submit.</p>
+  </header>
+
+  <main id="assignment"></main>
+
+  <nav class="pager">
+    <a href="./index.html">← All assignments</a><span class="spacer"></span><span></span>
+  </nav>
+
+  <script type="module">
+    import { getAssignment } from "./index.js";
+    import { renderAssignment } from "./assignment.js";
+
+    const id = new URLSearchParams(location.search).get("id");
+    const mount = document.getElementById("assignment");
+
+    if (!id) {
+      // Opened without ?id= (typed, bookmarked, or a dropped query) — send them
+      // to the assignment list rather than dead-ending on an error.
+      location.replace("./index.html");
+    } else {
+      const a = getAssignment(id);
+      if (!a) {
+        document.getElementById("title").textContent = "Assignment not found";
+        mount.innerHTML =
+          `<div class="err">No assignment with id <code>${id.replace(/[&<>]/g, "")}</code>. ` +
+          `See <a href="./index.html">all assignments</a>.</div>`;
+      } else {
+        document.title = `${a.title} — Karel JS`;
+        document.getElementById("title").textContent = a.title;
+        renderAssignment(a, mount, { isolate: true });
+      }
+    }
+  </script>
+</body>
+</html>

@@ -19,7 +19,10 @@ There is **no build step, no bundler, no transpile, and no test suite.** Source 
 | `worlds/` | Bundled world modules. `square.js` etc. each `export default` a world string; `index.js` re-exports them all. |
 | `index.html` | Course landing page / table of contents. |
 | `lessons/` | `01-…10-*.html` lessons, `lesson.js` (`renderNotebook` helper), `lesson.css`, and `square.html` (standalone demo). |
-| `package.json` | Only `stanfordkarel.js`, `worlds/`, `LICENSE`, `README.md` are published to npm (`files` field). The course is repo-only, served as static files. |
+| `assignments/` | Graded coursework. Manifest modules (`<id>.js`) + `index.js` (re-export & lookup), the generic student page `assignment.html` (reads `?id=`), its renderer `assignment.js`, and `index.html` (assignment list). |
+| `tools/` | `grade.js` (teacher batch grader) + `grade-worker.js`, `seal.js` (solution sealer), `roster.example.json`. |
+| `student-template/` | Starter repo layout students copy to submit (`README.md`, `student.json`, `submissions/`). Repo-only, not published. |
+| `package.json` | Published to npm (`files` field): `stanfordkarel.js`, `worlds/`, `assignments/`, `tools/`, `LICENSE`, `README.md`. The course pages (`index.html`, `lessons/`, `student-template/`) are repo-only, served as static files. |
 
 ## Architecture of `stanfordkarel.js`
 
@@ -82,12 +85,32 @@ Lessons are static HTML using `renderNotebook(cells)` from `lessons/lesson.js`. 
 
 New lessons: copy an existing `NN-*.html`, wire the prev/next `.pager` links, and add an entry to the `<ol class="toc">` in `index.html`. The challenge machinery lives entirely in `lesson.js`/`lesson.css`, so any lesson can add challenge cells.
 
+## Assignments & grading
+
+The `assignments/` + `tools/` layer adds **graded coursework** on top of the same simulator. A lesson challenge is formative (instant ✓ only); an assignment is that *plus* a submit path and an authoritative teacher-side re-grade. Key pieces and invariants:
+
+- **Two grades, one solution.** The instant in-browser ✓ is practice; the **grade of record** is `tools/grade.js` re-running the submission headlessly. Both compare against the *same* solution using the same aspects (`check`) — so keep the browser and CLI paths grading identically. The browser path reuses `runKarel`/`runKarelInWorker`; the CLI path uses `gradeKarel` (no canvas/`gif.js`, so it runs in Node).
+- **Sealed solutions.** An assignment manifest stores its solution as a `sealSolution()` string, **never plaintext**, so it isn't trivially readable in page source. This is obfuscation, not security (the key is embedded in `stanfordkarel.js`) — integrity comes from the CLI re-grade, not the cipher. Re-seal after editing a solution: `node tools/seal.js <plaintext.js>`.
+- **`gradeKarel` is the single headless grader.** It wraps the existing `computeSolutionState` + `statesMatch`/`matchesEnd`. Reuse it; don't hand-roll state comparison. It accepts a `main` function *or* program source text for both `program` and `solution`.
+- **Infinite-loop safety differs by side.** The browser isolates student code in a Web Worker (`isolate: true`). The CLI runs each `gradeKarel` in a `worker_threads` worker that `grade.js` kills after `--timeout` ms — necessary because `gradeKarel`/`computeSolutionState` have **no frame cap** (that guard lives only in `runKarel`'s render loop). Don't call `gradeKarel` on untrusted code without a timeout wrapper.
+- **Submission format.** `submissions/<id>.js` = three `// ` header comment lines (`assignment: <id>` tags the file) followed by the student's program verbatim. The whole file compiles as-is (comments are harmless), so the grader passes the raw text to `gradeKarel` — no export/import to strip. Keep it comment-tagged, not an ES module, for this reason.
+
+### Adding an assignment
+
+1. Write the plaintext solution to a scratch file and seal it: `node tools/seal.js sol.js` (add `--check` to verify the round-trip).
+2. Create `assignments/<id>.js` exporting a manifest (`id`, `title`, `points`, `world`, `prompt` HTML, `starter`, `check`, optional `end`, and the sealed `solution`). Mirror `assignments/collect-all.js`, including the plaintext-solution comment in its JSDoc header so the answer stays re-derivable.
+3. Re-export it from `assignments/index.js` **and** add it to the `assignments` array — that's what `tools/grade.js` grades, so this alone makes it gradeable at `assignments/assignment.html?id=<id>`.
+4. Add a matching `<li>` to the **static** list in `assignments/index.html` (the list is intentionally static HTML — no JS — so it renders even if module loading is blocked; mirror the existing row).
+5. It's published (the `assignments/` glob is in `files`). No new HTML per assignment — `assignment.html` is generic and reads `?id=`.
+
 ## Verifying changes (no test runner)
 
 Open the relevant page in a browser and watch the animation:
 
 - Library change → open `lessons/square.html` (exercises `runKarel`, bundled world, most Karel methods).
 - Course change → open `index.html` and click through the lessons.
+- Assignment change → open `assignments/assignment.html?id=collect-all` (goal builds, Run gives ✓ on a correct answer, Copy submission works, work survives reload). Grader change → `node tools/grade.js --roster <local.json>` against a scratch repo dir with a correct and a wrong `submissions/*.js`.
+- `gradeKarel`/cipher change → quick headless check: `node -e "import('./stanfordkarel.js').then(async m=>{const s=m.sealSolution('function main(k){k.move();}');console.log(m.unsealSolution(s));console.log(await m.gradeKarel('Dimension: (3,1)\nKarel: (1,1); east','function main(k){k.move();}',{solution:m.unsealSolution(s),check:['position']}))})"`.
 - Serve statically if needed: `python3 -m http.server` then browse to the page. ES module imports from CDN require `http://`/`https://`, not `file://`.
 
 ## Publishing (maintenance)

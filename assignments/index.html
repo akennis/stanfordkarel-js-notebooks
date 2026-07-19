@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karel Assignments</title>
+  <script>
+    // Normalize a missing trailing slash. When a server serves this directory as
+    // "/assignments" (no slash) without redirecting, the browser resolves the
+    // relative links below against the *parent* dir, so "./assignment.html" would
+    // 404. Redirect once to the canonical "/assignments/" so the links resolve
+    // inside this folder. No-op where the server or GitHub Pages already added
+    // the slash, or when opened as .../index.html directly.
+    if (location.pathname.endsWith("/assignments"))
+      location.replace(location.pathname + "/" + location.search + location.hash);
+  </script>
+  <style>
+    :root{ --ink:#1a1a1a; --muted:#666; --line:#e5e7eb; --accent:#0b5fff; }
+    *{box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+      color:var(--ink);background:#fafafa;margin:0;line-height:1.6;}
+    .wrap{max-width:52rem;margin:0 auto;padding:3rem 1.25rem 4rem;}
+    .crumb{font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+    .crumb a{color:inherit;text-decoration:none;}
+    h1{margin:.3rem 0 .4rem;font-size:2.1rem;}
+    .lead{margin:0 0 .5rem;color:var(--muted);font-size:1.1rem;}
+    .intro{margin:1.4rem 0 2rem;}
+    .intro code{background:#eef1f4;padding:.1em .35em;border-radius:4px;font-size:.92em;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+    h2{font-size:1.15rem;margin:2rem 0 .75rem;}
+    ol.toc{list-style:none;margin:0;padding:0;counter-reset:item;}
+    ol.toc li{margin:0;}
+    ol.toc a{display:flex;gap:1rem;align-items:baseline;text-decoration:none;color:inherit;
+      padding:.85rem 1rem;border:1px solid var(--line);border-radius:8px;margin-bottom:.55rem;
+      background:#fff;transition:border-color .15s, box-shadow .15s;}
+    ol.toc a:hover{border-color:var(--accent);box-shadow:0 1px 6px rgba(11,95,255,.08);}
+    ol.toc .num{counter-increment:item;flex:0 0 1.9rem;font-variant-numeric:tabular-nums;
+      font-weight:700;color:var(--accent);font-size:1.05rem;}
+    ol.toc .num::before{content:counter(item,decimal-leading-zero);}
+    ol.toc .body{flex:1;}
+    ol.toc .title{font-weight:600;font-size:1.02rem;}
+    ol.toc .desc{color:var(--muted);font-size:.9rem;}
+    ol.toc .pts{flex:0 0 auto;color:var(--muted);font-size:.85rem;font-weight:600;
+      align-self:center;}
+    .how{border:1px solid var(--line);border-radius:8px;background:#fff;padding:1rem 1.2rem;}
+    .how ol{margin:.4rem 0 0;padding-left:1.2rem;}
+    .how code{background:#eef1f4;padding:.05em .3em;border-radius:4px;
+      font-family:ui-monospace,monospace;font-size:.9em;}
+    .foot{margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid var(--line);
+      color:var(--muted);font-size:.9rem;}
+    .foot a{color:var(--accent);text-decoration:none;} .foot a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">Learning JavaScript with Karel</a></div>
+    <h1>Assignments</h1>
+    <p class="lead">Graded exercises. Solve each one, check it against the goal, then submit your code.</p>
+
+    <p class="intro">Each assignment gives you a goal animation and an editable code box, just like the
+      lesson challenges. The green ✓ is a practice check — your grade comes from the solution you
+      <strong>submit</strong> and your instructor re-runs.</p>
+
+    <h2>The assignments</h2>
+    <!-- Static list so it always renders (no JS needed). When you add an
+         assignment (assignments/<id>.js), add a matching <li> here. -->
+    <ol class="toc">
+      <li><a href="./assignment.html?id=collect-all">
+        <span class="num"></span>
+        <span class="body"><span class="title">Collect Every Beeper</span></span>
+        <span class="pts">10 pts</span>
+      </a></li>
+    </ol>
+
+    <h2>How to submit</h2>
+    <div class="how">
+      <p>Submit with git (preferred):</p>
+      <ol>
+        <li>Create a repository from your instructor's assignments template.</li>
+        <li>On each assignment page, press <code>📋 Copy submission</code>.</li>
+        <li>Save the copied text as <code>submissions/&lt;assignment-id&gt;.js</code> in your repo.</li>
+        <li><code>git add</code>, <code>git commit</code>, and <code>git push</code>.</li>
+      </ol>
+      <p style="margin:.6rem 0 0;">No git? Paste the same text into your shared Google Doc under a
+        heading matching the assignment id.</p>
+    </div>
+
+    <div class="foot">
+      Powered by <a href="https://www.npmjs.com/package/stanfordkarel-js-notebooks">stanfordkarel-js-notebooks</a>.
+      Back to the <a href="../index.html">course</a>.
+    </div>
+  </div>
+</body>
+</html>

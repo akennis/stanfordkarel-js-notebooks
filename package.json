@@ -13,6 +13,12 @@
     },
     "./worlds/*": {
       "import": "./worlds/*.js"
+    },
+    "./assignments": {
+      "import": "./assignments/index.js"
+    },
+    "./assignments/*": {
+      "import": "./assignments/*.js"
     }
   },
   "browser": true,
@@ -21,6 +27,8 @@
   "files": [
     "stanfordkarel.js",
     "worlds/",
+    "assignments/",
+    "tools/",
     "LICENSE",
     "README.md"
   ],

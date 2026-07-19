@@ -317,6 +317,38 @@ animation = karel.runKarel(worldText, main)
 
 ---
 
+## Assignments & grading
+
+On top of the notebook challenges, the repo ships an **assignments** workflow for graded coursework: students solve an exercise, get an instant in-browser ✓ for practice, then **submit** their code — by pushing `submissions/<id>.js` to their own repository (preferred) or pasting it into a shared doc. The instructor re-grades every submission **headlessly** — the grade of record — with the same simulator the browser uses.
+
+- **Student page** — `assignments/assignment.html?id=<id>` renders one assignment (goal GIF, editor, instant check, and a copy-ready submission file). Assignments are manifest modules under `assignments/`, listed at `assignments/index.html`.
+- **Teacher grader** — `tools/grade.js` reads a roster, pulls each student repo, and grades every submission in an isolated worker (with a timeout, so an infinite loop can't hang the run), emitting `gradebook.json` and a printed table.
+
+```bash
+# Grade everyone in a roster (see tools/roster.example.json for the format)
+node tools/grade.js --roster tools/roster.json
+#   --cache <dir>    where student repos are cloned (default .grade-cache)
+#   --out <file>     gradebook JSON (default gradebook.json)
+#   --timeout <ms>   per-submission budget (default 5000)
+#   --no-pull        grade already-cloned repos without git pull
+```
+
+A `repoUrl` in the roster may be a git URL **or** a local path (used in place — handy for testing).
+
+### Grading API
+
+These functions are part of the public library, usable in Node or the browser:
+
+| Function | Returns | Purpose |
+|---|---|---|
+| `gradeKarel(worldText, program, { solution, check, end })` | `Promise<{ solved, state, error }>` | Run a program against a world and compare its final state to a reference `solution` and/or `end` pose — **no rendering** (no canvas/`gif.js`), so it runs in Node. `program`/`solution` may be a `main` function or its source string. Errors are soft (a throw yields `{ solved: false, error }`). |
+| `compileProgram(src)` | `Function` | Compile Karel program source text into a callable `main()` (throws on a syntax error or a missing `main`). |
+| `sealSolution(src)` / `unsealSolution(cipher)` | `string` | Reversibly obfuscate / recover a solution string so an assignment page can embed it without shipping plaintext. **Obfuscation, not encryption** — the authoritative grade is the headless re-grade, so a student who recovers the key gains nothing gradeable. |
+
+> Authoring an assignment solution: write the plaintext `main` in a file and run `node tools/seal.js solution.js` to print the sealed string to paste into the manifest's `solution:` field.
+
+---
+
 ## Complete Example
 
 Karel navigates from the south-west corner to a 5×5 inner square and collects all 16 beepers around its perimeter:
@@ -365,8 +397,11 @@ See `lessons/square.html` for this example running as a standalone page.
 | `worlds/` | Bundled world modules (`index.js`, `square.js`, …) |
 | `index.html` | Landing page for the *Learning JavaScript with Karel* course |
 | `lessons/` | The ten lesson pages, plus `lesson.js` / `lesson.css` and the `square.html` demo |
+| `assignments/` | Graded-assignment manifests (`index.js`, `collect-all.js`, …) and the shared student page (`assignment.html` / `assignment.js`) |
+| `tools/` | `grade.js` (teacher batch grader), `grade-worker.js`, `seal.js` (solution-sealing helper), `roster.example.json` |
+| `student-template/` | Starter repo layout students copy to submit their work |
 
-Only `stanfordkarel.js`, `worlds/`, `LICENSE`, and `README.md` are published to npm (see the `files` field in `package.json`); the course pages live in the repo and are meant to be served as static files.
+Published to npm (see the `files` field in `package.json`): `stanfordkarel.js`, `worlds/`, `assignments/`, `tools/`, `LICENSE`, and `README.md`. The course pages (`index.html`, `lessons/`, `student-template/`) live in the repo and are meant to be served as static files.
 
 ---
 
