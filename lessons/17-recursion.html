@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>17 · Recursion — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 17 of 18</div>
+    <h1>17 · Recursion</h1>
+    <p class="lead">A function that calls itself — solving a problem by doing a little, then handing the rest to a smaller copy of itself.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-17">✏️ Practice this lesson → Assignment 17 (3 problems)</a></p>
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./16-scope.html">← Scope</a><span class="spacer"></span><a href="./18-error-handling.html">Error handling →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>A function that calls itself</h2>
+      <p>A loop repeats by circling back to the top. <strong>Recursion</strong> repeats a different way: a
+      function <em>calls itself</em> to handle the rest of the job. It sounds circular, but every well-formed
+      recursion has two parts that keep it grounded:</p>
+      <div class="callout"><strong>The two ingredients</strong>
+      <em>Base case</em> — the situation where the work is done and the function stops calling itself (no
+      base case = endless calls).<br>
+      <em>Recursive step</em> — do one small piece, then call the function again on a
+      <strong>smaller</strong> version of the problem, guaranteeing you creep toward the base case.</div>
+      <p>Read a recursion as: "if there's nothing left, stop; otherwise handle one bit and let another copy of
+      me finish."</p>` },
+
+      { md: `<h2>The smallest recursion: walk to the wall</h2>
+      <p>Here's recursion at its simplest. <code>walk</code> asks one question: is the front clear? If yes, it
+      takes a single step and calls <em>itself</em> to walk the (now shorter) remaining hallway. If no — the
+      wall — it does nothing, and the chain stops. The blocked front <strong>is</strong> the base case.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function walk(k) {
+  if (k.frontIsClear()) {   // recursive step
+    k.move();
+    walk(k);
+  }
+  // front blocked → do nothing → base case, the chain ends
+}
+
+function main(k) {
+  walk(k);
+}` },
+
+      { md: `<div class="callout warn"><strong>Always shrink toward the base case</strong>
+      Every recursive call must make the problem <em>smaller</em> — a step closer to the wall, one less
+      beeper, a lower number. If it doesn't, the function calls itself forever and the program never finishes.
+      A recursion without a reachable base case is the recursive version of an infinite loop.</div>` },
+
+      { md: `<h2>Counting down with a parameter</h2>
+      <p>The "smaller problem" is often just a smaller <em>number</em>. This <code>drop</code> takes a count
+      <code>n</code>: if it's zero, stop (base case); otherwise drop one beeper and call itself with
+      <code>n - 1</code>. Each call shrinks <code>n</code> until it reaches the base case. Three calls, three
+      beepers.</p>` },
+      { world: `Dimension: (1, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function drop(k, n) {
+  if (n === 0) return;      // base case: nothing left to drop
+  k.putBeeper();
+  drop(k, n - 1);           // smaller problem
+}
+
+function main(k) {
+  drop(k, 3);
+}` },
+
+      { md: `<h3>Challenge · March and plant, recursively</h3>
+      <p>Karel faces <strong>east</strong> in a five-wide room with an infinite bag. Using recursion (no
+      <code>for</code> or <code>while</code>), plant a beeper on the current corner, then — if the front is
+      clear — step forward and let a recursive call handle the rest. Every corner should end with one
+      beeper.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Write a helper <code>plant(k)</code>: <code>putBeeper()</code>, then <code>if
+        (k.frontIsClear())</code> <code>move()</code> and call <code>plant(k)</code> again. Call it once from
+        <code>main</code>. Beepers should land on all five corners.`,
+        starter: `function plant(k) {
+  k.putBeeper();
+  // if the front is clear, move and recurse
+}
+
+function main(k) {
+  plant(k);
+}`,
+        check: ["beepers"],
+        end: { avenue: 5, street: 1, direction: "east" },
+        solution: function main(k) {
+          function plant(k) {
+            k.putBeeper();
+            if (k.frontIsClear()) {
+              k.move();
+              plant(k);
+            }
+          }
+          plant(k);
+        } },
+
+      { md: `<h2>Recursion vs. loops</h2>
+      <p>Anything a loop can do, recursion can too — they're two ways to repeat. A loop keeps its state in a
+      variable that changes each pass; recursion keeps it in the <em>argument</em> passed to the next call.
+      Recursion reads most naturally when a problem is defined in terms of a smaller version of itself: "a
+      staircase of height <code>n</code> is a pile of <code>n</code>, then a staircase of height
+      <code>n - 1</code>." That sentence <em>is</em> the program.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function staircase(k, n) {
+  if (n === 0) return;            // base case
+  for (let i = 0; i < n; i++) {  // a pile of height n
+    k.putBeeper();
+  }
+  if (k.frontIsClear()) {
+    k.move();
+    staircase(k, n - 1);         // the rest of the staircase
+  }
+}
+
+function main(k) {
+  staircase(k, 4);
+}` },
+
+      { md: `<h3>Challenge · Build an ascending staircase</h3>
+      <p>Karel faces <strong>east</strong> in a four-wide room with an infinite bag. Build the staircase the
+      other way — piles of 1, 2, 3, 4 — with recursion. Carry the current height <code>n</code> as a
+      parameter that <em>grows</em>, and stop when it reaches the top.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Write <code>build(k, n, max)</code>: drop a pile of <code>n</code> beepers; if
+        <code>n &lt; max</code>, <code>move()</code> and call <code>build(k, n + 1, max)</code>. Start it with
+        <code>build(k, 1, 4)</code>. Piles should read 1, 2, 3, 4.`,
+        starter: `function build(k, n, max) {
+  // drop a pile of n beepers
+  // if n < max: move and recurse with n + 1
+}
+
+function main(k) {
+  build(k, 1, 4);
+}`,
+        check: ["beepers"],
+        end: { avenue: 4, street: 1, direction: "east" },
+        solution: function main(k) {
+          function build(k, n, max) {
+            for (let i = 0; i < n; i++) {
+              k.putBeeper();
+            }
+            if (n < max) {
+              k.move();
+              build(k, n + 1, max);
+            }
+          }
+          build(k, 1, 4);
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      A recursive function calls itself to finish the rest of a job. It needs a <em>base case</em> that stops
+      the chain and a <em>recursive step</em> that shrinks the problem — a step toward a wall, one fewer
+      beeper, a smaller number — so the base case is always reached. Recursion and loops are interchangeable;
+      recursion is clearest when a problem is naturally "one piece, plus a smaller version of the same
+      problem."</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

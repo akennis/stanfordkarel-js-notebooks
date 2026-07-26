@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>11 · Numbers &amp; Operators — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 11 of 18</div>
+    <h1>11 · Numbers &amp; Operators</h1>
+    <p class="lead">Do arithmetic and compare values — the operators that let a program calculate and decide.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-11">✏️ Practice this lesson → Assignment 11 (3 problems)</a></p>
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./10-capstone.html">← Capstone</a><span class="spacer"></span><a href="./12-strings.html">Strings →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>Numbers are data you can compute with</h2>
+      <p>In Part 1 our numbers were mostly fixed — <code>move 5 times</code>. But a number doesn't have to be
+      written down ahead of time; a program can <strong>calculate</strong> it. The symbols that combine
+      numbers are called <strong>operators</strong>, and they come in two families:</p>
+      <div class="callout"><strong>The operators you'll use most</strong>
+      <em>Arithmetic</em> — <code>+</code> add, <code>-</code> subtract, <code>*</code> multiply,
+      <code>/</code> divide, <code>%</code> remainder.<br>
+      <em>Comparison</em> — <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>,
+      <code>===</code> (equal), <code>!==</code> (not equal). These don't produce a number — they produce a
+      <strong>boolean</strong>, <code>true</code> or <code>false</code>.</div>
+      <p>Arithmetic answers <em>"how much?"</em>; comparison answers <em>"is it so?"</em>. We'll start with
+      the smallest possible use of each and build up to a program that plans its own work.</p>` },
+
+      { md: `<h2>The smallest step: a computed count</h2>
+      <p>Here's the tiniest meaningful use of arithmetic. Instead of writing <code>6</code>, we let the
+      program work it out: <code>4 + 2</code>. The variable <code>steps</code> holds the result, and the loop
+      uses it. Karel walks exactly six corners to the wall.</p>` },
+      { world: `Dimension: (7, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let steps = 4 + 2;
+  for (let i = 0; i < steps; i++) {
+    k.move();
+  }
+}` },
+
+      { md: `<h2>Multiplying and dividing</h2>
+      <p><code>*</code> and <code>/</code> work exactly as you'd expect. Say a corner needs one beeper for
+      every pair of squares in a three-square row — that's <code>6 / 2 = 3</code> beepers. The program divides
+      to find the count, then drops that many in a pile.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let piles = 6 / 2;
+  for (let i = 0; i < piles; i++) {
+    k.putBeeper();
+  }
+}` },
+
+      { md: `<h2>The remainder operator: every other one</h2>
+      <p><code>%</code> gives the <strong>remainder</strong> after division. <code>7 % 3</code> is 1;
+      <code>4 % 2</code> is 0. It shines for "every N-th" patterns: a number is even exactly when
+      <code>n % 2 === 0</code>. Here Karel walks the row and paints a corner yellow only on the even steps —
+      corners 1, 3, and 5.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  for (let i = 0; i < 6; i++) {
+    if (i % 2 === 0) {
+      k.paintCorner("Yellow");
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h3>Challenge · Calculate the distance</h3>
+      <p>The room is seven corners wide and Karel faces <strong>east</strong>. Don't type the number of
+      moves — <em>compute</em> it with arithmetic (for example <code>3 * 2</code>), walk to the far wall, and
+      drop a single beeper on the last corner.</p>` },
+      { world: `Dimension: (7, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Set a variable to an arithmetic expression that equals <code>6</code>, loop that many
+        <code>move()</code>s, then <code>putBeeper()</code> once. One beeper should sit on corner
+        <strong>(7, 1)</strong>.`,
+        starter: `function main(k) {
+  let steps = /* an expression that equals 6 */;
+  for (let i = 0; i < steps; i++) {
+    k.move();
+  }
+  // drop one beeper at the wall
+}`,
+        check: ["beepers"],
+        end: { avenue: 7, street: 1, direction: "east" },
+        solution: function main(k) {
+          let steps = 3 * 2;
+          for (let i = 0; i < steps; i++) {
+            k.move();
+          }
+          k.putBeeper();
+        } },
+
+      { md: `<h2>Comparisons make decisions</h2>
+      <p>A comparison operator asks a yes/no question and hands back a boolean, which is exactly what an
+      <code>if</code> or <code>while</code> wants. Below, Karel walks all six corners but only drops a beeper
+      where the corner number is <strong>greater than 3</strong> — the test <code>i &gt; 3</code> is
+      <code>false</code> for corners 1–3 and <code>true</code> for 4–6.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  for (let i = 1; i <= 6; i++) {
+    if (i > 3) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h3>Challenge · Paint every other corner</h3>
+      <p>Karel faces <strong>east</strong> in a five-wide room. Walk the whole row and paint <strong>every
+      other</strong> corner — 1, 3, and 5 — <code>"Red"</code>, leaving 2 and 4 bare. The remainder operator
+      is the tool for "every other."</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop over the five corners; when the step index is even
+        (<code>i % 2 === 0</code>), <code>paintCorner("Red")</code>. Move between corners while the front is
+        clear.`,
+        starter: `function main(k) {
+  for (let i = 0; i < 5; i++) {
+    // paint this corner Red only on even steps
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}`,
+        check: ["colors"],
+        end: { avenue: 5, street: 1, direction: "east" },
+        solution: function main(k) {
+          for (let i = 0; i < 5; i++) {
+            if (i % 2 === 0) {
+              k.paintCorner("Red");
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<h2>Putting arithmetic to work: a descending staircase</h2>
+      <p>Now the practical payoff. We want a row where each corner holds one fewer beeper than the last:
+      4, then 3, 2, 1. Rather than writing four different piles, we <em>compute</em> each height from the
+      corner number with subtraction — <code>5 - avenue</code>. One formula plants the whole staircase.</p>` },
+      { md: `<h3>Challenge · Build the staircase</h3>
+      <p>Karel faces <strong>east</strong> in a four-wide room with an infinite bag. On corner 1 drop
+      <strong>4</strong> beepers, on corner 2 drop <strong>3</strong>, on corner 3 drop <strong>2</strong>,
+      on corner 4 drop <strong>1</strong>. Compute each pile's height from the corner number — don't
+      hard-code four separate values.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `For each corner (avenue <code>a</code> from 1 to 4), let <code>count = 5 - a</code>, drop
+        <code>count</code> beepers with an inner loop, then move on while the front is clear. The result is a
+        4-3-2-1 staircase.`,
+        starter: `function main(k) {
+  for (let a = 1; a <= 4; a++) {
+    let count = /* how many beepers here? */;
+    for (let i = 0; i < count; i++) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}`,
+        check: ["beepers"],
+        end: { avenue: 4, street: 1, direction: "east" },
+        solution: function main(k) {
+          for (let a = 1; a <= 4; a++) {
+            let count = 5 - a;
+            for (let i = 0; i < count; i++) {
+              k.putBeeper();
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      Arithmetic operators (<code>+ - * / %</code>) compute numbers; comparison operators
+      (<code>&lt; &gt; &lt;= &gt;= === !==</code>) compute booleans for <code>if</code> and <code>while</code>.
+      <code>%</code> is the go-to for "every other" and even/odd tests. Best of all, a single formula like
+      <code>5 - a</code> can replace a pile of hand-written numbers — that's the whole point of computing a
+      value instead of writing it down.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>15 · Maps — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 15 of 18</div>
+    <h1>15 · Maps</h1>
+    <p class="lead">Look up a value by its key — a purpose-built dictionary for translation and tallying.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-15">✏️ Practice this lesson → Assignment 15 (3 problems)</a></p>
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./14-objects.html">← Objects</a><span class="spacer"></span><a href="./16-scope.html">Scope →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>A dictionary of key → value</h2>
+      <p>A <strong>Map</strong> stores pairs and lets you fetch a value by its <strong>key</strong> — exactly
+      like looking up a word in a dictionary. You've met key/value pairs already in objects; a Map is a
+      specialised container built for <em>lookups that change as the program runs</em>: adding keys, checking
+      whether one exists, counting how many there are, and iterating in insertion order.</p>
+      <div class="callout"><strong>The four moves</strong>
+      <code>map.set(key, value)</code> stores a pair · <code>map.get(key)</code> fetches a value (or
+      <code>undefined</code>) · <code>map.has(key)</code> asks if a key exists · <code>map.size</code> counts
+      the pairs. Create one empty with <code>new Map()</code>, or seeded:
+      <code>new Map([["R", "Red"]])</code>.</div>
+      <p><strong>Object or Map?</strong> Reach for an object to describe <em>one thing</em> with fixed fields;
+      reach for a Map when keys come and go at runtime — a lookup table or a running tally.</p>` },
+
+      { md: `<h2>The smallest use: one lookup</h2>
+      <p>Here a Map translates a one-letter code into a color name. We seed it with two pairs and ask
+      <code>colors.get("R")</code> — it hands back <code>"Red"</code>, which we paint. A Map turns a key you
+      have into a value you want.</p>` },
+      { world: `Dimension: (1, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let colors = new Map([["R", "Red"], ["B", "Blue"]]);
+  k.paintCorner(colors.get("R"));
+}` },
+
+      { md: `<h2>A lookup table beats a chain of <code>if</code>s</h2>
+      <p>Back in the Strings lesson we decoded a color string with a stack of <code>if</code> statements. A Map
+      does the same job in one line: <code>colors.get(ch)</code>. Add a color? Add a pair — no new
+      <code>if</code>. That's the everyday power of a lookup table: data instead of branches.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let colors = new Map();
+  colors.set("R", "Red");
+  colors.set("B", "Blue");
+  colors.set("G", "Green");
+
+  let code = "RBG";
+  for (let ch of code) {
+    k.paintCorner(colors.get(ch));
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h3>Challenge · Decode with a lookup table</h3>
+      <p>Karel faces <strong>east</strong> in a four-wide room. Build a Map from letters to colors, then use it
+      to decode the string <code>"GRBG"</code> — paint corners Green, Red, Blue, Green. No <code>if</code>
+      chains: let <code>get</code> do the translating.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Seed a Map with <code>R→Red</code>, <code>G→Green</code>, <code>B→Blue</code>. Loop over
+        <code>code</code>; paint each corner with <code>colors.get(ch)</code>, then move on while the front is
+        clear.`,
+        starter: `function main(k) {
+  let colors = new Map();
+  // set up R, G, B → their color names
+
+  let code = "GRBG";
+  for (let ch of code) {
+    // paint colors.get(ch), then move on
+  }
+}`,
+        check: ["colors"],
+        end: { avenue: 4, street: 1, direction: "east" },
+        solution: function main(k) {
+          let colors = new Map();
+          colors.set("R", "Red");
+          colors.set("G", "Green");
+          colors.set("B", "Blue");
+          let code = "GRBG";
+          for (let ch of code) {
+            k.paintCorner(colors.get(ch));
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<h2>Walking through a Map</h2>
+      <p>A Map is iterable. <code>for (let [key, value] of map)</code> visits every pair in the order it was
+      inserted, splitting each into its key and value. Here an <code>inventory</code> Map pairs a color with a
+      beeper count; Karel walks it, painting and stacking at each corner.</p>` },
+      { world: `Dimension: (2, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let inventory = new Map([["Red", 2], ["Blue", 1]]);
+  for (let [color, count] of inventory) {
+    k.paintCorner(color);
+    for (let i = 0; i < count; i++) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h2>The classic use: counting</h2>
+      <p>Maps are the natural way to <strong>tally</strong>. To count how often something appears, use the
+      thing as a key and keep a running count as its value. The idiom is
+      <code>map.set(key, (map.get(key) || 0) + 1)</code> — "whatever the count was (or 0 if new), add one."
+      This turns a stream of observations into a summary.</p>` },
+      { md: `<h3>Challenge · Count the red corners</h3>
+      <p>Karel faces <strong>east</strong> in a six-wide room whose corners are already painted. Walk the
+      whole row, using a Map to tally how many corners are <strong>Red</strong>. Then, standing on the last
+      corner, drop that many beepers — a beeper pile that <em>reports the count</em>. (There are three red
+      corners, so three beepers.)</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (2, 1); Blue
+Color: (3, 1); Red
+Color: (4, 1); Red
+Color: (5, 1); Blue`,
+        prompt: `Loop across all six corners. When <code>k.cornerColorIs("Red")</code>, bump the
+        <code>"Red"</code> count in your tally with the counting idiom. After the walk, drop
+        <code>tally.get("Red")</code> beepers where Karel stands (corner 6).`,
+        starter: `function main(k) {
+  let tally = new Map();
+  for (let i = 0; i < 6; i++) {
+    if (k.cornerColorIs("Red")) {
+      // add one to the "Red" tally
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+  let reds = tally.get("Red") || 0;
+  // drop that many beepers here
+}`,
+        check: ["beepers"],
+        end: { avenue: 6, street: 1, direction: "east" },
+        solution: function main(k) {
+          let tally = new Map();
+          for (let i = 0; i < 6; i++) {
+            if (k.cornerColorIs("Red")) {
+              tally.set("Red", (tally.get("Red") || 0) + 1);
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+          let reds = tally.get("Red") || 0;
+          for (let i = 0; i < reds; i++) {
+            k.putBeeper();
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      A Map stores key → value pairs: <code>set</code> to store, <code>get</code> to fetch, <code>has</code>
+      to check, <code>size</code> to count, and <code>for (let [k, v] of map)</code> to iterate. Use one as a
+      <em>lookup table</em> to replace chains of <code>if</code>, and as a <em>tally</em> to count occurrences
+      with <code>map.set(key, (map.get(key) || 0) + 1)</code>. Maps shine when the set of keys is discovered
+      as the program runs.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>18 · Error Handling — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 18 of 18</div>
+    <h1>18 · Error Handling</h1>
+    <p class="lead">Anticipate what can go wrong and recover gracefully — with <code>try</code> / <code>catch</code>.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-18">✏️ Practice this lesson → Assignment 18 (3 problems)</a></p>
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./17-recursion.html">← Recursion</a><span class="spacer"></span><a href="../index.html">Back to contents →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>When things go wrong</h2>
+      <p>Some actions can <strong>fail</strong>. Karel asked to <code>move()</code> into a wall can't — so it
+      <strong>throws an error</strong>, and normally the program stops right there. Often that's fine (it tells
+      you about a bug). But sometimes failure is expected and you'd rather <em>handle</em> it and carry on.
+      That's what <code>try</code> / <code>catch</code> is for.</p>
+      <div class="callout"><strong>The shape of it</strong>
+      <code>try { … }</code> holds code that <em>might</em> fail. If it throws, control jumps straight to
+      <code>catch (err) { … }</code>, which decides what to do about it — <code>err</code> is the error, and
+      <code>err.message</code> describes what happened. If nothing throws, the <code>catch</code> is skipped
+      entirely.</div>` },
+
+      { md: `<h2>The smallest case: catch a failed move</h2>
+      <p>Karel is boxed into a 1×1 world — there's nowhere to go. The <code>move()</code> throws, but instead
+      of stopping, control jumps to <code>catch</code>, where Karel paints the corner red to show it recovered.
+      The program finishes cleanly. Notice Karel never actually moves: a failed action changes nothing.</p>` },
+      { world: `Dimension: (1, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  try {
+    k.move();               // blocked → throws an error
+  } catch (err) {
+    k.paintCorner("Red");   // we handle it and keep going
+  }
+}` },
+
+      { md: `<h2>Attempt, then recover</h2>
+      <p>This flips how you think about walls. Usually we <em>look before we leap</em> — check
+      <code>frontIsClear()</code> first. With <code>try</code>/<code>catch</code> you can instead <em>attempt
+      and recover</em>: just try the move, and deal with failure if it comes. Below Karel tries to move ten
+      times, but the room is only four wide — the wall throws, <code>break</code> stops the loop, and no crash
+      results.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  for (let i = 0; i < 10; i++) {
+    try {
+      k.move();
+    } catch (err) {
+      break;                // hit the wall — stop safely
+    }
+  }
+}` },
+
+      { md: `<h3>Challenge · Fill a row without measuring it</h3>
+      <p>Karel faces <strong>east</strong> in a room of unknown width (it's five wide) with an infinite bag.
+      Put a beeper on the current corner, then <em>try</em> to move; if the move fails, you've reached the wall
+      — stop. Use <code>try</code>/<code>catch</code> to detect the wall instead of
+      <code>frontIsClear()</code>. Every corner should end with one beeper.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop: <code>putBeeper()</code>, then <code>try { k.move(); }</code> and on
+        <code>catch</code> <code>break</code> out. Beepers should land on all five corners and Karel should
+        finish at the wall, corner <strong>(5, 1)</strong>.`,
+        starter: `function main(k) {
+  while (true) {
+    k.putBeeper();
+    try {
+      k.move();
+    } catch (err) {
+      // reached the wall — stop
+    }
+  }
+}`,
+        check: ["beepers"],
+        end: { avenue: 5, street: 1, direction: "east" },
+        solution: function main(k) {
+          while (true) {
+            k.putBeeper();
+            try {
+              k.move();
+            } catch (err) {
+              break;
+            }
+          }
+        } },
+
+      { md: `<h2>Raising your own errors, and <code>finally</code></h2>
+      <p>You can signal trouble yourself with <code>throw</code>, and you can guarantee some cleanup runs no
+      matter what with a <code>finally</code> block — it executes whether the <code>try</code> succeeded or
+      threw. Raising an error looks like this:</p>
+      <pre class="code"><code>if (k.noBeepersInBag()) {
+  throw new Error("out of beepers");
+}</code></pre>
+      <p>And <code>finally</code> is where "always do this at the end" lives — closing a file, releasing a
+      lock, or here, marking where Karel came to rest.</p>` },
+      { md: `<h2><code>finally</code> always runs</h2>
+      <p>Karel tries two moves in a two-wide room. The first succeeds; the second hits the wall and throws, so
+      <code>catch</code> handles it. Either way, the <code>finally</code> block paints Karel's final corner
+      green — proof it runs even after an error interrupted the <code>try</code>.</p>` },
+      { world: `Dimension: (2, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  try {
+    k.move();                 // ok → (2, 1)
+    k.move();                 // wall → throws
+  } catch (err) {
+    // the second move failed; nothing to undo
+  } finally {
+    k.paintCorner("Green");   // runs no matter what
+  }
+}` },
+
+      { md: `<h3>Challenge · Navigate the bend</h3>
+      <p>Karel starts at <strong>(1, 1)</strong> facing <strong>east</strong> in a 3×3 room. Reach the
+      top-right corner <strong>(3, 3)</strong> using <code>try</code>/<code>catch</code> to feel for walls:
+      move east until a move throws, turn left, then move north until a move throws. Finish at
+      <strong>(3, 3)</strong> facing <strong>north</strong>.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Walk east with a <code>try</code>/<code>catch</code> loop that <code>break</code>s when
+        <code>move()</code> throws. Then <code>turnLeft()</code> and repeat going north. Karel should end at
+        <strong>(3, 3)</strong> facing <strong>north</strong>.`,
+        starter: `function main(k) {
+  // move east until a move throws, then break
+  // turnLeft
+  // move north until a move throws, then break
+}`,
+        check: ["position"],
+        end: { avenue: 3, street: 3, direction: "north" },
+        solution: function main(k) {
+          while (true) {
+            try { k.move(); }
+            catch (err) { break; }
+          }
+          k.turnLeft();
+          while (true) {
+            try { k.move(); }
+            catch (err) { break; }
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      Failing actions <em>throw</em> errors. Wrap risky code in <code>try</code>, handle the failure in
+      <code>catch (err)</code>, and put guaranteed cleanup in <code>finally</code>. You can raise your own
+      errors with <code>throw new Error(…)</code>. Error handling lets a program <em>attempt and recover</em>
+      instead of crashing — the last tool in your JavaScript kit for writing programs that hold up in the real
+      world.</div>
+      <p style="margin-top:1rem;">That's the whole course — from a single <code>k.move()</code> to data
+      structures, recursion, and resilient code. You now know the core of JavaScript. Ready to be graded? Head
+      to the <a href="../assignments/index.html">Assignments</a>, or experiment freely in the
+      <a href="../playground.html">Playground</a>.</p>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

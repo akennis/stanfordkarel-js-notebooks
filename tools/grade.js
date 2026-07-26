@@ -92,19 +92,36 @@ function readSubmissions(repoDir) {
 }
 
 // ── grading ──────────────────────────────────────────────────────────────────
+// Build the worker payload for an assignment. A multi-problem (lesson) assignment
+// unseals each problem's solution and asks the worker to unwrap the framed
+// `problem_<key>()` from the submission; a standalone assignment sends one.
+function workerPayload(assignment, source) {
+  if (Array.isArray(assignment.problems)) {
+    return {
+      programText: source,
+      problems: assignment.problems.map(p => ({
+        key: p.key,
+        worldText: p.world,
+        solutionText: unsealSolution(p.solution),
+        check: p.check,
+        end: p.end || null,
+      })),
+    };
+  }
+  return {
+    worldText: assignment.world,
+    programText: source,
+    solutionText: unsealSolution(assignment.solution),
+    check: assignment.check,
+    end: assignment.end || null,
+  };
+}
+
 // Run one submission in a worker, killed after `timeout` ms.
 function gradeInWorker(assignment, source, timeout) {
-  const solutionText = unsealSolution(assignment.solution);
+  const workerData = workerPayload(assignment, source);
   return new Promise(res => {
-    const worker = new Worker(WORKER, {
-      workerData: {
-        worldText: assignment.world,
-        programText: source,
-        solutionText,
-        check: assignment.check,
-        end: assignment.end || null,
-      },
-    });
+    const worker = new Worker(WORKER, { workerData });
     let settled = false;
     const done = value => { if (!settled) { settled = true; worker.terminate(); res(value); } };
     const timer = setTimeout(() => done({ solved: false, error: "timeout" }), timeout);
@@ -112,6 +129,35 @@ function gradeInWorker(assignment, source, timeout) {
     worker.on("error", e => { clearTimeout(timer); done({ solved: false, error: e.message }); });
     worker.on("exit", () => { clearTimeout(timer); done({ solved: false, error: "worker exited" }); });
   });
+}
+
+// Collapse a worker result into a { solved, points, note } scoreline for an
+// assignment. Multi-problem assignments sum the points of each solved problem;
+// `solved` means every problem passed.
+function scoreResult(assignment, r) {
+  const max = assignment.points ?? 0;
+  if (Array.isArray(assignment.problems)) {
+    if (r.error && !r.perProblem) return { solved: false, points: 0, max, note: r.error };
+    const per = r.perProblem || {};
+    let points = 0, solvedCount = 0;
+    const notes = [];
+    for (const p of assignment.problems) {
+      const pr = per[p.key] || { solved: false, error: "no result" };
+      if (pr.solved) { points += p.points ?? 0; solvedCount++; }
+      else notes.push(`${p.key}: ${pr.error || "wrong result"}`);
+    }
+    return {
+      solved: solvedCount === assignment.problems.length,
+      points, max,
+      note: notes.join("; ") || `${solvedCount}/${assignment.problems.length} problems`,
+    };
+  }
+  return {
+    solved: r.solved,
+    points: r.solved ? max : 0,
+    max,
+    note: r.error || (r.solved ? "" : "wrong result"),
+  };
 }
 
 async function gradeStudent(entry, opts) {
@@ -125,12 +171,7 @@ async function gradeStudent(entry, opts) {
     if (!sub) { results[a.id] = { solved: false, points: 0, max: a.points ?? 0, note: dir ? "no submission" : (note || "no repo") }; continue; }
     if (!getAssignment(sub.id)) { results[a.id] = { solved: false, points: 0, max: a.points ?? 0, note: "unknown assignment id" }; continue; }
     const r = await gradeInWorker(a, sub.source, opts.timeout);
-    results[a.id] = {
-      solved: r.solved,
-      points: r.solved ? (a.points ?? 0) : 0,
-      max: a.points ?? 0,
-      note: r.error || (r.solved ? "" : "wrong result"),
-    };
+    results[a.id] = scoreResult(a, r);
   }
   // Flag submissions that don't match any known assignment.
   for (const s of submitted) {

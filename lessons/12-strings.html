@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>12 · Strings — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 12 of 18</div>
+    <h1>12 · Strings</h1>
+    <p class="lead">Store and work with text — words, labels, and even little programs written as characters.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-12">✏️ Practice this lesson → Assignment 12 (3 problems)</a></p>
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./11-numbers-operators.html">← Numbers</a><span class="spacer"></span><a href="./13-arrays.html">Arrays →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>Text is data too</h2>
+      <p>A <strong>string</strong> is a piece of text — a run of characters wrapped in quotes:
+      <code>"Karel"</code>, <code>"Red"</code>, <code>"go north"</code>. You can store one in a variable,
+      compare it, glue strings together, measure it, and pull out individual characters. Strings are how a
+      program holds names, labels, messages — and, as you'll see, tiny instructions.</p>
+      <p>You've already used strings without noticing: every color name you paint with is one.</p>` },
+
+      { md: `<h2>The smallest use: a color is a string</h2>
+      <p>Here is the simplest meaningful string in this course. <code>color</code> holds the text
+      <code>"Blue"</code>, and we hand that string straight to <code>paintCorner</code>. The value in the
+      variable <em>is</em> the color name.</p>` },
+      { world: `Dimension: (1, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let color = "Blue";
+  k.paintCorner(color);
+}` },
+
+      { md: `<h2>Length and joining</h2>
+      <p>Two everyday string operations: <code>.length</code> tells you how many characters a string has, and
+      <code>+</code> glues strings together (this is called <strong>concatenation</strong>). Since
+      <code>"Karel".length</code> is 5, the loop below walks five corners — the word itself decides the
+      distance.</p>
+      <div class="callout"><strong>Joining vs. adding</strong>
+      The same <code>+</code> does two jobs: with numbers it adds (<code>2 + 3</code> → 5), with strings it
+      joins (<code>"Ka" + "rel"</code> → <code>"Karel"</code>). If either side is a string, JavaScript joins.</div>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let word = "Karel";
+  for (let i = 0; i < word.length; i++) {
+    k.move();
+  }
+}` },
+
+      { md: `<h2>Reaching into a string</h2>
+      <p>A string is a sequence of characters, and — like a row of corners — it's numbered from
+      <strong>0</strong>. <code>word[0]</code> is the first character, <code>word[1]</code> the second, and so
+      on. That means a string can act like a <em>list of instructions</em>: read one character per step and
+      do what it says.</p>
+      <p>Below, the string <code>"RGB"</code> is a paint plan. A helper turns each letter into a color, and
+      Karel walks the row painting corner&nbsp;1 red, 2 green, 3 blue.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function paint(k, code) {
+  if (code === "R") k.paintCorner("Red");
+  if (code === "G") k.paintCorner("Green");
+  if (code === "B") k.paintCorner("Blue");
+}
+
+function main(k) {
+  let plan = "RGB";
+  for (let i = 0; i < plan.length; i++) {
+    paint(k, plan[i]);
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h3>Challenge · Paint from a code string</h3>
+      <p>Karel faces <strong>east</strong> in a four-wide room. The plan string is <code>"RGBR"</code>. Walk
+      the row and paint each corner the color its letter names — <code>R</code>→Red, <code>G</code>→Green,
+      <code>B</code>→Blue — so the corners read Red, Green, Blue, Red.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop over <code>plan</code> by index. For each character <code>plan[i]</code>, paint the
+        matching color, then move on while the front is clear. Corners should end Red, Green, Blue, Red.`,
+        starter: `function main(k) {
+  let plan = "RGBR";
+  for (let i = 0; i < plan.length; i++) {
+    let code = plan[i];
+    // paint the matching color: R→Red, G→Green, B→Blue
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}`,
+        check: ["colors"],
+        end: { avenue: 4, street: 1, direction: "east" },
+        solution: function main(k) {
+          let plan = "RGBR";
+          for (let i = 0; i < plan.length; i++) {
+            let code = plan[i];
+            if (code === "R") k.paintCorner("Red");
+            if (code === "G") k.paintCorner("Green");
+            if (code === "B") k.paintCorner("Blue");
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<h2>A string as a tiny program</h2>
+      <p>If one character can mean "paint red," another can mean "move" or "turn." A string of such characters
+      becomes a <strong>miniature program</strong> Karel runs one letter at a time — the same idea behind real
+      instruction sets. Let <code>M</code> mean <em>move</em> and <code>L</code> mean <em>turn left</em>, and a
+      short string can steer Karel around a corner.</p>` },
+      { md: `<h3>Challenge · Run the instruction tape</h3>
+      <p>Karel starts at <strong>(1, 1)</strong> facing <strong>east</strong> in a 3×3 room. Read the command
+      string <code>"MMLMM"</code> character by character: on <code>"M"</code> move, on <code>"L"</code> turn
+      left. Executed in order, Karel should finish in the top-right corner <strong>(3, 3)</strong> facing
+      <strong>north</strong>.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop over <code>cmds</code>. For each character: if it's <code>"M"</code> call
+        <code>move()</code>; if it's <code>"L"</code> call <code>turnLeft()</code>. Karel should end at
+        <strong>(3, 3)</strong> facing <strong>north</strong>.`,
+        starter: `function main(k) {
+  let cmds = "MMLMM";
+  for (let i = 0; i < cmds.length; i++) {
+    let c = cmds[i];
+    // "M" → move, "L" → turnLeft
+  }
+}`,
+        check: ["position"],
+        end: { avenue: 3, street: 3, direction: "north" },
+        solution: function main(k) {
+          let cmds = "MMLMM";
+          for (let i = 0; i < cmds.length; i++) {
+            let c = cmds[i];
+            if (c === "M") k.move();
+            if (c === "L") k.turnLeft();
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      A string is text in quotes. <code>.length</code> counts its characters, <code>+</code> joins strings,
+      and <code>str[i]</code> reads the character at position <code>i</code> (counting from 0). Because a
+      string is just an ordered sequence of characters, you can loop over it and treat each character as an
+      instruction — a compact, readable way to describe a plan.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>13 · Arrays — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 13 of 18</div>
+    <h1>13 · Arrays</h1>
+    <p class="lead">An ordered list of values you can index into, measure, loop over, and grow.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-13">✏️ Practice this lesson → Assignment 13 (3 problems)</a></p>
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./12-strings.html">← Strings</a><span class="spacer"></span><a href="./14-objects.html">Objects →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>Many values, one name</h2>
+      <p>A variable holds one value. An <strong>array</strong> holds a whole <em>ordered list</em> of them
+      under a single name, written with square brackets: <code>[3, 1, 2]</code>. Each slot has a position — an
+      <strong>index</strong> — counting from <strong>0</strong>. Arrays are the workhorse data structure: a
+      row of pile heights, a palette of colors, a queue of instructions.</p>
+      <div class="callout"><strong>Index from zero</strong>
+      For <code>let a = [3, 1, 2]</code>: <code>a[0]</code> is 3, <code>a[1]</code> is 1, <code>a[2]</code> is
+      2. The last index is always <code>a.length - 1</code>. Ask for <code>a[3]</code> here and you get
+      <code>undefined</code> — there's no such slot.</div>` },
+
+      { md: `<h2>The smallest use: a list and one index</h2>
+      <p>Start tiny. This array holds three color names; we reach in for the first one with
+      <code>palette[0]</code> and paint with it. An array is just several values you can address by number.</p>` },
+      { world: `Dimension: (1, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let palette = ["Red", "Green", "Blue"];
+  k.paintCorner(palette[0]);
+}` },
+
+      { md: `<h2>Length and looping by index</h2>
+      <p>The real power comes from looping. <code>.length</code> is the count of slots, so a
+      <code>for</code> loop from 0 up to <code>heights.length</code> visits every element in order. Here the
+      array <code>[3, 1, 2]</code> is a little bar chart: at each corner Karel drops <code>heights[i]</code>
+      beepers, then steps right.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let heights = [3, 1, 2];
+  for (let i = 0; i < heights.length; i++) {
+    for (let b = 0; b < heights[i]; b++) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h3>Challenge · Paint the palette</h3>
+      <p>Karel faces <strong>east</strong> in a four-wide room. The array
+      <code>["Red", "Blue", "Green", "Yellow"]</code> is a palette, one color per corner. Walk the row and
+      paint each corner the color at that index.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop <code>i</code> from 0 to <code>palette.length</code>. Paint the current corner with
+        <code>palette[i]</code>, then move on while the front is clear. Corners should end Red, Blue, Green,
+        Yellow.`,
+        starter: `function main(k) {
+  let palette = ["Red", "Blue", "Green", "Yellow"];
+  for (let i = 0; i < palette.length; i++) {
+    // paint this corner with palette[i]
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}`,
+        check: ["colors"],
+        end: { avenue: 4, street: 1, direction: "east" },
+        solution: function main(k) {
+          let palette = ["Red", "Blue", "Green", "Yellow"];
+          for (let i = 0; i < palette.length; i++) {
+            k.paintCorner(palette[i]);
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<h2>A cleaner loop: <code>for…of</code></h2>
+      <p>When you don't need the index — just each value in turn — <code>for (let x of array)</code> reads
+      better. It hands you the elements one at a time, no counter to manage. Same bar chart as before, written
+      more directly:</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let heights = [1, 2, 3, 4];
+  for (let h of heights) {
+    for (let b = 0; b < h; b++) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h2>Growing an array with <code>push</code></h2>
+      <p>Arrays don't have to be written out in full — you can start empty and <strong>build one up</strong>
+      with <code>.push(value)</code>, which adds to the end. That lets a program <em>plan</em>: assemble a list
+      of actions first, then carry them out. Below we push three actions, then run the list with
+      <code>for…of</code>.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let plan = [];
+  plan.push("move");
+  plan.push("move");
+  plan.push("beeper");
+  for (let action of plan) {
+    if (action === "move") k.move();
+    if (action === "beeper") k.putBeeper();
+  }
+}` },
+
+      { md: `<h3>Challenge · Plot the data</h3>
+      <p>Karel faces <strong>east</strong> in a five-wide room with an infinite bag. Given the data array
+      <code>[3, 1, 4, 1, 5]</code>, build a bar chart: drop that many beepers on each corner, left to right.
+      Corner 1 gets 3, corner 2 gets 1, corner 3 gets 4, and so on.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop over <code>data</code>. At each corner drop that element's number of beepers with an
+        inner loop, then move on while the front is clear. Piles should read 3, 1, 4, 1, 5.`,
+        starter: `function main(k) {
+  let data = [3, 1, 4, 1, 5];
+  for (let n of data) {
+    // drop n beepers here, then move on
+  }
+}`,
+        check: ["beepers"],
+        end: { avenue: 5, street: 1, direction: "east" },
+        solution: function main(k) {
+          let data = [3, 1, 4, 1, 5];
+          for (let n of data) {
+            for (let b = 0; b < n; b++) {
+              k.putBeeper();
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      An array is an ordered list written with <code>[…]</code> and indexed from 0. <code>.length</code>
+      counts the slots; a <code>for</code> loop with an index or a <code>for…of</code> loop visits each
+      element. <code>.push()</code> grows an array so a program can build a plan before executing it. Arrays
+      turn "do this to a whole list of things" into a few clean lines.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>16 · Scope &amp; Lifetime — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 16 of 18</div>
+    <h1>16 · Scope &amp; Lifetime</h1>
+    <p class="lead">Where a variable can be seen, and how long it lives — the difference between a memory that persists and one that resets.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-16">✏️ Practice this lesson → Assignment 16 (3 problems)</a></p>
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./15-maps.html">← Maps</a><span class="spacer"></span><a href="./17-recursion.html">Recursion →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>A variable lives inside its braces</h2>
+      <p>Every variable you declare with <code>let</code> has a <strong>scope</strong>: the region of code
+      where its name is visible. The rule is simple — a variable belongs to the nearest pair of curly braces
+      <code>{ … }</code> around its declaration, and vanishes when that block ends. That region also
+      determines its <strong>lifetime</strong>: how long the value survives before it's gone.</p>
+      <div class="callout"><strong>Why we pass <code>k</code> everywhere</strong>
+      A variable declared inside <code>main</code> can't be seen from another function — scopes don't leak.
+      That's the reason every helper in this course takes the robot as a parameter (<code>function
+      turnRight(k)</code>): <code>main</code>'s <code>k</code> isn't visible inside the helper, so we hand it
+      in. Scope is why.</div>` },
+
+      { md: `<h2>The smallest case: block scope</h2>
+      <p>A variable declared inside a loop or an <code>if</code> exists only within those braces — and is
+      created <em>fresh on every pass</em>. Below, <code>i</code> lives only inside the <code>for</code>. The
+      moment the loop ends, <code>i</code> is gone; you couldn't use it on the next line. Each iteration gets
+      its own <code>i</code>, which is exactly why the counter behaves.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  for (let i = 0; i < 3; i++) {
+    k.move();
+  }
+  // i does not exist here — it lived only inside the loop
+}` },
+
+      { md: `<h2>Persisting across passes: the accumulator</h2>
+      <p>Sometimes you want the opposite — a value that <em>survives</em> every iteration and grows. Declare it
+      in the <strong>outer</strong> scope, before the loop, so it lives across all the passes. This is the
+      <strong>accumulator</strong> pattern. Here <code>total</code> outlives the loop and remembers how many
+      beepers Karel has dropped, then reports the tally as one pile.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let total = 0;                 // lives across the whole loop
+  for (let i = 0; i < 3; i++) {
+    k.putBeeper();
+    total = total + 1;
+    k.move();
+  }
+  // total is 3 here, and Karel drops that many
+  for (let i = 0; i < total; i++) {
+    k.putBeeper();
+  }
+}` },
+
+      { md: `<div class="callout warn"><strong>The classic scope bug</strong>
+      Declare the accumulator <em>inside</em> the loop —
+      <code>for (…) { let total = 0; total = total + 1; }</code> — and it is reborn as 0 every pass, so it
+      never climbs past 1. "Persist or reset?" is really "outer scope or inner scope?" Choosing the wrong one
+      is one of the most common beginner bugs.</div>` },
+
+      { md: `<h2>Functions have private variables</h2>
+      <p>A function's parameters and its own <code>let</code> variables are <strong>local</strong> — invisible
+      outside, and untouched by names elsewhere. Two functions can each use a variable called <code>i</code>
+      with no collision, because each <code>i</code> lives in its own scope. That privacy is what makes helpers
+      safe to reuse: <code>plantRow</code>'s counter can't disturb <code>main</code>'s.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function plantRow(k) {
+  let i = 0;                     // this i is private to plantRow
+  while (k.frontIsClear()) {
+    k.putBeeper();
+    k.move();
+    i = i + 1;
+  }
+  k.putBeeper();
+}
+
+function main(k) {
+  let i = 99;                    // a different i entirely
+  plantRow(k);
+  // main's i is still 99 — plantRow never touched it
+}` },
+
+      { md: `<h3>Challenge · Total up the piles</h3>
+      <p>Karel faces <strong>east</strong> in a five-wide room. Several corners hold beepers; Karel's bag
+      starts empty. Walk the row, picking up <em>every</em> beeper and keeping a running
+      <strong>total</strong>. On the final corner, drop the whole total as one pile — six beepers in all. The
+      trick is where you declare <code>total</code>.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: 0
+Beeper: (1, 1); 2
+Beeper: (2, 1); 1
+Beeper: (4, 1); 3`,
+        prompt: `Declare <code>total</code> <em>before</em> the loop so it survives. At each corner, pick up
+        all its beepers (<code>while (k.beepersPresent())</code>), adding to <code>total</code>. After the
+        walk, drop <code>total</code> beepers where Karel stands (corner 5).`,
+        starter: `function main(k) {
+  let total = 0;                 // must live across the whole walk
+  for (let i = 0; i < 5; i++) {
+    while (k.beepersPresent()) {
+      // pick up and count
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+  // drop total beepers here
+}`,
+        check: ["beepers"],
+        end: { avenue: 5, street: 1, direction: "east" },
+        solution: function main(k) {
+          let total = 0;
+          for (let i = 0; i < 5; i++) {
+            while (k.beepersPresent()) {
+              k.pickBeeper();
+              total = total + 1;
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+          for (let i = 0; i < total; i++) {
+            k.putBeeper();
+          }
+        } },
+
+      { md: `<h3>Challenge · A growing staircase</h3>
+      <p>One more test of lifetime. Karel faces <strong>east</strong> in a four-wide room with an infinite
+      bag. Keep a counter <code>n</code> that <em>grows by one at every corner</em>, and drop <code>n</code>
+      beepers there — building piles of 1, 2, 3, 4. This only works if <code>n</code> persists across
+      iterations; declare it in the right scope.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Declare <code>n</code> before the loop. Each pass: add one to <code>n</code>, drop that many
+        beepers, then move on while the front is clear. Piles should read 1, 2, 3, 4.`,
+        starter: `function main(k) {
+  let n = 0;                     // where must this live to keep growing?
+  for (let i = 0; i < 4; i++) {
+    // add one to n, drop n beepers, then move on
+  }
+}`,
+        check: ["beepers"],
+        end: { avenue: 4, street: 1, direction: "east" },
+        solution: function main(k) {
+          let n = 0;
+          for (let i = 0; i < 4; i++) {
+            n = n + 1;
+            for (let b = 0; b < n; b++) {
+              k.putBeeper();
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      A variable belongs to the nearest enclosing braces and dies when they close — that's its scope and its
+      lifetime. Declare a value <em>inside</em> a loop to get a fresh copy each pass; declare it
+      <em>outside</em> to accumulate across passes. Function parameters and locals are private, which is why
+      helpers take <code>k</code> as an argument. Choosing the right scope is choosing whether a memory
+      persists or resets.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

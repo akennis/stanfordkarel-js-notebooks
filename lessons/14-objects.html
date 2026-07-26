@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>14 · Objects — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 14 of 18</div>
+    <h1>14 · Objects</h1>
+    <p class="lead">Group related values under named keys — a record that keeps a thing's details together.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-14">✏️ Practice this lesson → Assignment 14 (3 problems)</a></p>
+  <main id="notebook"></main>
+
+  <nav class="pager">
+    <a href="./13-arrays.html">← Arrays</a><span class="spacer"></span><a href="./15-maps.html">Maps →</a>
+  </nav>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>Values that belong together</h2>
+      <p>An array lists values by <em>position</em>. An <strong>object</strong> lists them by
+      <em>name</em>. It bundles related facts about one thing into a single value, written with curly braces
+      and <code>key: value</code> pairs:</p>
+      <div class="callout"><strong>Anatomy of an object</strong>
+      <code>let spot = { color: "Red", beepers: 2 };</code><br>
+      The <em>keys</em> are <code>color</code> and <code>beepers</code>; the <em>values</em> are
+      <code>"Red"</code> and <code>2</code>. You read a value with a dot: <code>spot.color</code> is
+      <code>"Red"</code>, <code>spot.beepers</code> is <code>2</code>.</div>
+      <p>Where an array is "a list of things," an object is "one thing with several labelled parts."</p>` },
+
+      { md: `<h2>The smallest use: one record</h2>
+      <p>Here a single object describes what to do at one corner: paint it green and drop two beepers. We read
+      each field by name and act on it. Everything about this corner travels together in one tidy value.</p>` },
+      { world: `Dimension: (1, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let spot = { color: "Green", beepers: 2 };
+  k.paintCorner(spot.color);
+  for (let i = 0; i < spot.beepers; i++) {
+    k.putBeeper();
+  }
+}` },
+
+      { md: `<h2>Reading and updating fields</h2>
+      <p>Dot notation both reads and writes. <code>robot.dropped</code> reads the value;
+      <code>robot.dropped = robot.dropped + 1</code> stores a new one. An object makes a fine little
+      <strong>scoreboard</strong> — a bundle of counters a program keeps as it works. Below, Karel plants a
+      row and tallies its progress in one object.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let robot = { dropped: 0 };
+  for (let i = 0; i < 4; i++) {
+    k.putBeeper();
+    robot.dropped = robot.dropped + 1;
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+  // robot.dropped is now 4
+}` },
+
+      { md: `<h2>A list of records</h2>
+      <p>Objects and arrays combine into the shape you'll reach for constantly: an <strong>array of
+      objects</strong>. Each element is a record, so a whole plan reads almost like a table. This
+      <code>plan</code> says corner by corner what color to paint and how many beepers to drop.</p>` },
+      { world: `Dimension: (3, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let plan = [
+    { color: "Red",   beepers: 1 },
+    { color: "Blue",  beepers: 2 },
+    { color: "Green", beepers: 0 },
+  ];
+  for (let step of plan) {
+    k.paintCorner(step.color);
+    for (let i = 0; i < step.beepers; i++) {
+      k.putBeeper();
+    }
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h3>Challenge · Follow the color plan</h3>
+      <p>Karel faces <strong>east</strong> in a four-wide room. Each object in <code>plan</code> has a
+      <code>color</code> field. Walk the row and paint each corner the color its record names, ending Red,
+      Blue, Yellow, Green.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop over <code>plan</code>. For each <code>step</code>, paint the corner with
+        <code>step.color</code>, then move on while the front is clear.`,
+        starter: `function main(k) {
+  let plan = [
+    { color: "Red" },
+    { color: "Blue" },
+    { color: "Yellow" },
+    { color: "Green" },
+  ];
+  for (let step of plan) {
+    // paint this corner step.color, then move on
+  }
+}`,
+        check: ["colors"],
+        end: { avenue: 4, street: 1, direction: "east" },
+        solution: function main(k) {
+          let plan = [
+            { color: "Red" },
+            { color: "Blue" },
+            { color: "Yellow" },
+            { color: "Green" },
+          ];
+          for (let step of plan) {
+            k.paintCorner(step.color);
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<h2>Why bundle? Two facts, one record</h2>
+      <p>You could keep colors in one array and beeper counts in another and hope they stay lined up. Objects
+      remove that risk: each corner's color and count live in the <em>same</em> record, so they can never
+      drift apart. That's the practical reason objects exist — related data stays together.</p>` },
+      { md: `<h3>Challenge · Paint and stack from one plan</h3>
+      <p>Karel faces <strong>east</strong> in a four-wide room with an infinite bag. Each record in
+      <code>plan</code> has both a <code>color</code> and a <code>beepers</code> count. At every corner, paint
+      it <em>and</em> drop the right number of beepers, then move on. Use both fields from each record.</p>` },
+      { world: `Dimension: (4, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Loop over <code>plan</code>. For each <code>step</code>: <code>paintCorner(step.color)</code>,
+        drop <code>step.beepers</code> beepers with an inner loop, then move while the front is clear.`,
+        starter: `function main(k) {
+  let plan = [
+    { color: "Red",    beepers: 2 },
+    { color: "Yellow", beepers: 0 },
+    { color: "Blue",   beepers: 1 },
+    { color: "Green",  beepers: 3 },
+  ];
+  for (let step of plan) {
+    // paint step.color and drop step.beepers, then move on
+  }
+}`,
+        check: ["beepers", "colors"],
+        end: { avenue: 4, street: 1, direction: "east" },
+        solution: function main(k) {
+          let plan = [
+            { color: "Red",    beepers: 2 },
+            { color: "Yellow", beepers: 0 },
+            { color: "Blue",   beepers: 1 },
+            { color: "Green",  beepers: 3 },
+          ];
+          for (let step of plan) {
+            k.paintCorner(step.color);
+            for (let i = 0; i < step.beepers; i++) {
+              k.putBeeper();
+            }
+            if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      An object groups values under named keys: <code>{ color: "Red", beepers: 2 }</code>. Read and write
+      fields with a dot (<code>step.color</code>). An <strong>array of objects</strong> is the natural shape
+      for a table of records — a plan where each row keeps all its related details bundled together, so they
+      stay in sync.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+</body>
+</html>

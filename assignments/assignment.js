@@ -5,15 +5,21 @@
  * (lessons/lesson.js → renderChallenge) is purely formative, an assignment adds
  * a submit panel that produces the file a student commits to their own repo. The
  * in-browser ✓ here is practice only; the grade of record comes from the
- * teacher-side re-grade (tools/grade.js).
+ * teacher-side re-grade (tools/grade-lessons.js).
  *
- * The manifest ships its reference solution SEALED (see stanfordkarel.js /
+ * A lesson assignment (assignments/lesson-NN.js) bundles THREE problems keyed
+ * simple / moderate / complex — one card each — plus a SINGLE combined
+ * submission textarea at the page bottom. That one file auto-frames all three
+ * solutions, each wrapped in an outer function that returns its main(k), so a
+ * reviewer's grader can run and grade every problem from the one submission.
+ *
+ * Each problem ships its reference solution SEALED (see stanfordkarel.js /
  * tools/seal.js); we unseal it at runtime to build the goal GIF and to grade the
  * student's run — never printing the plaintext into the page.
  */
 import { runKarel, runKarelInWorker, unsealSolution, compileProgram } from "../stanfordkarel.js";
 
-const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
 const DEFAULT_OPTS = { cellSize: 46, delay: 150 };
 
@@ -39,17 +45,48 @@ function friendlyError(err) {
   return err.message;
 }
 
-// The exact text a student commits as submissions/<id>.js. The header comments
-// tag the file so the grader knows which assignment it answers; the rest is the
-// student's program verbatim, so the file is both human-readable and directly
-// runnable by compileProgram (no export/import to strip).
-function buildSubmission(id, code) {
-  return (
-    `// Karel submission — keep the three header lines below.\n` +
-    `// assignment: ${id}\n` +
+// Normalize both manifest shapes into { ..., problems: [...] }. A legacy
+// single-problem assignment (assignments/collect-all.js) carries its world /
+// prompt / solution at the top level; wrap it as one "problem" so the renderer
+// below only ever deals with the array form.
+function normalize(a) {
+  if (Array.isArray(a.problems)) return a;
+  return {
+    ...a,
+    problems: [{
+      key: "solution", label: "Problem", points: a.points ?? 0,
+      world: a.world, prompt: a.prompt, starter: a.starter,
+      check: a.check, end: a.end, solution: a.solution,
+    }],
+  };
+}
+
+// The exact text a student commits as submissions/<id>.js. Every problem's code
+// is wrapped in its own outer function `problem_<key>()` that returns the main()
+// the student defined — so all three coexist in one file and a grader can run
+// each independently by calling its wrapper. The header lines tag the file with
+// the assignment id; the whole thing is valid JavaScript (helpers included).
+function buildSubmission(a, values) {
+  const rule = "─".repeat(58);
+  let out =
+    `// Karel submission — do not remove the header or the function wrappers.\n` +
+    `// assignment: ${a.id}\n` +
     `// submittedAt: ${new Date().toISOString()}\n` +
-    code.replace(/\s*$/, "") + "\n"
-  );
+    `//\n` +
+    `// Each problem below is wrapped in an outer function that returns its\n` +
+    `// main(k), so your instructor's grader can run and grade all three.\n`;
+  for (const p of a.problems) {
+    const body = (values[p.key] || "").replace(/\s*$/, "");
+    out +=
+      `\n// ${rule}\n` +
+      `// Problem: ${p.key}${p.label ? ` (${p.label})` : ""}\n` +
+      `// ${rule}\n` +
+      `function problem_${p.key}() {\n` +
+      `${body}\n` +
+      `  return main;\n` +
+      `}\n`;
+  }
+  return out;
 }
 
 async function copyText(text) {
@@ -63,33 +100,107 @@ async function copyText(text) {
 
 /**
  * Render an assignment manifest into `mount`.
- * @param {object} a       Assignment manifest (see assignments/collect-all.js).
+ * @param {object} raw     Assignment manifest (lesson-NN.js or collect-all.js).
  * @param {Element} [mount]
  * @param {{isolate?:boolean}} [options]  isolate (default true) runs the
  *   student's code in a Web Worker so an endless loop can't freeze the page.
  */
-export async function renderAssignment(a, mount = document.getElementById("assignment"), { isolate = true } = {}) {
-  const aspects = a.check || ["beepers", "position", "direction", "colors"];
+export async function renderAssignment(raw, mount = document.getElementById("assignment"), { isolate = true } = {}) {
+  const a = normalize(raw);
   const opts = a.opts || DEFAULT_OPTS;
-  const storageKey = "karel-assignment:" + a.id;
-  const stub = a.starter != null ? a.starter : "function main(k) {\n  // your code here\n}\n";
 
-  // Unseal + compile the reference solution once: used both to draw the goal and
-  // to grade the student's run. Kept in this closure, never written to the DOM.
+  // Optional back-link to the companion lesson.
+  if (a.lessonSlug) {
+    const back = document.createElement("p");
+    back.className = "lesson-link";
+    back.innerHTML =
+      `📘 Companion lesson: <a href="../lessons/${esc(a.lessonSlug)}.html">${esc(a.lessonTitle || a.lessonSlug)}</a>`;
+    mount.appendChild(back);
+  }
+
+  // Live editor values by problem key, and per-card refreshers so any edit
+  // updates the single combined submission at the bottom.
+  const values = {};
+  const submissionRefreshers = [];
+  const refreshSubmission = () => submissionRefreshers.forEach(fn => fn());
+
+  for (const p of a.problems) {
+    await renderProblemCard(a, p, mount, { opts, isolate, values, refreshSubmission });
+  }
+
+  // ── Single combined submission for all problems ──────────────────────────
+  const panel = document.createElement("div");
+  panel.className = "submit-panel";
+  panel.innerHTML =
+    `<div class="panel-label">📤 Submit all ${a.problems.length} problems</div>` +
+    `<p class="submit-help">This one file contains every problem, each wrapped so your ` +
+      `instructor's grader can run them automatically. Commit it to your assignments ` +
+      `repository as <code>submissions/${esc(a.id)}.js</code>:</p>` +
+    `<textarea class="submission" readonly spellcheck="false"></textarea>` +
+    `<div class="submit-controls">` +
+      `<button type="button" class="copy-btn">📋 Copy submission</button>` +
+      `<span class="copy-note"></span>` +
+    `</div>` +
+    `<details class="submit-how"><summary>How to submit</summary>` +
+      `<p><strong>Git (preferred).</strong> Save the copied text as ` +
+      `<code>submissions/${esc(a.id)}.js</code> in your repo, then:</p>` +
+      `<pre class="code"><code>git add submissions/${esc(a.id)}.js\n` +
+      `git commit -m "Submit ${esc(a.id)}"\n` +
+      `git push</code></pre>` +
+      `<p><strong>No git?</strong> Paste the same text into your shared Google Doc under a ` +
+      `heading named <code>${esc(a.id)}</code>.</p>` +
+      `<p class="submit-note">The ✓ on each problem is a practice check. Your grade comes from ` +
+      `the code you actually submit, re-run by your instructor.</p>` +
+    `</details>`;
+  mount.appendChild(panel);
+
+  const submission = panel.querySelector(".submission");
+  const copyBtn = panel.querySelector(".copy-btn");
+  const copyNote = panel.querySelector(".copy-note");
+
+  submissionRefreshers.push(() => {
+    submission.value = buildSubmission(a, values);
+    autoSize(submission);
+  });
+  refreshSubmission();
+  requestAnimationFrame(() => autoSize(submission));
+
+  copyBtn.addEventListener("click", async () => {
+    refreshSubmission();
+    const ok = await copyText(submission.value);
+    copyNote.textContent = ok ? "Copied to clipboard." : "Press Ctrl/Cmd-C to copy the text above.";
+    if (!ok) { submission.focus(); submission.select(); }
+    setTimeout(() => { copyNote.textContent = ""; }, 4000);
+  });
+}
+
+// Render a single problem card: goal GIF, editor, Run, verdict. Wires the editor
+// into `values[p.key]` and calls refreshSubmission() on every edit so the shared
+// submission textarea stays current.
+async function renderProblemCard(a, p, mount, { opts, isolate, values, refreshSubmission }) {
+  const aspects = p.check || ["beepers", "position", "direction", "colors"];
+  const storageKey = `karel-assignment:${a.id}:${p.key}`;
+  const stub = p.starter != null ? p.starter : "function main(k) {\n  // your code here\n}\n";
+
   let solutionFn = null;
   try {
-    solutionFn = compileProgram(unsealSolution(a.solution));
+    solutionFn = compileProgram(unsealSolution(p.solution));
   } catch (err) {
-    mount.innerHTML = `<div class="err">This assignment's solution could not be loaded: ${esc(friendlyError(err))}</div>`;
+    const e = document.createElement("div");
+    e.className = "err";
+    e.textContent = `Problem "${p.key}" could not be loaded: ${friendlyError(err)}`;
+    mount.appendChild(e);
+    values[p.key] = "";
     return;
   }
 
   const wrap = document.createElement("div");
   wrap.className = "challenge assignment-card";
   wrap.innerHTML =
-    `<div class="chal-head"><span class="chal-badge">Assignment</span>` +
-      `<div class="chal-prompt">${a.prompt || ""} ` +
-      `<span class="points">Worth ${a.points ?? 0} points.</span></div></div>` +
+    `<div class="chal-head">` +
+      `<span class="chal-badge level-${esc(p.key)}">${esc(p.label || p.key)}</span>` +
+      `<div class="chal-prompt">${p.prompt || ""} ` +
+      `<span class="points">Worth ${p.points ?? 0} points.</span></div></div>` +
     `<div class="chal-grid">` +
       `<section class="chal-goal">` +
         `<div class="panel-label">🎯 Goal — make Karel do this</div>` +
@@ -106,27 +217,6 @@ export async function renderAssignment(a, mount = document.getElementById("assig
         `<div class="panel-label your-label">Your result</div>` +
         `<div class="render your-render"><span class="status muted">Run your code to see Karel go.</span></div>` +
       `</section>` +
-    `</div>` +
-    `<div class="submit-panel">` +
-      `<div class="panel-label">Submit</div>` +
-      `<p class="submit-help">When you're happy with your solution, submit it by committing this ` +
-        `file to your assignments repository as <code>submissions/${esc(a.id)}.js</code>:</p>` +
-      `<textarea class="submission" readonly spellcheck="false"></textarea>` +
-      `<div class="submit-controls">` +
-        `<button type="button" class="copy-btn">📋 Copy submission</button>` +
-        `<span class="copy-note"></span>` +
-      `</div>` +
-      `<details class="submit-how"><summary>How to submit</summary>` +
-        `<p><strong>Git (preferred).</strong> Save the copied text as ` +
-        `<code>submissions/${esc(a.id)}.js</code> in your repo, then:</p>` +
-        `<pre class="code"><code>git add submissions/${esc(a.id)}.js\n` +
-        `git commit -m "Submit ${esc(a.id)}"\n` +
-        `git push</code></pre>` +
-        `<p><strong>No git?</strong> Paste the same text into your shared Google Doc under a ` +
-        `heading named <code>${esc(a.id)}</code>.</p>` +
-        `<p class="submit-note">The ✓ above is a practice check. Your grade comes from the code ` +
-        `you actually submit, re-run by your instructor.</p>` +
-      `</details>` +
     `</div>`;
   mount.appendChild(wrap);
 
@@ -136,46 +226,31 @@ export async function renderAssignment(a, mount = document.getElementById("assig
   const verdict = wrap.querySelector(".verdict");
   const runBtn = wrap.querySelector(".run-btn");
   const resetBtn = wrap.querySelector(".reset-btn");
-  const submission = wrap.querySelector(".submission");
-  const copyBtn = wrap.querySelector(".copy-btn");
-  const copyNote = wrap.querySelector(".copy-note");
 
-  // Restore saved work; fall back to the starter stub.
   editor.value = localStorage.getItem(storageKey) ?? stub;
+  values[p.key] = editor.value;
 
-  const refreshSubmission = () => { submission.value = buildSubmission(a.id, editor.value); };
-  refreshSubmission();
-
-  requestAnimationFrame(() => { autoSize(editor); autoSize(submission); });
+  requestAnimationFrame(() => autoSize(editor));
   editor.addEventListener("input", () => {
     autoSize(editor);
+    values[p.key] = editor.value;
     localStorage.setItem(storageKey, editor.value);
     refreshSubmission();
-    autoSize(submission);
   });
   editor.addEventListener("keydown", handleTab);
   resetBtn.addEventListener("click", () => {
     editor.value = stub;
+    values[p.key] = editor.value;
     localStorage.setItem(storageKey, editor.value);
     autoSize(editor);
     refreshSubmission();
-    autoSize(submission);
     editor.focus();
   });
 
-  copyBtn.addEventListener("click", async () => {
-    refreshSubmission();
-    const ok = await copyText(submission.value);
-    copyNote.textContent = ok ? "Copied to clipboard." : "Press Ctrl/Cmd-C to copy the text above.";
-    if (!ok) { submission.focus(); submission.select(); }
-    setTimeout(() => { copyNote.textContent = ""; }, 4000);
-  });
-
-  // Build the goal GIF from the (unsealed, never shown) solution. Passing it as
-  // its own reference makes runKarel draw Karel green on the winning end-state.
+  // Build the goal GIF from the (unsealed, never shown) solution.
   try {
-    const img = await runKarel(a.world, solutionFn,
-      { ...opts, solution: solutionFn, check: aspects, end: a.end });
+    const img = await runKarel(p.world, solutionFn,
+      { ...opts, solution: solutionFn, check: aspects, end: p.end });
     goalRender.replaceChildren(img);
   } catch (err) {
     goalRender.innerHTML = `<div class="err">Could not build goal: ${esc(friendlyError(err))}</div>`;
@@ -188,7 +263,6 @@ export async function renderAssignment(a, mount = document.getElementById("assig
     yourRender.replaceChildren(
       Object.assign(document.createElement("span"), { className: "status", textContent: "Running…" })
     );
-    // Parse once up front for a friendly syntax/main() error before running.
     try {
       compileProgram(editor.value);
     } catch (err) {
@@ -197,14 +271,10 @@ export async function renderAssignment(a, mount = document.getElementById("assig
       return;
     }
     try {
-      // Grade the run against the unsealed solution, exactly like a lesson
-      // challenge. When isolate is on the student's (untrusted, maybe infinite)
-      // code runs in a Web Worker, passed as source text, so it can't freeze the
-      // page; otherwise it runs in-thread.
-      const gradeOpts = { ...opts, solution: solutionFn, check: aspects, end: a.end };
+      const gradeOpts = { ...opts, solution: solutionFn, check: aspects, end: p.end };
       const img = isolate
-        ? await runKarelInWorker(a.world, editor.value, gradeOpts)
-        : await runKarel(a.world, compileProgram(editor.value), gradeOpts);
+        ? await runKarelInWorker(p.world, editor.value, gradeOpts)
+        : await runKarel(p.world, compileProgram(editor.value), gradeOpts);
       yourRender.replaceChildren(img);
       if (img.dataset.error) {
         const e = document.createElement("div");
