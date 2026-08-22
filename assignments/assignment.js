@@ -28,15 +28,55 @@ function autoSize(ta) {
   ta.style.height = ta.scrollHeight + 2 + "px";
 }
 
-// Tab inserts two spaces instead of moving focus, so the editor feels like code.
-function handleTab(e) {
-  if (e.key !== "Tab") return;
-  e.preventDefault();
+// Replace [from, to) with `text`, going through execCommand so the browser's
+// native undo stack survives. `caret` defaults to the end of the inserted text.
+function spliceText(ta, from, to, text, caret = from + text.length) {
+  ta.setSelectionRange(from, to);
+  let ok = false;
+  try {
+    ok = text === "" ? document.execCommand("delete") : document.execCommand("insertText", false, text);
+  } catch { ok = false; }
+  if (!ok) ta.value = ta.value.slice(0, from) + text + ta.value.slice(to);
+  ta.setSelectionRange(caret, caret);
+  autoSize(ta);
+}
+
+// Make the textarea feel like a code editor: Tab inserts two spaces instead of
+// moving focus, Shift+Tab removes them, Enter carries the current line's indent
+// (two deeper after an opening brace), and typing `}` on a blank line dedents.
+function handleEditorKeys(e) {
+  if (e.key !== "Tab" && e.key !== "Enter" && e.key !== "}") return;
   const ta = e.target;
   const start = ta.selectionStart, end = ta.selectionEnd;
-  ta.value = ta.value.slice(0, start) + "  " + ta.value.slice(end);
-  ta.selectionStart = ta.selectionEnd = start + 2;
-  autoSize(ta);
+  const lineStart = ta.value.lastIndexOf("\n", start - 1) + 1;
+  const indent = ta.value.slice(lineStart, start).match(/^[ \t]*/)[0];
+
+  if (e.key === "Tab") {
+    e.preventDefault();
+    if (!e.shiftKey) return spliceText(ta, start, end, "  ");
+    const lead = ta.value.slice(lineStart).match(/^ {1,2}/);
+    if (lead) spliceText(ta, lineStart, lineStart + lead[0].length, "", Math.max(lineStart, start - lead[0].length));
+    return;
+  }
+
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const opens = /[{([]$/.test(ta.value.slice(lineStart, start).trimEnd());
+    const inner = indent + (opens ? "  " : "");
+    // Between a just-opened brace and its closer, leave the closer on its own line.
+    if (opens && /^[ \t]*[}\])]/.test(ta.value.slice(end))) {
+      spliceText(ta, start, end, "\n" + inner + "\n" + indent, start + 1 + inner.length);
+    } else {
+      spliceText(ta, start, end, "\n" + inner);
+    }
+    return;
+  }
+
+  // `}` typed on an otherwise blank line snaps back one level.
+  if (start === end && /^ +$/.test(indent) && indent.length === start - lineStart && indent.length >= 2) {
+    e.preventDefault();
+    spliceText(ta, start - 2, end, "}");
+  }
 }
 
 function friendlyError(err) {
@@ -237,7 +277,7 @@ async function renderProblemCard(a, p, mount, { opts, isolate, values, refreshSu
     localStorage.setItem(storageKey, editor.value);
     refreshSubmission();
   });
-  editor.addEventListener("keydown", handleTab);
+  editor.addEventListener("keydown", handleEditorKeys);
   resetBtn.addEventListener("click", () => {
     editor.value = stub;
     values[p.key] = editor.value;
