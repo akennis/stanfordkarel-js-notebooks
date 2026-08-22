@@ -15,11 +15,6 @@
 
   <main id="notebook"></main>
 
-  <nav class="pager">
-    <a href="./reference.html">← All reference pages</a><span class="spacer"></span>
-    <a href="./ref-turn-left.html">k.turnLeft() →</a>
-  </nav>
-
   <script type="module">
     import { renderNotebook } from "./lesson.js";
 
@@ -101,5 +96,7 @@ Karel: (1, 1); east`,
 
     renderNotebook(cells, undefined, { isolate: true });
   </script>
+
+  <script type="module" src="../site-nav.js"></script>
 </body>
 </html>

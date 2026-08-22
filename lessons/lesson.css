@@ -77,8 +77,3 @@ pre.code code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 .verdict.ok{color:#16a34a;} .verdict.no{color:#d1451b;}
 .status.muted{color:#aab;}
 .chal-work .your-render{min-height:56px;}
-.pager{max-width:52rem;margin:2rem auto 3rem;padding:1.2rem 1.25rem 0;
-  border-top:1px solid var(--line);display:flex;justify-content:space-between;
-  gap:1rem;font-size:.95rem;}
-.pager a{color:var(--accent);text-decoration:none;font-weight:500;}
-.pager a:hover{text-decoration:underline;} .pager .spacer{flex:1;}

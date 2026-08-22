@@ -16,10 +16,6 @@
   <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-03">✏️ Practice this lesson → Assignment 3 (3 problems)</a></p>
   <main id="notebook"></main>
 
-  <nav class="pager">
-    <a href="./02-functions.html">← Functions</a><span class="spacer"></span><a href="./04-for-loops.html">for loops →</a>
-  </nav>
-
   <script type="module">
     import { renderNotebook } from "./lesson.js";
 
@@ -281,5 +277,7 @@ BeeperBag: INFINITY`,
     // like an endless loop can't freeze the page (grading is unchanged).
     renderNotebook(cells, undefined, { isolate: true });
   </script>
+
+  <script type="module" src="../site-nav.js"></script>
 </body>
 </html>

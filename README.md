@@ -397,12 +397,13 @@ See `lessons/square.html` for this example running as a standalone page.
 | `stanfordkarel.js` | The library — world parser, simulator, and GIF renderer |
 | `worlds/` | Bundled world modules (`index.js`, `square.js`, …) |
 | `index.html` | Landing page for the *Learning JavaScript with Karel* course |
+| `site-nav.js` | Shared navbar and prev/next pager for every page, driven by one site map |
 | `lessons/` | The ten lesson pages, plus `lesson.js` / `lesson.css` and the `square.html` demo |
 | `assignments/` | Graded-assignment manifests (`index.js`, `collect-all.js`, …) and the shared student page (`assignment.html` / `assignment.js`) |
 | `tools/` | `grade.js` (teacher batch grader), `grade-worker.js`, `seal.js` (solution-sealing helper), `roster.example.json` |
 | `student-template/` | Starter repo layout students copy to submit their work |
 
-Published to npm (see the `files` field in `package.json`): `stanfordkarel.js`, `worlds/`, `assignments/`, `tools/`, `LICENSE`, and `README.md`. The course pages (`index.html`, `lessons/`, `student-template/`) live in the repo and are meant to be served as static files.
+Published to npm (see the `files` field in `package.json`): `stanfordkarel.js`, `worlds/`, `assignments/`, `tools/`, `LICENSE`, and `README.md`. The course pages (`index.html`, `lessons/`, `site-nav.js`, `student-template/`) live in the repo and are meant to be served as static files.
 
 ---
 

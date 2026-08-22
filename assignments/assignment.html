@@ -43,13 +43,10 @@
 
   <main id="assignment"></main>
 
-  <nav class="pager">
-    <a href="./index.html">← All assignments</a><span class="spacer"></span><span></span>
-  </nav>
-
   <script type="module">
-    import { getAssignment } from "./index.js";
+    import { assignments, getAssignment } from "./index.js";
     import { renderAssignment } from "./assignment.js";
+    import { setNext } from "../site-nav.js";
 
     const id = new URLSearchParams(location.search).get("id");
     const mount = document.getElementById("assignment");
@@ -69,8 +66,17 @@
         document.title = `${a.title} — Karel JS`;
         document.getElementById("title").textContent = a.title;
         renderAssignment(a, mount, { isolate: true });
+
+        // This page's successor depends on ?id=, so it can't live in the static
+        // site map — hand it to the navbar once the assignment is known. The
+        // last assignment gets no Next link.
+        const at = assignments.indexOf(a);
+        const following = at === -1 ? undefined : assignments[at + 1];
+        if (following) setNext(`./assignment.html?id=${following.id}`, following.title);
       }
     }
   </script>
+
+  <script type="module" src="../site-nav.js" data-prev="./index.html" data-prev-label="All assignments"></script>
 </body>
 </html>

@@ -16,10 +16,6 @@
   <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-02">✏️ Practice this lesson → Assignment 2 (3 problems)</a></p>
   <main id="notebook"></main>
 
-  <nav class="pager">
-    <a href="./01-commands.html">← Commands</a><span class="spacer"></span><a href="./03-if.html">if statements →</a>
-  </nav>
-
   <script type="module">
     import { renderNotebook } from "./lesson.js";
 
@@ -236,5 +232,7 @@ function main(k) {
     // like an endless loop can't freeze the page (grading is unchanged).
     renderNotebook(cells, undefined, { isolate: true });
   </script>
+
+  <script type="module" src="../site-nav.js"></script>
 </body>
 </html>

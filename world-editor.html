@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karel World Editor — build a world visually</title>
+  <style>
+    :root {
+      --fg: #222; --muted: #888; --border: #ddd; --accent: #2b6cb0; --err: #c53030;
+      --cs: 46px;              /* cell size, kept in sync with the grid */
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif; color: var(--fg);
+      max-width: 72rem; margin: 2.5rem auto; padding: 0 1rem; line-height: 1.5;
+    }
+    h1 { margin-bottom: 0.25rem; }
+    p.sub { color: #555; margin-top: 0; }
+
+    .layout { display: grid; grid-template-columns: 1fr 22rem; gap: 1.5rem; align-items: start; }
+    @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+    section { min-width: 0; }
+    .panel-label { font-weight: 600; margin: 0 0 0.4rem; }
+
+    /* ── Toolbar ─────────────────────────────────────────────────────────── */
+    .toolbar { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .toolbar button {
+      font: inherit; cursor: pointer; border: 1px solid var(--border);
+      background: #fff; color: var(--fg); padding: 0.35rem 0.7rem; border-radius: 6px;
+    }
+    .toolbar button.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+    .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0.5rem 0; }
+    .row label { font-size: 0.9rem; color: #444; }
+    .row input[type="number"] { width: 4rem; font: inherit; padding: 0.2rem 0.35rem;
+      border: 1px solid var(--border); border-radius: 5px; }
+    select { font: inherit; padding: 0.25rem 0.35rem; border: 1px solid var(--border); border-radius: 5px; }
+
+    .swatches { display: flex; flex-wrap: wrap; gap: 4px; margin: 0.4rem 0 0.2rem; }
+    .swatch { width: 26px; height: 26px; border-radius: 5px; cursor: pointer;
+      border: 2px solid #ccc; padding: 0; }
+    .swatch.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(43,108,176,0.25); }
+    .swatch.none { position: relative; background: #fff; }
+    .swatch.none::after { content: ""; position: absolute; inset: 3px; border-radius: 3px;
+      background: linear-gradient(to top right, transparent 46%, #c53030 46%, #c53030 54%, transparent 54%); }
+
+    button.action {
+      font: inherit; font-weight: 600; cursor: pointer;
+      border: 1px solid var(--accent); background: var(--accent); color: #fff;
+      padding: 0.4rem 0.9rem; border-radius: 6px;
+    }
+    button.action.secondary { background: #fff; color: var(--accent); }
+
+    /* ── Board / grid ────────────────────────────────────────────────────── */
+    .board-wrap { overflow: auto; padding: 0.25rem; }
+    .board { display: grid; grid-template-columns: 24px auto; grid-template-rows: auto 20px;
+      width: max-content; }
+    .street-labels { display: flex; flex-direction: column; }
+    .street-labels span { height: var(--cs); display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 4px; font-size: 11px; color: #555; font-variant-numeric: tabular-nums; }
+    .avenue-labels { grid-column: 2; display: flex; }
+    .avenue-labels span { width: var(--cs); text-align: center; font-size: 11px; color: #555;
+      font-variant-numeric: tabular-nums; }
+
+    .grid { display: grid; border: 2px solid #111; background: #fff; user-select: none; }
+    .cell { position: relative; width: var(--cs); height: var(--cs);
+      border-right: 1px solid #eee; border-top: 1px solid #eee; cursor: pointer; }
+    .cell .mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: #d0d0d0; font-size: 14px; line-height: 1; pointer-events: none; }
+
+    .beeper { position: absolute; inset: 24%; background: #d9d9d9; border: 1px solid #333;
+      transform: rotate(45deg); pointer-events: none; }
+    .count { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #111; pointer-events: none; }
+
+    .karel { position: absolute; inset: 16%; border-radius: 6px; background: #cfe3ff;
+      border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center;
+      color: var(--accent); pointer-events: none; }
+    .karel .arrow { font-size: 15px; line-height: 1; }
+
+    /* Wall hit-zones: transparent by default, black when a wall exists. Only
+       clickable while the Wall or Erase tool is active (see .grid.tool-* below). */
+    .edge { position: absolute; background: transparent; pointer-events: none; z-index: 3; }
+    .edge.wall { background: #111; }
+    .edge-n { top: -3px; left: 0; right: 0; height: 6px; }
+    .edge-s { bottom: -3px; left: 0; right: 0; height: 6px; }
+    .edge-e { top: 0; bottom: 0; right: -3px; width: 6px; }
+    .edge-w { top: 0; bottom: 0; left: -3px; width: 6px; }
+    .grid.tool-wall .edge, .grid.tool-erase .edge { pointer-events: auto; }
+    .grid.tool-wall .edge:hover, .grid.tool-erase .edge:hover { background: rgba(43,108,176,0.35); }
+    .grid.tool-wall .edge.wall:hover, .grid.tool-erase .edge.wall:hover { background: #444; }
+
+    /* ── Code panel ──────────────────────────────────────────────────────── */
+    textarea {
+      width: 100%; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px; line-height: 1.45; padding: 0.6rem 0.7rem;
+      border: 1px solid var(--border); border-radius: 6px; resize: vertical;
+      background: #fafafa; color: var(--fg); tab-size: 2; min-height: 320px;
+    }
+    .hint { color: var(--muted); font-size: 12px; margin: 0.3rem 0; }
+    .status { color: var(--muted); font-size: 0.85rem; }
+    .status.error { color: var(--err); }
+  </style>
+</head>
+<body>
+  <h1>Karel World Editor</h1>
+  <p class="sub">Build a Karel world by clicking the grid — place Karel, drop beepers, paint corners, and drag out
+    walls. The <code>.w</code> world code updates live on the right and is saved in your browser automatically.
+    New to the syntax? See <a href="./world-formats.html" target="_blank" rel="noopener">World Formats</a>.</p>
+
+  <div class="layout">
+    <section>
+      <div class="panel-label">Tool</div>
+      <div class="toolbar" id="toolbar">
+        <button type="button" data-tool="karel" class="active">🤖 Karel</button>
+        <button type="button" data-tool="beeper">◆ Beeper</button>
+        <button type="button" data-tool="wall">▮ Wall</button>
+        <button type="button" data-tool="paint">🎨 Paint</button>
+        <button type="button" data-tool="erase">✕ Erase</button>
+      </div>
+
+      <div id="paintRow" class="row" hidden>
+        <span class="panel-label" style="margin:0">Color:</span>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <p class="hint" id="toolHint"></p>
+
+      <div class="row">
+        <label>Avenues <input type="number" id="avenues" min="1" max="30" step="1"></label>
+        <label>Streets <input type="number" id="streets" min="1" max="30" step="1"></label>
+        <label>Karel faces
+          <select id="dir">
+            <option value="north">north</option>
+            <option value="east">east</option>
+            <option value="south">south</option>
+            <option value="west">west</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Beeper bag <input type="number" id="bag" min="0" step="1"></label>
+        <label><input type="checkbox" id="bagInf"> infinite</label>
+        <label>Speed <input type="number" id="speed" min="0" step="0.5" placeholder="—" style="width:5rem"></label>
+        <button type="button" class="action secondary" id="newBtn">New / Clear</button>
+      </div>
+
+      <div class="panel-label" style="margin-top:0.6rem">World</div>
+      <div class="board-wrap">
+        <div class="board" id="board"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="panel-label">World code (<code>.w</code>)</div>
+      <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+      <div class="row">
+        <button type="button" class="action" id="loadBtn">↥ Load code into grid</button>
+        <button type="button" class="action secondary" id="copyBtn">Copy</button>
+        <span class="status" id="codeStatus"></span>
+      </div>
+      <p class="hint">Paste an existing world above and press <strong>Load</strong> to edit it visually. The box
+        also mirrors whatever you build on the grid — edit it directly, then Load to apply.</p>
+    </section>
+  </div>
+
+  <script>
+    "use strict";
+
+    // ── Colors ──────────────────────────────────────────────────────────────
+    // Mirror the library's CSS_COLORS map so painted corners preview accurately
+    // and serialize to the exact Karel color names the simulator understands.
+    const CSS_COLORS = {
+      Red: "red", Black: "black", Cyan: "cyan", "Dark Gray": "#4d4d4d", Gray: "#8c8c8c",
+      Green: "green", "Light Gray": "#cccccc", Magenta: "#cd00cd", Orange: "orange",
+      Pink: "pink", White: "#fffafa", Blue: "blue", Yellow: "yellow",
+    };
+    const COLOR_NAMES = Object.keys(CSS_COLORS);
+
+    const TURN_LEFT = { north: "west", west: "south", south: "east", east: "north" };
+    const DIRS = ["north", "east", "south", "west"];
+    const DIR_DEG = { east: 0, south: 90, west: 180, north: -90 };  // rotation for the ➤ arrow
+
+    const STORAGE_KEY = "karelWorldEditor.v1";
+
+    // ── State ───────────────────────────────────────────────────────────────
+    // Walls are stored canonically as `${a},${s},east` (vertical, between a and
+    // a+1) or `${a},${s},north` (horizontal, between s and s+1). Every edge the
+    // user clicks is normalized to this form so a wall is never duplicated.
+    const state = {
+      A: 8, S: 8,
+      karel: { a: 1, s: 1, dir: "east" },
+      bag: 0,                 // number, or Infinity for an infinite bag
+      speed: null,            // number, or null when unset
+      beepers: new Map(),     // "a,s" -> count
+      colors: new Map(),      // "a,s" -> color name
+      walls: new Set(),       // canonical "a,s,dir"
+    };
+
+    let tool = "karel";
+    let paintColor = "Red";
+
+    const key = (a, s) => `${a},${s}`;
+
+    // Reduce any (a,s,dir) to its canonical stored form. Returns null for walls
+    // that would sit on the outer boundary (redundant with the grid border).
+    function canonWall(a, s, dir) {
+      if (dir === "south") { s -= 1; dir = "north"; }
+      else if (dir === "west") { a -= 1; dir = "east"; }
+      if (a < 1 || s < 1) return null;
+      if (dir === "east" && a >= state.A) return null;   // east of the last avenue = border
+      if (dir === "north" && s >= state.S) return null;  // north of the top street = border
+      return `${a},${s},${dir}`;
+    }
+    function hasWall(a, s, dir) { const c = canonWall(a, s, dir); return c != null && state.walls.has(c); }
+    function toggleWall(a, s, dir, force) {
+      const c = canonWall(a, s, dir);
+      if (!c) return;
+      const on = force === undefined ? !state.walls.has(c) : force;
+      if (on) state.walls.add(c); else state.walls.delete(c);
+    }
+
+    // ── Serialize to .w text ────────────────────────────────────────────────
+    function serialize() {
+      const out = [];
+      out.push(`Dimension: (${state.A}, ${state.S})`);
+      out.push(`Karel: (${state.karel.a}, ${state.karel.s}); ${state.karel.dir}`);
+      out.push(`BeeperBag: ${state.bag === Infinity ? "INFINITY" : state.bag}`);
+      if (state.speed != null) out.push(`Speed: ${state.speed}`);
+
+      const cmp = (x, y) => x[1] - y[1] || x[0] - y[0];   // by street then avenue
+      const walls = [...state.walls].map(w => w.split(",")).map(([a, s, d]) => [+a, +s, d]);
+      for (const [a, s, d] of walls.sort((p, q) => cmp(p, q) || p[2].localeCompare(q[2])))
+        out.push(`Wall: (${a}, ${s}); ${d}`);
+
+      const beeps = [...state.beepers].map(([k, c]) => [...k.split(",").map(Number), c]);
+      for (const [a, s, c] of beeps.sort(cmp)) out.push(`Beeper: (${a}, ${s}); ${c}`);
+
+      const cols = [...state.colors].map(([k, c]) => [...k.split(",").map(Number), c]);
+      for (const [a, s, c] of cols.sort(cmp)) out.push(`Color: (${a}, ${s}); ${c}`);
+
+      return out.join("\n") + "\n";
+    }
+
+    // ── Parse .w text (tolerant, mirrors the library parser) ────────────────
+    function parse(text) {
+      const next = {
+        A: 1, S: 1, karel: { a: 1, s: 1, dir: "east" }, bag: 0, speed: null,
+        beepers: new Map(), colors: new Map(), walls: new Set(),
+      };
+      const rawWalls = [];   // collected first, canonicalized after A/S are known
+      for (const line of text.split("\n")) {
+        const t = line.trim();
+        if (!t) continue;
+        const ci = t.indexOf(":");
+        if (ci === -1) continue;
+        const kw = t.slice(0, ci).trim().toLowerCase();
+        const params = t.slice(ci + 1).trim();
+        const low = params.toLowerCase();
+        const coord = low.match(/\((\d+),\s*(\d+)\)/);
+        const a = coord ? +coord[1] : null;
+        const s = coord ? +coord[2] : null;
+        const dir = (low.match(/\b(north|south|east|west)\b/) || [])[1] || null;
+        const num = (low.replace(/\(.*?\)/, "").match(/\d+/) || [])[0];
+
+        switch (kw) {
+          case "dimension": if (a != null) { next.A = a; next.S = s; } break;
+          case "karel":
+            if (a != null) { next.karel.a = a; next.karel.s = s; }
+            if (dir) next.karel.dir = dir; break;
+          case "beeper":
+            if (a != null && num != null)
+              next.beepers.set(key(a, s), (next.beepers.get(key(a, s)) || 0) + +num);
+            break;
+          case "wall": if (a != null && dir) rawWalls.push([a, s, dir]); break;
+          case "beeperbag":
+            next.bag = /inf/i.test(low) ? Infinity : (num != null ? +num : 0); break;
+          case "color": {
+            const m = params.match(/;\s*(.+)$/);
+            if (a != null && m) {
+              const name = m[1].trim().split(/\s+/)
+                .map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+              next.colors.set(key(a, s), name);
+            }
+            break;
+          }
+          case "speed": { const v = parseFloat(params); if (!isNaN(v) && v > 0) next.speed = v; break; }
+        }
+      }
+      if (next.A < 1) next.A = 1;
+      if (next.S < 1) next.S = 1;
+      // Canonicalize walls now that dimensions are known.
+      const saveA = state.A, saveS = state.S;
+      state.A = next.A; state.S = next.S;
+      for (const [a, s, d] of rawWalls) { const c = canonWall(a, s, d); if (c) next.walls.add(c); }
+      state.A = saveA; state.S = saveS;
+      return next;
+    }
+
+    // Drop anything that falls outside the A×S grid (after a resize) and clamp
+    // Karel back inside.
+    function clampToGrid() {
+      const inB = (a, s) => a >= 1 && a <= state.A && s >= 1 && s <= state.S;
+      for (const k of [...state.beepers.keys()]) { const [a, s] = k.split(",").map(Number); if (!inB(a, s)) state.beepers.delete(k); }
+      for (const k of [...state.colors.keys()]) { const [a, s] = k.split(",").map(Number); if (!inB(a, s)) state.colors.delete(k); }
+      for (const w of [...state.walls]) {
+        const [a, s, d] = w.split(","); if (!canonWall(+a, +s, d)) state.walls.delete(w);
+      }
+      state.karel.a = Math.min(Math.max(1, state.karel.a), state.A);
+      state.karel.s = Math.min(Math.max(1, state.karel.s), state.S);
+    }
+
+    function replaceState(next) {
+      Object.assign(state, next);
+      clampToGrid();
+    }
+
+    // ── Rendering ───────────────────────────────────────────────────────────
+    const board = document.getElementById("board");
+    const codeEl = document.getElementById("code");
+    const codeStatus = document.getElementById("codeStatus");
+
+    function makeEdge(a, s, dirs) {
+      const frag = [];
+      for (const d of dirs) {
+        const e = document.createElement("div");
+        e.className = "edge edge-" + d[0] + (hasWall(a, s, d) ? " wall" : "");
+        e.dataset.a = a; e.dataset.s = s; e.dataset.dir = d;
+        frag.push(e);
+      }
+      return frag;
+    }
+
+    function render() {
+      // Street labels (top = highest street) + grid + avenue labels.
+      board.replaceChildren();
+
+      const streetLabels = document.createElement("div");
+      streetLabels.className = "street-labels";
+      for (let s = state.S; s >= 1; s--) {
+        const span = document.createElement("span");
+        span.textContent = s;
+        streetLabels.appendChild(span);
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "grid tool-" + tool;
+      grid.style.gridTemplateColumns = `repeat(${state.A}, var(--cs))`;
+      grid.style.gridTemplateRows = `repeat(${state.S}, var(--cs))`;
+
+      for (let s = state.S; s >= 1; s--) {
+        for (let a = 1; a <= state.A; a++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.a = a; cell.dataset.s = s;
+          const k = key(a, s);
+
+          const color = state.colors.get(k);
+          if (color) cell.style.background = CSS_COLORS[color] || color;
+
+          const beeperCount = state.beepers.get(k) || 0;
+          const isKarel = state.karel.a === a && state.karel.s === s;
+
+          if (!color && !beeperCount && !isKarel) {
+            const mark = document.createElement("div");
+            mark.className = "mark"; mark.textContent = "+";
+            cell.appendChild(mark);
+          }
+          if (beeperCount > 0) {
+            const b = document.createElement("div"); b.className = "beeper";
+            cell.appendChild(b);
+            if (beeperCount > 1) {
+              const c = document.createElement("div"); c.className = "count";
+              c.textContent = beeperCount; cell.appendChild(c);
+            }
+          }
+          if (isKarel) {
+            const k2 = document.createElement("div"); k2.className = "karel";
+            const arr = document.createElement("span");
+            arr.className = "arrow"; arr.textContent = "➤";
+            arr.style.transform = `rotate(${DIR_DEG[state.karel.dir]}deg)`;
+            k2.appendChild(arr); cell.appendChild(k2);
+          }
+
+          // Wall edges: draw north/east always; also south on the bottom row and
+          // west on the leftmost column so boundary-adjacent interior walls are
+          // reachable from both sides.
+          const dirs = ["north", "east"];
+          if (s === 1) dirs.push("south");
+          if (a === 1) dirs.push("west");
+          for (const e of makeEdge(a, s, dirs)) cell.appendChild(e);
+
+          grid.appendChild(cell);
+        }
+      }
+
+      const avenueLabels = document.createElement("div");
+      avenueLabels.className = "avenue-labels";
+      const spacer = document.createElement("div");   // under the street-label column
+      for (let a = 1; a <= state.A; a++) {
+        const span = document.createElement("span"); span.textContent = a;
+        avenueLabels.appendChild(span);
+      }
+
+      board.appendChild(streetLabels);
+      board.appendChild(grid);
+      board.appendChild(spacer);
+      board.appendChild(avenueLabels);
+
+      syncControls();
+      const code = serialize();
+      if (document.activeElement !== codeEl) codeEl.value = code;
+      try { localStorage.setItem(STORAGE_KEY, code); } catch { /* private mode: ignore */ }
+    }
+
+    // Reflect state into the form controls (without clobbering focused fields).
+    function syncControls() {
+      const set = (id, v) => { const el = document.getElementById(id); if (document.activeElement !== el) el.value = v; };
+      set("avenues", state.A);
+      set("streets", state.S);
+      document.getElementById("dir").value = state.karel.dir;
+      document.getElementById("bagInf").checked = state.bag === Infinity;
+      const bagEl = document.getElementById("bag");
+      bagEl.disabled = state.bag === Infinity;
+      if (document.activeElement !== bagEl) bagEl.value = state.bag === Infinity ? "" : state.bag;
+      set("speed", state.speed == null ? "" : state.speed);
+    }
+
+    // ── Tool application ────────────────────────────────────────────────────
+    function applyToCell(a, s, remove) {
+      const k = key(a, s);
+      switch (tool) {
+        case "karel":
+          if (state.karel.a === a && state.karel.s === s) state.karel.dir = TURN_LEFT[state.karel.dir];
+          else { state.karel.a = a; state.karel.s = s; }
+          break;
+        case "beeper": {
+          const c = (state.beepers.get(k) || 0) + (remove ? -1 : 1);
+          if (c > 0) state.beepers.set(k, c); else state.beepers.delete(k);
+          break;
+        }
+        case "paint":
+          if (remove || paintColor === "") state.colors.delete(k);
+          else state.colors.set(k, paintColor);
+          break;
+        case "erase":
+          state.beepers.delete(k); state.colors.delete(k);
+          break;
+      }
+    }
+
+    board.addEventListener("click", (e) => {
+      const edge = e.target.closest(".edge");
+      if (edge && (tool === "wall" || tool === "erase")) {
+        toggleWall(+edge.dataset.a, +edge.dataset.s, edge.dataset.dir, tool === "erase" ? false : undefined);
+        render();
+        return;
+      }
+      const cell = e.target.closest(".cell");
+      if (!cell || tool === "wall") return;   // Wall tool only acts on edges
+      applyToCell(+cell.dataset.a, +cell.dataset.s, false);
+      render();
+    });
+
+    // Right-click removes: one beeper, or a painted color.
+    board.addEventListener("contextmenu", (e) => {
+      const cell = e.target.closest(".cell");
+      if (!cell || (tool !== "beeper" && tool !== "paint")) return;
+      e.preventDefault();
+      applyToCell(+cell.dataset.a, +cell.dataset.s, true);
+      render();
+    });
+
+    // ── Toolbar & palette ───────────────────────────────────────────────────
+    const toolHints = {
+      karel: "Click a corner to place Karel. Click Karel again to rotate him left.",
+      beeper: "Click to add a beeper (stacks). Right-click to remove one.",
+      wall: "Click a cell edge to toggle a wall on that side.",
+      paint: "Click to paint a corner in the chosen color. Right-click to clear it.",
+      erase: "Click a corner to clear beepers & paint; click an edge to remove a wall.",
+    };
+    const toolbar = document.getElementById("toolbar");
+    const paintRow = document.getElementById("paintRow");
+    const toolHint = document.getElementById("toolHint");
+
+    function selectTool(t) {
+      tool = t;
+      for (const b of toolbar.querySelectorAll("button")) b.classList.toggle("active", b.dataset.tool === t);
+      paintRow.hidden = t !== "paint";
+      toolHint.textContent = toolHints[t];
+      const grid = board.querySelector(".grid");
+      if (grid) grid.className = "grid tool-" + t;
+    }
+    toolbar.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (b) selectTool(b.dataset.tool);
+    });
+
+    const swatches = document.getElementById("swatches");
+    function buildSwatches() {
+      const none = document.createElement("button");
+      none.className = "swatch none"; none.title = "None (clear)"; none.dataset.color = "";
+      swatches.appendChild(none);
+      for (const name of COLOR_NAMES) {
+        const sw = document.createElement("button");
+        sw.className = "swatch"; sw.title = name; sw.dataset.color = name;
+        sw.style.background = CSS_COLORS[name];
+        swatches.appendChild(sw);
+      }
+      markSwatch();
+    }
+    function markSwatch() {
+      for (const sw of swatches.querySelectorAll(".swatch"))
+        sw.classList.toggle("active", sw.dataset.color === paintColor);
+    }
+    swatches.addEventListener("click", (e) => {
+      const sw = e.target.closest(".swatch"); if (!sw) return;
+      paintColor = sw.dataset.color; markSwatch();
+    });
+
+    // ── Form controls ───────────────────────────────────────────────────────
+    function clampSize(v) { v = Math.round(+v); return isNaN(v) ? 1 : Math.min(30, Math.max(1, v)); }
+    document.getElementById("avenues").addEventListener("change", (e) => {
+      state.A = clampSize(e.target.value); clampToGrid(); render();
+    });
+    document.getElementById("streets").addEventListener("change", (e) => {
+      state.S = clampSize(e.target.value); clampToGrid(); render();
+    });
+    document.getElementById("dir").addEventListener("change", (e) => { state.karel.dir = e.target.value; render(); });
+    document.getElementById("bag").addEventListener("change", (e) => {
+      const v = Math.round(+e.target.value); state.bag = isNaN(v) || v < 0 ? 0 : v; render();
+    });
+    document.getElementById("bagInf").addEventListener("change", (e) => {
+      state.bag = e.target.checked ? Infinity : 0; render();
+    });
+    document.getElementById("speed").addEventListener("change", (e) => {
+      const v = parseFloat(e.target.value); state.speed = isNaN(v) || v <= 0 ? null : v; render();
+    });
+
+    document.getElementById("newBtn").addEventListener("click", () => {
+      if (!confirm("Start a new, empty world? This clears the current one.")) return;
+      replaceState({
+        A: state.A, S: state.S, karel: { a: 1, s: 1, dir: "east" }, bag: 0, speed: null,
+        beepers: new Map(), colors: new Map(), walls: new Set(),
+      });
+      render();
+    });
+
+    // ── Code load / copy ─────────────────────────────────────────────────────
+    document.getElementById("loadBtn").addEventListener("click", () => {
+      try {
+        const next = parse(codeEl.value);
+        replaceState(next);
+        render();
+        codeStatus.className = "status";
+        codeStatus.textContent = "Loaded ✓";
+        setTimeout(() => { codeStatus.textContent = ""; }, 1500);
+      } catch (err) {
+        codeStatus.className = "status error";
+        codeStatus.textContent = "Could not parse: " + err.message;
+      }
+    });
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(codeEl.value);
+        codeStatus.className = "status"; codeStatus.textContent = "Copied!";
+        setTimeout(() => { codeStatus.textContent = ""; }, 1500);
+      } catch {
+        codeEl.select();
+      }
+    });
+
+    // Tab inserts two spaces in the code box.
+    codeEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      e.preventDefault();
+      const s = codeEl.selectionStart, end = codeEl.selectionEnd;
+      codeEl.value = codeEl.value.slice(0, s) + "  " + codeEl.value.slice(end);
+      codeEl.selectionStart = codeEl.selectionEnd = s + 2;
+    });
+
+    // ── Boot ─────────────────────────────────────────────────────────────────
+    buildSwatches();
+    selectTool("karel");
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && /Dimension\s*:/i.test(saved)) replaceState(parse(saved));
+    } catch { /* ignore */ }
+    render();
+  </script>
+
+  <script type="module" src="./site-nav.js"></script>
+</body>
+</html>

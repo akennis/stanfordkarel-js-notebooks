@@ -18,6 +18,7 @@ There is **no build step, no bundler, no transpile, and no test suite.** Source 
 | `stanfordkarel.js` | The entire library: world parser, simulator (`KarelWorld`, `KarelProgram`), canvas renderer, GIF encoder, `runKarel`, `fetchWorld`. |
 | `worlds/` | Bundled world modules. `square.js` etc. each `export default` a world string; `index.js` re-exports them all. |
 | `index.html` | Course landing page / table of contents. |
+| `site-nav.js` | Site-wide navbar + bottom pager, and the `SECTIONS` site map that is the **single source of truth for page order**. Every HTML page includes it with one line. |
 | `lessons/` | `01-…10-*.html` lessons, `lesson.js` (`renderNotebook` helper), `lesson.css`, and `square.html` (standalone demo). |
 | `assignments/` | Graded coursework. Manifest modules (`<id>.js`) + `index.js` (re-export & lookup), the generic student page `assignment.html` (reads `?id=`), its renderer `assignment.js`, and `index.html` (assignment list). |
 | `tools/` | `grade.js` (teacher batch grader) + `grade-worker.js`, `seal.js` (solution sealer), `gen-lesson-assignments.js` (generates the per-lesson assignments), `roster.example.json`. |
@@ -83,7 +84,23 @@ Lessons are static HTML using `renderNotebook(cells)` from `lessons/lesson.js`. 
 
 `opts` (any cell) defaults to `{ cellSize: 46, delay: 150 }`. Cells render top-to-bottom; `md` are synchronous, `code`/`challenge` are awaited so animations build in order.
 
-New lessons: copy an existing `NN-*.html`, wire the prev/next `.pager` links, and add an entry to the `<ol class="toc">` in `index.html`. The challenge machinery lives entirely in `lesson.js`/`lesson.css`, so any lesson can add challenge cells.
+New lessons: copy an existing `NN-*.html`, add the page to `SECTIONS` in `site-nav.js` (this is what wires up its navbar Next and its bottom pager — never hand-write nav links), and add an entry to the `<ol class="toc">` in `index.html`. The challenge machinery lives entirely in `lesson.js`/`lesson.css`, so any lesson can add challenge cells.
+
+## Site navigation
+
+Every HTML page in the repo — lessons, reference, assignments, playground, world editor, world formats — carries one line before `</body>`:
+
+```html
+<script type="module" src="./site-nav.js"></script>    <!-- ../site-nav.js from a subdirectory -->
+```
+
+That module renders the sticky navbar (Home · Lessons · Assignments · Reference, plus a right-aligned **Next**) and the bottom prev/next pager. Both come from the `SECTIONS` array at the top of `site-nav.js`, so **page order lives in exactly one place**. Rules:
+
+- **Next advances within a section only** (`lessons`, `assignments`, `reference`, `tools`). The last page of a section gets **no** Next link — it is omitted, never rendered dead or disabled. Same for a page absent from the map (`lessons/square.html`).
+- All links resolve against `import.meta.url`, so nothing is root-absolute and the site works from the repo root, a subdirectory, and a GitHub Pages project base.
+- The module injects its own CSS, so pages with inline `<style>` need no extra `<link>`. It uses the shared `--ink/--muted/--line/--accent` custom properties with literal fallbacks.
+- Off-map pages can still get links: `data-prev`/`data-prev-label` (and `data-next`/`data-next-label`) on the script tag, or the exported `setNext(href, label)` for a successor only known at runtime — that's how `assignments/assignment.html` chains `?id=` to the next assignment.
+- Don't reintroduce hand-written `<nav class="pager">` blocks; they were removed from all 35 pages that had them, and `.pager` no longer exists in `lesson.css`.
 
 ## Assignments & grading
 
