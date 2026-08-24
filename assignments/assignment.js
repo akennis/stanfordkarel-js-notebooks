@@ -18,6 +18,7 @@
  * student's run — never printing the plaintext into the page.
  */
 import { runKarel, runKarelInWorker, unsealSolution, compileProgram } from "../stanfordkarel.js";
+import { backupCode, registerSlot, installRecoveryTools } from "../code-backup.js";
 
 const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -102,30 +103,30 @@ function normalize(a) {
 }
 
 // The exact text a student commits as submissions/<id>.js. Every problem's code
-// is wrapped in its own outer function `problem_<key>()` that returns the main()
-// the student defined — so all three coexist in one file and a grader can run
-// each independently by calling its wrapper. The header lines tag the file with
-// the assignment id; the whole thing is valid JavaScript (helpers included).
+// is wrapped in its own outer function `problem_<n>()` — numbered by position,
+// 1-based — that returns the main() the student defined, so all three coexist in
+// one file and a grader can run each independently by calling its wrapper. The
+// header lines tag the file with the assignment id; the whole thing is valid
+// JavaScript (helpers included).
 function buildSubmission(a, values) {
   const rule = "─".repeat(58);
   let out =
     `// Karel submission — do not remove the header or the function wrappers.\n` +
     `// assignment: ${a.id}\n` +
-    `// submittedAt: ${new Date().toISOString()}\n` +
     `//\n` +
     `// Each problem below is wrapped in an outer function that returns its\n` +
     `// main(k), so your instructor's grader can run and grade all three.\n`;
-  for (const p of a.problems) {
+  a.problems.forEach((p, i) => {
     const body = (values[p.key] || "").replace(/\s*$/, "");
     out +=
       `\n// ${rule}\n` +
-      `// Problem: ${p.key}${p.label ? ` (${p.label})` : ""}\n` +
+      `// Problem ${i + 1}: ${p.key}${p.label ? ` (${p.label})` : ""}\n` +
       `// ${rule}\n` +
-      `function problem_${p.key}() {\n` +
+      `function problem_${i + 1}() {\n` +
       `${body}\n` +
       `  return main;\n` +
       `}\n`;
-  }
+  });
   return out;
 }
 
@@ -148,6 +149,8 @@ async function copyText(text) {
 export async function renderAssignment(raw, mount = document.getElementById("assignment"), { isolate = true } = {}) {
   const a = normalize(raw);
   const opts = a.opts || DEFAULT_OPTS;
+  // Teacher-side recovery for code erased by Reset (see ../code-backup.js).
+  installRecoveryTools();
 
   // Optional back-link to the companion lesson.
   if (a.lessonSlug) {
@@ -220,6 +223,8 @@ export async function renderAssignment(raw, mount = document.getElementById("ass
 async function renderProblemCard(a, p, mount, { opts, isolate, values, refreshSubmission }) {
   const aspects = p.check || ["beepers", "position", "direction", "colors"];
   const storageKey = `karel-assignment:${a.id}:${p.key}`;
+  const backupScope = `assignment:${a.id}:${p.key}`;
+  const backupLabel = `${a.id} · ${p.label || p.key}`;
   const stub = p.starter != null ? p.starter : "function main(k) {\n  // your code here\n}\n";
 
   let solutionFn = null;
@@ -251,8 +256,17 @@ async function renderProblemCard(a, p, mount, { opts, isolate, values, refreshSu
         `<textarea class="editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>` +
         `<div class="chal-controls">` +
           `<button type="button" class="run-btn">▶ Run</button>` +
-          `<button type="button" class="reset-btn" title="Restore the starter code">Reset</button>` +
+          `<button type="button" class="reset-btn" title="Restore the starter code" aria-expanded="false">Reset</button>` +
           `<span class="verdict"></span>` +
+        `</div>` +
+        `<div class="reset-confirm" role="alertdialog" aria-modal="false" hidden>` +
+          `<p class="reset-warn"><strong>⚠ This will erase your code.</strong> ` +
+          `Resetting replaces everything in the editor with the starter code, including the saved work ` +
+          `for this problem. This cannot be undone.</p>` +
+          `<div class="reset-actions">` +
+            `<button type="button" class="reset-yes">Erase my code</button>` +
+            `<button type="button" class="reset-no">Cancel</button>` +
+          `</div>` +
         `</div>` +
         `<div class="panel-label your-label">Your result</div>` +
         `<div class="render your-render"><span class="status muted">Run your code to see Karel go.</span></div>` +
@@ -266,9 +280,21 @@ async function renderProblemCard(a, p, mount, { opts, isolate, values, refreshSu
   const verdict = wrap.querySelector(".verdict");
   const runBtn = wrap.querySelector(".run-btn");
   const resetBtn = wrap.querySelector(".reset-btn");
+  const resetConfirm = wrap.querySelector(".reset-confirm");
 
   editor.value = localStorage.getItem(storageKey) ?? stub;
   values[p.key] = editor.value;
+  // Where a recovered backup goes back to (see ../code-backup.js).
+  registerSlot(backupScope, {
+    label: backupLabel,
+    editor,
+    save: code => {
+      values[p.key] = code;
+      try { localStorage.setItem(storageKey, code); } catch { /* private mode */ }
+      autoSize(editor);
+      refreshSubmission();
+    },
+  });
 
   requestAnimationFrame(() => autoSize(editor));
   editor.addEventListener("input", () => {
@@ -278,7 +304,29 @@ async function renderProblemCard(a, p, mount, { opts, isolate, values, refreshSu
     refreshSubmission();
   });
   editor.addEventListener("keydown", handleEditorKeys);
+  // Reset wipes saved work as well as the editor, so it only arms the inline
+  // warning; the erase itself happens on the confirm button below it.
+  const closeResetConfirm = () => {
+    resetConfirm.hidden = true;
+    resetBtn.setAttribute("aria-expanded", "false");
+  };
   resetBtn.addEventListener("click", () => {
+    if (resetConfirm.hidden) {
+      resetConfirm.hidden = false;
+      resetBtn.setAttribute("aria-expanded", "true");
+      wrap.querySelector(".reset-no").focus();
+    } else {
+      closeResetConfirm();
+    }
+  });
+  wrap.querySelector(".reset-no").addEventListener("click", () => {
+    closeResetConfirm();
+    editor.focus();
+  });
+  wrap.querySelector(".reset-yes").addEventListener("click", () => {
+    closeResetConfirm();
+    // Erased for the student, kept for the teacher — see ../code-backup.js.
+    backupCode(backupScope, editor.value, { stub, label: backupLabel });
     editor.value = stub;
     values[p.key] = editor.value;
     localStorage.setItem(storageKey, editor.value);

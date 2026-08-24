@@ -1,4 +1,5 @@
 import { runKarel, runKarelInWorker } from "../stanfordkarel.js";
+import { backupCode, registerSlot, installRecoveryTools, pageSlug } from "../code-backup.js";
 
 const esc = s => s.replace(/[&<>]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;" }[c]));
 
@@ -118,7 +119,10 @@ function handleEditorKeys(e) {
 //                  goal cells still run in-thread (their code is trusted).
 export async function renderNotebook(cells, mount = document.getElementById("notebook"), { isolate = false } = {}) {
   let counter = 0;
+  let challengeCount = 0;
   const nb = mount;
+  // Teacher-side recovery for code erased by Reset (see ../code-backup.js).
+  installRecoveryTools();
 
   function renderMd(cell) {
     const div = document.createElement("div");
@@ -163,6 +167,10 @@ export async function renderNotebook(cells, mount = document.getElementById("not
   }
 
   async function renderChallenge(cell) {
+    // Captured per card: challengeCount keeps climbing as later cells render.
+    const n = ++challengeCount;
+    const scope = `lesson:${pageSlug()}:${n}`;
+    const label = `${pageSlug()} · challenge ${n}`;
     const wrap = document.createElement("div");
     wrap.className = "challenge";
     const aspects = cell.check || ["beepers", "position", "direction", "colors"];
@@ -180,8 +188,16 @@ export async function renderNotebook(cells, mount = document.getElementById("not
           `<textarea class="editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>` +
           `<div class="chal-controls">` +
             `<button type="button" class="run-btn">▶ Run</button>` +
-            `<button type="button" class="reset-btn" title="Restore the starter code">Reset</button>` +
+            `<button type="button" class="reset-btn" title="Restore the starter code" aria-expanded="false">Reset</button>` +
             `<span class="verdict"></span>` +
+          `</div>` +
+          `<div class="reset-confirm" role="alertdialog" aria-modal="false" hidden>` +
+            `<p class="reset-warn"><strong>⚠ This will erase your code.</strong> ` +
+            `Resetting replaces everything in the editor with the starter code. This cannot be undone.</p>` +
+            `<div class="reset-actions">` +
+              `<button type="button" class="reset-yes">Erase my code</button>` +
+              `<button type="button" class="reset-no">Cancel</button>` +
+            `</div>` +
           `</div>` +
           `<div class="panel-label your-label">Your result</div>` +
           `<div class="render your-render"><span class="status muted">Run your code to see Karel go.</span></div>` +
@@ -196,13 +212,41 @@ export async function renderNotebook(cells, mount = document.getElementById("not
     const verdict = wrap.querySelector(".verdict");
     const runBtn = wrap.querySelector(".run-btn");
     const resetBtn = wrap.querySelector(".reset-btn");
+    const resetConfirm = wrap.querySelector(".reset-confirm");
 
     editor.value = stub;
+    registerSlot(scope, {
+      label,
+      editor,
+      save: () => autoSize(editor),
+    });
     // autoSize needs layout; defer until the element is measured in the DOM.
     requestAnimationFrame(() => autoSize(editor));
     editor.addEventListener("input", () => autoSize(editor));
     editor.addEventListener("keydown", handleEditorKeys);
+    // Reset is destructive, so it only arms the inline warning; the actual
+    // erase happens on the confirm button below it.
+    const closeResetConfirm = () => {
+      resetConfirm.hidden = true;
+      resetBtn.setAttribute("aria-expanded", "false");
+    };
     resetBtn.addEventListener("click", () => {
+      if (resetConfirm.hidden) {
+        resetConfirm.hidden = false;
+        resetBtn.setAttribute("aria-expanded", "true");
+        wrap.querySelector(".reset-no").focus();
+      } else {
+        closeResetConfirm();
+      }
+    });
+    wrap.querySelector(".reset-no").addEventListener("click", () => {
+      closeResetConfirm();
+      editor.focus();
+    });
+    wrap.querySelector(".reset-yes").addEventListener("click", () => {
+      closeResetConfirm();
+      // Erased for the student, kept for the teacher — see ../code-backup.js.
+      backupCode(scope, editor.value, { stub, label });
       editor.value = stub;
       autoSize(editor);
       editor.focus();

@@ -19,6 +19,7 @@ There is **no build step, no bundler, no transpile, and no test suite.** Source 
 | `worlds/` | Bundled world modules. `square.js` etc. each `export default` a world string; `index.js` re-exports them all. |
 | `index.html` | Course landing page / table of contents. |
 | `site-nav.js` | Site-wide navbar + bottom pager, and the `SECTIONS` site map that is the **single source of truth for page order**. Every HTML page includes it with one line. |
+| `code-backup.js` | Teacher-side safety net behind the Reset button: every confirmed Reset copies the student's code to a `karel-backup:` localStorage slot. Imported by both `lessons/lesson.js` and `assignments/assignment.js`. Repo-only, not published. |
 | `lessons/` | `01-…10-*.html` lessons, `lesson.js` (`renderNotebook` helper), `lesson.css`, and `square.html` (standalone demo). |
 | `assignments/` | Graded coursework. Manifest modules (`<id>.js`) + `index.js` (re-export & lookup), the generic student page `assignment.html` (reads `?id=`), its renderer `assignment.js`, and `index.html` (assignment list). |
 | `tools/` | `grade.js` (teacher batch grader) + `grade-worker.js`, `seal.js` (solution sealer), `gen-lesson-assignments.js` (generates the per-lesson assignments), `roster.example.json`. |
@@ -112,7 +113,7 @@ The `assignments/` + `tools/` layer adds **graded coursework** on top of the sam
 - **Infinite-loop safety differs by side.** The browser isolates student code in a Web Worker (`isolate: true`). The CLI runs each `gradeKarel` in a `worker_threads` worker that `grade.js` kills after `--timeout` ms — necessary because `gradeKarel`/`computeSolutionState` have **no frame cap** (that guard lives only in `runKarel`'s render loop). Don't call `gradeKarel` on untrusted code without a timeout wrapper.
 - **Two manifest shapes.** A *standalone* assignment (`collect-all.js`) carries `world`/`prompt`/`solution`/`check` at the top level. A *lesson* assignment (`lesson-NN.js`) instead carries a `problems` array of three (`key` ∈ `simple`/`moderate`/`complex`, each with its own `world`/`prompt`/`starter`/`check`/`end`/sealed `solution`) plus `lessonSlug`/`lessonTitle` for the cross-link back to `lessons/NN-*.html`. `assignment.js` normalizes the standalone form into a one-element `problems` array, so the renderer only handles the array shape.
 - **Per-lesson assignments are generated.** `tools/gen-lesson-assignments.js` is the single source of truth for the 18 lesson assignments: it holds the **plaintext** solutions, verifies each headlessly (the solution must match itself; the starter must *not* already solve), seals them, and writes `assignments/lesson-NN.js`. Never hand-edit those files — edit the generator and rerun `node tools/gen-lesson-assignments.js` (`--check` verifies without writing).
-- **Submission format.** `submissions/<id>.js` starts with `// ` header comment lines (`assignment: <id>` tags the file). A standalone submission is then the student's program verbatim. A lesson submission frames each problem as `function problem_<key>() { …student code…; return main; }` — the outer wrapper lets all three coexist in one file; the grader unwraps each (`grade-worker.js`) and grades it against that problem's sealed solution. The whole file compiles as-is (comments/wrappers are harmless), so no export/import to strip. `tools/grade.js` sums per-problem points for a lesson assignment; a lesson counts as fully solved only when all three problems pass.
+- **Submission format.** `submissions/<id>.js` starts with `// ` header comment lines (`assignment: <id>` tags the file). A standalone submission carries a single `function problem_1()` wrapper (the grader also accepts a bare top-level `main`, for a hand-written submission). A lesson submission frames each problem as `function problem_<n>() { …student code…; return main; }` — `n` is the problem's 1-based position in the assignment — the outer wrapper lets all three coexist in one file; the grader unwraps each (`grade-worker.js`) and grades it against that problem's sealed solution. The whole file compiles as-is (comments/wrappers are harmless), so no export/import to strip. `tools/grade.js` sums per-problem points for a lesson assignment; a lesson counts as fully solved only when all three problems pass.
 
 ### Adding an assignment
 
@@ -124,6 +125,19 @@ The `assignments/` + `tools/` layer adds **graded coursework** on top of the sam
 3. Re-export it from `assignments/index.js` **and** add it to the `assignments` array — that's what `tools/grade.js` grades, so this alone makes it gradeable at `assignments/assignment.html?id=<id>`.
 4. Add a matching `<li>` to the **static** list in `assignments/index.html` (the list is intentionally static HTML — no JS — so it renders even if module loading is blocked; mirror the existing row).
 5. It's published (the `assignments/` glob is in `files`). No new HTML per assignment — `assignment.html` is generic and reads `?id=`.
+
+## Reset backups (teacher recovery)
+
+The Reset button under a lesson challenge or an assignment problem is destructive, so it arms an inline warning box (`.reset-confirm`, styled in `lessons/lesson.css`) and only erases on confirm. The warning tells the student the erase cannot be undone — **that wording is deliberate**, because a student who knows about an undo clicks Reset carelessly — but the confirm handler first calls `backupCode()` from `code-backup.js`, which keeps the last 5 versions per editor:
+
+```
+karel-backup:assignment:<assignmentId>:<problemKey>   →  [{ts, code, label, page}, …]
+karel-backup:lesson:<pageSlug>:<challengeIndex>       →  [{ts, code, label, page}, …]
+```
+
+This is a per-origin, per-browser-profile safety net, not a sync service: it never leaves the student's machine, and it is separate from the live `karel-assignment:…` keys the assignment page saves to during normal work.
+
+To recover, at the student's browser: add `?recover=1` to the page URL for a panel listing every backup (Restore is live for editors on the current page; other slots show their source to copy), or use `karelBackups` in the console — `list()`, `dump(scope)`, `restore(scope, index)`, `panel()`. If a lesson or assignment card gains another editor, register it with `registerSlot()` so Restore has somewhere to write.
 
 ## Verifying changes (no test runner)
 

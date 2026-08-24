@@ -73,6 +73,17 @@ pre.code code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 .reset-btn{font:inherit;font-size:.85rem;color:var(--muted);background:transparent;
   border:1px solid var(--in-border);border-radius:6px;padding:.35rem .7rem;cursor:pointer;}
 .reset-btn:hover{color:var(--ink);border-color:#b6bdc6;}
+.reset-confirm{margin:.6rem 0 0;border:1px solid #f0c48a;border-left:4px solid #d97706;
+  background:#fff7ed;border-radius:0 6px 6px 0;padding:.6rem .8rem;}
+.reset-confirm[hidden]{display:none;}
+.reset-warn{margin:0;font-size:.86rem;line-height:1.45;color:#7c4a03;}
+.reset-warn strong{display:block;}
+.reset-actions{display:flex;gap:.5rem;margin-top:.55rem;}
+.reset-yes,.reset-no{font:inherit;font-size:.85rem;border-radius:6px;padding:.35rem .8rem;cursor:pointer;}
+.reset-yes{font-weight:600;color:#fff;background:#d1451b;border:1px solid #d1451b;}
+.reset-yes:hover{background:#b23a15;}
+.reset-no{color:var(--ink);background:#fff;border:1px solid var(--in-border);}
+.reset-no:hover{border-color:#b6bdc6;}
 .verdict{font-size:.88rem;font-weight:600;}
 .verdict.ok{color:#16a34a;} .verdict.no{color:#d1451b;}
 .status.muted{color:#aab;}

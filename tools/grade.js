@@ -94,7 +94,8 @@ function readSubmissions(repoDir) {
 // ── grading ──────────────────────────────────────────────────────────────────
 // Build the worker payload for an assignment. A multi-problem (lesson) assignment
 // unseals each problem's solution and asks the worker to unwrap the framed
-// `problem_<key>()` from the submission; a standalone assignment sends one.
+// `problem_<n>()` (1-based, by position) from the submission; a standalone
+// assignment sends one.
 function workerPayload(assignment, source) {
   if (Array.isArray(assignment.problems)) {
     return {
