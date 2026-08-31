@@ -12,7 +12,7 @@ export const lesson02 = {
   lessonSlug: "02-functions",
   lessonTitle: "Functions",
   title: "Assignment 2 · Functions",
-  points: 30,
+  points: 50,
   problems: [
     {
       key: "simple",
@@ -43,6 +43,16 @@ export const lesson02 = {
       starter: "function dropAndMove(k) {\n  \n}\n\nfunction main(k) {\n  \n}\n",
       check: ["beepers","position"],
       solution: "DRQcBhhEDB0RVEQOXTILBSEKEkheWkJBCW9MDQhdQUVCI0gWFQQeTU0WfBFLClwIA1sGWxgLPBwneQMUAgYQRBlfSwwTDAIFCFoRSzxBDRcXDhwkCkk7Xh0EWg5FFmlTEVREDl0yCwUhChJIXlpCWnhFTEkRHEFxWAVgHBMERA5NFnxM",
+    },
+    {
+      key: "complex2",
+      label: "Complex II",
+      points: 20,
+      world: "Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: 0\nWall: (2, 2); north\nWall: (3, 2); north\nWall: (4, 2); north\nWall: (5, 2); north\nWall: (6, 2); north\nWall: (2, 4); north\nWall: (3, 4); north\nWall: (4, 4); north\nWall: (5, 4); north\nWall: (6, 4); north\nWall: (2, 6); north\nWall: (3, 6); north\nWall: (4, 6); north\nWall: (5, 6); north\nWall: (6, 6); north\nBeeper: (2, 3); 1\nBeeper: (4, 3); 1\nBeeper: (6, 3); 1\nBeeper: (2, 5); 1\nBeeper: (4, 5); 1\nBeeper: (6, 5); 1\nBeeper: (2, 7); 1\nBeeper: (4, 7); 1\nBeeper: (6, 7); 1",
+      prompt: "Nine beepers are scattered across the three floors of an 8&times;8 building &mdash; streets 3, 5 and 7, with a beeper on avenues 2, 4 and 6 of each. Walls seal the middle of every floor, so the only ways up are the open columns at the far west (avenue 1) and far east (avenues 7&ndash;8).\n<p>Every floor is laid out exactly the same, which is what makes this a job for a <strong>function</strong>. Write a helper of your own that picks up all the beepers on <em>one</em> floor, then call it once per floor to clear the whole building. You may write a second helper for the trip up to the next floor.</p>\n<p>You don't have <code>if</code> or loops yet, so spell the moves out inside the helper &mdash; let the helper do the repeating. Karel starts at <code>(1, 1)</code> facing east with an empty bag and must finish holding all nine beepers; where Karel ends up doesn't matter.</p>",
+      starter: "function main(k) {\n  \n}\n",
+      check: ["beepers"],
+      solution: "DRQcBhhEDB0RU1oETAEjDQMKFgUdGEsaeEVMRk0eXkZTSQRIb0FMDkpdH1IAIxcAHEgRWxgLPEENGEsMAxMBBV8KYUFSDkJADAVUGB9aJ1NFCkIVDU4dcw4EAgAeBUpIOxAWCgMeChcJTU0WfBFLClwIA1sGWxgLPEENGEsRBQYPbxNUGwQATUUWaQ47OlAUQxARCAMLRE4aWAYDWg5FDRh5ERBdT0AcEwRETF8nVhEATx8KGkhLWgo6FkFGXREUHgsoSBBFQ0hJb0wNCF1cX0AEBVpea0xFDwMbXh0EWkxXJ0NTWh5CFF8dKQQKEUwETTtLQRlLAUIVFhkZDWsNUw5PAQoSSF4YUGtSRQcDDhxHVR5IFnlFQQdLCUIAVENISW9MDQhdXF9ABAVaXmtMRQ8DG14dBFpMVydDU1oeWw5bFk1IV29EDR0fHxQACyBIBQcZGQ1rDVMOTxgQFkM6VA0VWkxXJx55O1ZDD04HDA4CRQlMH19DCltFFydDU1oeQhRfHSkEChFMBE07S0EZSwFCFRYZGQ1rDVMOTwEKEkheGFBrUkUHAxcGQ156BEsHTUhXb0QNHR8fFAALIEgFBxkZDWsNUw5PGBAWQzpUDRVaTFcnQ1NSXFMAXzUJDgMXTEZfCmFBUgYARA4RGVsfWidTRQIAAAVfMF0EDgBNBwRYeREQVQ1EHgdJB0xfJ1YRCA0XBB5rDxxeQh4KBEhvHA==",
     },
   ],
 };

@@ -13,8 +13,9 @@
  *   node tools/gen-lesson-assignments.js
  * Add --check to only verify (no files written).
  *
- * Each lesson manifest holds THREE problems keyed simple | moderate | complex.
- * The student page (assignments/assignment.html) renders all three plus one
+ * Each lesson manifest holds three problems keyed simple | moderate | complex
+ * (a lesson may add a further problem under its own key, e.g. complex2).
+ * The student page (assignments/assignment.html) renders them all plus one
  * combined, auto-framed submission textarea; the teacher grader
  * (tools/grade-lessons.js) re-runs each framed problem against these solutions.
  */
@@ -90,6 +91,13 @@ const LESSONS = {
         starter: `function dropAndMove(k) {\n  \n}\n\nfunction main(k) {\n  \n}\n`,
         check: ["beepers", "position"],
         solution: `function dropAndMove(k) {\n  k.putBeeper();\n  k.move();\n}\n\nfunction main(k) {\n  dropAndMove(k);\n  dropAndMove(k);\n  dropAndMove(k);\n}`,
+      },
+      {
+        key: "complex2", label: "Complex II", points: 20,
+        world: `Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: 0\nWall: (2, 2); north\nWall: (3, 2); north\nWall: (4, 2); north\nWall: (5, 2); north\nWall: (6, 2); north\nWall: (2, 4); north\nWall: (3, 4); north\nWall: (4, 4); north\nWall: (5, 4); north\nWall: (6, 4); north\nWall: (2, 6); north\nWall: (3, 6); north\nWall: (4, 6); north\nWall: (5, 6); north\nWall: (6, 6); north\nBeeper: (2, 3); 1\nBeeper: (4, 3); 1\nBeeper: (6, 3); 1\nBeeper: (2, 5); 1\nBeeper: (4, 5); 1\nBeeper: (6, 5); 1\nBeeper: (2, 7); 1\nBeeper: (4, 7); 1\nBeeper: (6, 7); 1`,
+        prompt: `Nine beepers are scattered across the three floors of an 8&times;8 building &mdash; streets 3, 5 and 7, with a beeper on avenues 2, 4 and 6 of each. Walls seal the middle of every floor, so the only ways up are the open columns at the far west (avenue 1) and far east (avenues 7&ndash;8).\n<p>Every floor is laid out exactly the same, which is what makes this a job for a <strong>function</strong>. Write a helper of your own that picks up all the beepers on <em>one</em> floor, then call it once per floor to clear the whole building. You may write a second helper for the trip up to the next floor.</p>\n<p>You don't have <code>if</code> or loops yet, so spell the moves out inside the helper &mdash; let the helper do the repeating. Karel starts at <code>(1, 1)</code> facing east with an empty bag and must finish holding all nine beepers; where Karel ends up doesn't matter.</p>`,
+        starter: STUB, check: ["beepers"],
+        solution: `function clearFloor(k) {\n  k.move();\n  k.pickBeeper();\n  k.move();\n  k.move();\n  k.pickBeeper();\n  k.move();\n  k.move();\n  k.pickBeeper();\n}\n\nfunction climb(k) {\n  k.move();\n  k.move();\n  k.turnLeft();\n  k.move();\n  k.move();\n  k.turnLeft();\n  k.move();\n  k.move();\n  k.move();\n  k.move();\n  k.move();\n  k.move();\n  k.move();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  k.turnLeft();\n  k.move();\n  k.move();\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n  clearFloor(k);\n  climb(k);\n  clearFloor(k);\n  climb(k);\n  clearFloor(k);\n}`,
       },
     ],
   },

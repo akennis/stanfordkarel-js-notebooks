@@ -7,11 +7,12 @@
  * in-browser ✓ here is practice only; the grade of record comes from the
  * teacher-side re-grade (tools/grade-lessons.js).
  *
- * A lesson assignment (assignments/lesson-NN.js) bundles THREE problems keyed
- * simple / moderate / complex — one card each — plus a SINGLE combined
- * submission textarea at the page bottom. That one file auto-frames all three
- * solutions, each wrapped in an outer function that returns its main(k), so a
- * reviewer's grader can run and grade every problem from the one submission.
+ * A lesson assignment (assignments/lesson-NN.js) bundles three or more problems
+ * (simple / moderate / complex, plus any extra) — one card each — plus a SINGLE
+ * combined submission textarea at the page bottom. That one file auto-frames
+ * every problem's solution, each wrapped in an outer function that returns its
+ * main(k), so a reviewer's grader can run and grade them all from the one
+ * submission. Nothing here assumes a problem count; it follows a.problems.
  *
  * Each problem ships its reference solution SEALED (see stanfordkarel.js /
  * tools/seal.js); we unseal it at runtime to build the goal GIF and to grade the
@@ -104,7 +105,7 @@ function normalize(a) {
 
 // The exact text a student commits as submissions/<id>.js. Every problem's code
 // is wrapped in its own outer function `problem_<n>()` — numbered by position,
-// 1-based — that returns the main() the student defined, so all three coexist in
+// 1-based — that returns the main() the student defined, so they all coexist in
 // one file and a grader can run each independently by calling its wrapper. The
 // header lines tag the file with the assignment id; the whole thing is valid
 // JavaScript (helpers included).
@@ -115,7 +116,7 @@ function buildSubmission(a, values) {
     `// assignment: ${a.id}\n` +
     `//\n` +
     `// Each problem below is wrapped in an outer function that returns its\n` +
-    `// main(k), so your instructor's grader can run and grade all three.\n`;
+    `// main(k), so your instructor's grader can run and grade every one.\n`;
   a.problems.forEach((p, i) => {
     const body = (values[p.key] || "").replace(/\s*$/, "");
     out +=
@@ -175,7 +176,8 @@ export async function renderAssignment(raw, mount = document.getElementById("ass
   const panel = document.createElement("div");
   panel.className = "submit-panel";
   panel.innerHTML =
-    `<div class="panel-label">📤 Submit all ${a.problems.length} problems</div>` +
+    `<div class="panel-label">📤 ${a.problems.length === 1
+        ? "Submit your solution" : `Submit all ${a.problems.length} problems`}</div>` +
     `<p class="submit-help">This one file contains every problem, each wrapped so your ` +
       `instructor's grader can run them automatically. Commit it to your assignments ` +
       `repository as <code>submissions/${esc(a.id)}.js</code>:</p>` +
