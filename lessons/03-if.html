@@ -13,7 +13,7 @@
     <p class="lead">Let Karel sense the world and run commands only when a condition is true.</p>
   </header>
 
-  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-03">✏️ Practice this lesson → Assignment 3 (3 problems)</a></p>
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-03">✏️ Practice this lesson → Assignment 3 (4 problems)</a></p>
   <main id="notebook"></main>
 
   <script type="module">
@@ -42,9 +42,10 @@
       <code>pickBeeper()</code> fails if there's no beeper, <code>move()</code> fails into a wall. An
       <code>if</code> lets Karel <em>look before it leaps</em>.</p>` },
 
-      { md: `<h2>Karel's four senses</h2>
-      <p>Karel's sensing commands fall into four families. The rest of this lesson takes them one at a
-      time — a decision for walls, for beepers underfoot, for the beeper bag, and for direction.</p>
+      { md: `<h2>Karel's five senses</h2>
+      <p>Karel's sensing commands fall into five families. The rest of this lesson takes them one at a
+      time — a decision for walls, for beepers underfoot, for the beeper bag, for direction, and for the
+      color painted on a corner.</p>
       <div class="callout"><strong>The sensing menu, by family</strong>
       • <strong>Walls:</strong> <code>frontIsClear()</code> / <code>frontIsBlocked()</code>,
       <code>leftIsClear()</code> / <code>leftIsBlocked()</code>,
@@ -53,7 +54,9 @@
       <code>noBeepersPresent()</code><br>
       • <strong>Beepers in the bag:</strong> <code>beepersInBag()</code> / <code>noBeepersInBag()</code><br>
       • <strong>Direction:</strong> <code>facingNorth()</code>, <code>facingEast()</code>,
-      <code>facingSouth()</code>, <code>facingWest()</code></div>` },
+      <code>facingSouth()</code>, <code>facingWest()</code><br>
+      • <strong>Corner color:</strong> <code>cornerColorIs("Red")</code>,
+      <code>cornerColorIs("Green")</code>, … — one question per color name</div>` },
 
       { md: `<h2>1 · Sensing walls</h2>
       <p>Karel can feel for walls in three directions: straight ahead (<code>frontIsClear</code>), to its
@@ -264,12 +267,116 @@ BeeperBag: INFINITY`,
           k.move();
         } },
 
+      { md: `<h2>5 · Sensing &mdash; and changing &mdash; a corner's color</h2>
+      <p>Corners can be painted. <code>k.cornerColorIs("Red")</code> is <code>true</code> when Karel's
+      current corner is painted that exact color, <code>false</code> otherwise — you ask about
+      <em>one</em> color name at a time (there's no ready-made opposite the way walls and beepers have
+      one). The matching <em>actions</em> write what that sensor reads:</p>
+      <div class="callout"><strong>Two painting commands</strong>
+      • <code>k.paintCorner("Green")</code> — fill the current corner with a named color (same names as
+      <code>cornerColorIs</code>: <code>"Red"</code>, <code>"Green"</code>, <code>"Blue"</code>,
+      <code>"Yellow"</code>, …). Karel doesn't move.<br>
+      • <code>k.paintCorner("")</code> — erase the paint, leaving the corner blank again.</div>
+      <p>Now a puzzle: <strong>swap</strong> two colors — every red corner becomes green, every green
+      corner becomes red. The obvious pair of <code>if</code>s doesn't work:</p>
+      <pre class="code">if (k.cornerColorIs("Red"))   k.paintCorner("Green");
+if (k.cornerColorIs("Green")) k.paintCorner("Red");</pre>
+      <p>The first <code>if</code> repaints a red corner green — then the <em>second</em> <code>if</code>
+      sees that fresh green and paints it straight back to red. Every corner ends up red. The fix is a
+      neutral third color: send red to <code>"Yellow"</code> first, then green to red, then the yellows
+      on to green. Each <code>if</code> now tests a color no earlier line can have produced.</p>` },
+      { world: `Dimension: (5, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (2, 1); Green
+Color: (3, 1); Red
+Color: (4, 1); Green
+Color: (5, 1); Red`, code: `function flip(k) {
+  if (k.cornerColorIs("Red")) {
+    k.paintCorner("Yellow");
+  }
+  if (k.cornerColorIs("Green")) {
+    k.paintCorner("Red");
+  }
+  if (k.cornerColorIs("Yellow")) {
+    k.paintCorner("Green");
+  }
+}
+
+function main(k) {
+  flip(k);
+  k.move();
+  flip(k);
+  k.move();
+  flip(k);
+  k.move();
+  flip(k);
+  k.move();
+  flip(k);
+}` },
+      { md: `<h3>Challenge · Swap red and green</h3>
+      <p>Six corners, each painted red or green. Finish the <code>flip</code> helper using the
+      neutral-color trick above, then call it once per corner so every red ends up green and every green
+      ends up red. Grading checks the final colors.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Green
+Color: (2, 1); Red
+Color: (3, 1); Green
+Color: (4, 1); Green
+Color: (5, 1); Red
+Color: (6, 1); Green`,
+        prompt: `Complete <code>flip(k)</code>: <code>if (k.cornerColorIs("Red"))</code> paint
+        <code>"Yellow"</code>; <code>if (k.cornerColorIs("Green"))</code> paint <code>"Red"</code>;
+        <code>if (k.cornerColorIs("Yellow"))</code> paint <code>"Green"</code>. Call it once per corner,
+        moving east between them, so the row ends green-red-green-green-red-green flipped to
+        red-green-red-red-green-red.`,
+        starter: `function flip(k) {
+  // Red here?    -> paint a neutral color first, e.g. "Yellow"
+  // Green here?  -> paint "Red"
+  // Yellow here? -> paint "Green"
+}
+
+function main(k) {
+  flip(k);
+  // move east and flip once per corner (six in all)
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          function flip(k) {
+            if (k.cornerColorIs("Red")) {
+              k.paintCorner("Yellow");
+            }
+            if (k.cornerColorIs("Green")) {
+              k.paintCorner("Red");
+            }
+            if (k.cornerColorIs("Yellow")) {
+              k.paintCorner("Green");
+            }
+          }
+          flip(k);
+          k.move();
+          flip(k);
+          k.move();
+          flip(k);
+          k.move();
+          flip(k);
+          k.move();
+          flip(k);
+          k.move();
+          flip(k);
+        } },
+
       { md: `<div class="callout tip"><strong>You learned</strong>
       An <code>if</code> statement runs its block only when a condition is <code>true</code>, and
-      conditions are booleans (<code>true</code>/<code>false</code>). Karel senses its world in four
+      conditions are booleans (<code>true</code>/<code>false</code>). Karel senses its world in five
       families — <strong>walls</strong>, <strong>beepers on the corner</strong>, <strong>beepers in the
-      bag</strong>, and <strong>direction</strong> — and an <code>if</code> turns any of those answers into
-      a decision. Guarding a risky command with the right sensor is how Karel looks before it leaps. In the
+      bag</strong>, <strong>direction</strong>, and <strong>corner color</strong> — and an <code>if</code>
+      turns any of those answers into a decision. Guarding a risky command with the right sensor is how
+      Karel looks before it leaps. Watch the order, too: when a block changes what a later condition
+      tests — like repainting a corner — the lines stop being independent. In the
       next lessons you'll put these decisions <em>inside loops</em>, where they become far more powerful.</div>` },
     ];
 

@@ -12,7 +12,7 @@ export const lesson03 = {
   lessonSlug: "03-if",
   lessonTitle: "Making Decisions with if",
   title: "Assignment 3 · Making Decisions with if",
-  points: 30,
+  points: 50,
   problems: [
     {
       key: "simple",
@@ -43,6 +43,16 @@ export const lesson03 = {
       starter: "function main(k) {\n  \n}\n",
       check: ["colors","position"],
       solution: "DRQcBhhEDB0RXVcIQ1sOSEwebg1WWA1BWg5CTwYWQVVEEn0BABIJCxAFXxhLClwVDUQNB3JfRA9IAU1DPgAAD18KYUFSDkJADAVUGB9aJ1NFCApFTEZYUw4EAgAeXjMBVENTD1lbTEhMDkpdF1gFFTEKHkMGARkSZARJUUxaZkVERlhcBBcXTUUWaVMRWVBBBRhLAwkAFEgEQjsTFxYJQxdbGBkWCgMDBAgCESdCBF8OE1pHPkgHURgLPEENGEsMAxMBBV8KYUFSDAoNSxgfUlMEXRYXEjwXAV4TXx9JW0xMRk0DUFlYFW4cFw8JF0wPJFQPQ1teZlA=",
+    },
+    {
+      key: "complex2",
+      label: "Complex II",
+      points: 20,
+      world: "Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nColor: (6, 1); Blue\nColor: (2, 2); Red\nColor: (4, 3); Red\nColor: (6, 3); Orange\nColor: (8, 4); Blue\nColor: (2, 5); Orange\nColor: (4, 5); Blue\nColor: (6, 5); Red\nColor: (2, 7); Red\nColor: (7, 7); Orange\nColor: (4, 8); Blue\nColor: (8, 8); Orange",
+      prompt: "An 8&times;8 grid is dusted with coloured corners &mdash; some <code>\"Red\"</code>, some <code>\"Orange\"</code>, some <code>\"Blue\"</code>, the rest bare. Karel must sweep the whole grid and leave beepers to match the colour it is standing on: <strong>1</strong> beeper on every red corner, <strong>2</strong> on every orange corner, <strong>3</strong> on every blue corner, and nothing on a bare corner.\n<p>You don't have loops yet, so this is a job for <strong>functions</strong> plus <code>if</code>. Write a helper that checks the current corner's colour with <code>cornerColorIs</code> and drops the right number of beepers, and another helper that walks one full row of eight corners applying it; then call them to cover the grid boustrophedon-style &mdash; east along one street, up one, west along the next.</p>\n<p>Karel starts at <code>(1, 1)</code> facing east with an unlimited bag. Where Karel finishes doesn't matter &mdash; only the beepers are graded.</p>",
+      starter: "function main(k) {\n  \n}\n",
+      check: ["beepers"],
+      solution: "DRQcBhhEDB0RREMTQyEMBgQRTEZfERBrUkUHAxcGQ156BEsHTUhXb0QNHR8fFAALIEgFBxkZDWsNUw5PGBAWQzpUDRVaTFcnHnk7VkMPTgcMDgJFCUwEWkMKW0UXJ0NTWFYWSUZdBg4eCwFfNV4HDgAsHwVBIVRUFEgEUx5rTEVEDR0fGxQGJwlIExZDGB9aJ1NFHGZFREQQEUMKXAYDXw0WQ3NZDUIBLBJERytfF18MBFBMRQ0YeREQFkFGXRUUGCcBSAZUGUlbXmYNQ1MRWxgRWAcnBAkVAV9eGFBrUkURJ0NTWFYWSUZdBg4eCwFfNV4HDgAsHwVBMV1FU0MEWkUaZkVEDVZaRREHES5IBgNUQh5IFnlFQUxFDwMGRB8jFwAcSBFbGAs8QQ1TRQpCFRFZNFQOERcXRARYeREQS2tQeW8HGQsHWR9eBUERFwNeECFeRx4KBFMea0xFCUwEWkMKW15mDUMYH11ZF0hbTFpmRURAF0MASRlMVydDU1oeWw5bFk1IV29EDRtQGQpaDkUWaVMRWxgMQgUASUVebg1WXAoTGU0HBFh5ERBdT0AcEwRETF8nVhEGAAAOREZKSDsQFgoDHgoXCU1NFnwRSwwTFwcFCFoKOhZBRl0IDhoATARNO0tBHwQeRksYGAs8QQ0YSwwDEwEFXwphQVIIDV8IW1oZDWtQeW8HGQsHWR9eBUEaChxrERxcdVcSWVsOSEwebg1WWkUVBxcCYQYVRRgfWidTRQpCCAtbExlCWnhFTEZNB0RCWC1IFRFJRV5uUHw7DRQcBhhEDB0RWFkRawEKDDsAF1leWkJBCW9MDRcGQ15kCEobEUkHTF8nVhEATx8KGkhLWgo6FkFZBhcPPgwDRQIZAEhJbxEnaRVEXlUVRBwLQQEEDUNeWkJBCW9MDQABXkNFM0IETQpFXm4NVlkEETQXA0AmEkJEHgoESG9BTAYWQgVCOQ4FTQcEWHkREF4OXTUXDgEyAV4CGQBISW9MDQABXkNFM0IETQpFXm4NVlkEETQXA0AmEkJEHgoESG9BTAYWQgVCOQ4FTQcEWHkREF4OXTUXDgEyAV4CGQBISW9MDQABXkNFM0IETQpFXm4NVlkEETQXA0AmEkJEHgoESG9BTAYWQgVCOQ4FTQcEWHkREF4OXTUXDgEyAV4CGQBISW9MDQABXkNFM0IETQpFXm4NVlkEETQXA0AmEkJEHgoESG9BTAYWQgVCOQ4FTQcEWHlM",
     },
   ],
 };
