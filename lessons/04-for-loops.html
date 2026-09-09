@@ -172,11 +172,69 @@ BeeperBag: INFINITY`,
             k.turnLeft();
           }
         } },
+      { md: `<h2>One loop after another</h2>
+      <p>Not every task is a single repeated action. Often a problem breaks into <em>parts</em> — do
+      one thing several times, then do a different thing several times. You don't need one clever loop
+      that does everything: give each part its own loop and run them <strong>in sequence</strong>, each
+      one finishing completely before the next begins.</p>
+      <p>Here the job has two halves. The first loop stamps a beeper on every corner as Karel heads
+      east; the second loop turns Karel around and picks every one of them back up. Two loops, two
+      phases, read top to bottom.</p>
+      <div class="callout"><strong>Divide and conquer</strong>
+      When a task feels too big for one loop, ask "what are its steps?" — then write one loop per step.
+      The loops don't interact; each just leaves the world ready for the next.</div>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  // Phase 1: stamp a beeper on all six corners, west to east
+  for (let i = 0; i < 5; i++) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+
+  // Phase 2: turn around and pick every beeper back up
+  k.turnLeft();
+  k.turnLeft();
+  for (let i = 0; i < 5; i++) {
+    k.pickBeeper();
+    k.move();
+  }
+  k.pickBeeper();
+}` },
+      { md: `<h3>Challenge · Two jobs, two loops</h3>
+      <p>Karel starts at the far west of an eight-square room facing <strong>east</strong>. Solve this
+      with <strong>two separate loops</strong>, one after the other. First, drop a beeper on each of the
+      <strong>first four</strong> corners as Karel walks east. Then, with a second loop, walk the rest of
+      the way to <strong>avenue 8</strong> without dropping anything.</p>` },
+      { world: `Dimension: (8, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Two loops in a row: the first does <code>putBeeper()</code> then <code>move()</code>
+        four times; the second does <code>move()</code> three times to reach avenue 8. Beepers end up on
+        avenues 1&ndash;4, with Karel resting on avenue 8.`,
+        starter: `function main(k) {
+  // Loop 1: a beeper on each of the first four corners
+
+  // Loop 2: walk on to avenue 8
+
+}`,
+        check: ["beepers", "position"],
+        solution: function main(k) {
+          for (let i = 0; i < 4; i++) {
+            k.putBeeper();
+            k.move();
+          }
+          for (let i = 0; i < 3; i++) {
+            k.move();
+          }
+        } },
       { md: `<div class="callout tip"><strong>You learned</strong>
       Use a <code>for</code> loop to repeat code a known number of times. The number after
       <code>i &lt;</code> controls how many passes run, and everything inside <code>{ }</code> happens on
-      every pass. A loop body can call your functions <em>and</em> hold other loops, so a few lines can
-      describe a lot of work — five moves, a beeper trail, or a full lap around a square.</div>` },
+      every pass. A loop body can call your functions <em>and</em> hold other loops, and several loops
+      can run one after another — each handling one phase of the job — so a few lines can describe a lot
+      of work: a beeper trail, a full lap around a square, or a stamp-then-collect sweep.</div>` },
     ];
 
     // isolate: run reader-submitted challenge code in a Web Worker so a mistake

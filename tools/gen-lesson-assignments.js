@@ -148,17 +148,25 @@ const LESSONS = {
       },
       {
         key: "moderate", label: "Moderate", points: 10,
-        world: `Dimension: (4, 1)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
-        prompt: `Use a <code>for</code> loop to drop a beeper on every one of the four corners, finishing on <code>(4, 1)</code>.`,
+        world: `Dimension: (5, 5)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (2, 2); 1\nBeeper: (3, 3); 1\nBeeper: (4, 4); 1\nBeeper: (5, 5); 1`,
+        prompt: `A beeper sits on every corner of the diagonal, from <code>(1, 1)</code> up to <code>(5, 5)</code>. Use a <code>for</code> loop to walk the diagonal, picking up each beeper along the way, and finish on <code>(5, 5)</code>. Karel can only <code>turnLeft()</code>, so one step to the northeast means: move east, turn to face north, move north, then turn back to face east.`,
         starter: STUB, check: ["beepers", "position"],
-        solution: `function main(k) {\n  for (let i = 0; i < 3; i++) {\n    k.putBeeper();\n    k.move();\n  }\n  k.putBeeper();\n}`,
+        solution: `function main(k) {\n  for (let i = 0; i < 4; i++) {\n    k.pickBeeper();\n    k.move();\n    k.turnLeft();\n    k.move();\n    k.turnLeft();\n    k.turnLeft();\n    k.turnLeft();\n  }\n  k.pickBeeper();\n}`,
       },
       {
         key: "complex", label: "Complex", points: 15,
-        world: `Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
-        prompt: `Drop a beeper on all five corners, then turn around and return to <code>(1, 1)</code>, finishing there facing west.`,
-        starter: STUB, check: ["beepers", "position", "direction"],
-        solution: `function main(k) {\n  for (let i = 0; i < 4; i++) {\n    k.putBeeper();\n    k.move();\n  }\n  k.putBeeper();\n  k.turnLeft();\n  k.turnLeft();\n  for (let i = 0; i < 4; i++) {\n    k.move();\n  }\n}`,
+        world: `Dimension: (5, 5)\nKarel: (1, 1); east\nBeeperBag: 0\n` +
+          // perimeter: all 16 edge corners
+          `Beeper: (1, 1); 1\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (4, 1); 1\nBeeper: (5, 1); 1\n` +
+          `Beeper: (5, 2); 1\nBeeper: (5, 3); 1\nBeeper: (5, 4); 1\nBeeper: (5, 5); 1\n` +
+          `Beeper: (4, 5); 1\nBeeper: (3, 5); 1\nBeeper: (2, 5); 1\nBeeper: (1, 5); 1\n` +
+          `Beeper: (1, 4); 1\nBeeper: (1, 3); 1\nBeeper: (1, 2); 1\n` +
+          // interior diagonal
+          `Beeper: (2, 2); 1\nBeeper: (3, 3); 1\nBeeper: (4, 4); 1`,
+        prompt: `This 5&times;5 world has a beeper on all 16 perimeter corners and one on each interior diagonal corner &mdash; <code>(2, 2)</code>, <code>(3, 3)</code>, <code>(4, 4)</code>. Pick up every beeper with two loops, one after the other.\n<p><strong>1. A nested loop for the perimeter.</strong> The outer loop runs once per side (four sides). The inner loop walks that side &mdash; <code>pickBeeper()</code> then <code>move()</code>, four times. After the inner loop, <code>turnLeft()</code> to face the next side. Four sides later Karel is back where it started, facing east.</p>\n<p><strong>2. A simple loop for the diagonal.</strong> Three times: step one corner to the north-east (<code>move()</code>, <code>turnLeft()</code>, <code>move()</code>, <code>turnRight(k)</code>) and <code>pickBeeper()</code>.</p>\n<p>The <code>turnRight</code> helper is already written for you.</p>`,
+        starter: `function turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  // Loop 1: walk the perimeter (outer loop = 4 sides, inner loop = 4 steps)\n\n  // Loop 2: climb the diagonal, picking up (2,2), (3,3), (4,4)\n\n}\n`,
+        check: ["beepers"],
+        solution: `function turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  for (let side = 0; side < 4; side++) {\n    for (let step = 0; step < 4; step++) {\n      k.pickBeeper();\n      k.move();\n    }\n    k.turnLeft();\n  }\n  for (let i = 0; i < 3; i++) {\n    k.move();\n    k.turnLeft();\n    k.move();\n    turnRight(k);\n    k.pickBeeper();\n  }\n}`,
       },
     ],
   },
