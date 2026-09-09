@@ -12,6 +12,16 @@
  *   node tools/grade.js --roster tools/roster.json
  *   node tools/grade.js --roster r.json --cache .grade-cache --out gradebook.json --timeout 5000
  *   node tools/grade.js --roster r.json --no-pull      # don't git-pull existing clones
+ *   node tools/grade.js --roster r.json --verbose      # print every problem's pass/fail as it's checked
+ *
+ * Single file (no roster, no clone) — grade one submission by path or URL:
+ *   node tools/grade.js --file submissions/lab02.js
+ *   node tools/grade.js --file https://github.com/ha2700/repo/blob/main/lab02.js
+ *   node tools/grade.js --file <url> --id collect-all      # override the assignment id
+ * A github.com/<owner>/<repo>/blob/<ref>/<path> URL is rewritten to its
+ * raw.githubusercontent.com form automatically; a raw URL is fetched as given.
+ * The assignment is taken from the file's `// assignment: <id>` header unless
+ * --id is passed. Exit status is 0 when the submission is solved, 1 otherwise.
  *
  * Roster format (JSON array):
  *   [ { "name": "Ada Lovelace", "github": "ada", "repoUrl": "https://github.com/ada/karel.git" } ]
@@ -34,7 +44,7 @@ const WORKER = join(HERE, "grade-worker.js");
 
 // ── args ─────────────────────────────────────────────────────────────────────
 function parseArgs(argv) {
-  const opts = { roster: "tools/roster.json", cache: ".grade-cache", out: "gradebook.json", timeout: 5000, pull: true };
+  const opts = { roster: "tools/roster.json", cache: ".grade-cache", out: "gradebook.json", timeout: 5000, pull: true, file: null, id: null, verbose: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--roster") opts.roster = argv[++i];
@@ -42,13 +52,37 @@ function parseArgs(argv) {
     else if (a === "--out") opts.out = argv[++i];
     else if (a === "--timeout") opts.timeout = Number(argv[++i]);
     else if (a === "--no-pull") opts.pull = false;
+    else if (a === "--verbose" || a === "-v") opts.verbose = true;
+    else if (a === "--file") opts.file = argv[++i];
+    else if (a === "--id") opts.id = argv[++i];
     else if (a === "-h" || a === "--help") { printHelp(); process.exit(0); }
     else { console.error(`Unknown argument: ${a}`); process.exit(1); }
   }
   return opts;
 }
 function printHelp() {
-  console.log("Usage: node tools/grade.js --roster <file> [--cache <dir>] [--out <file>] [--timeout <ms>] [--no-pull]");
+  console.log("Usage: node tools/grade.js --roster <file> [--cache <dir>] [--out <file>] [--timeout <ms>] [--no-pull] [--verbose]");
+  console.log("       node tools/grade.js --file <path-or-url> [--id <assignmentId>] [--timeout <ms>] [--verbose]");
+}
+
+// Rewrite a github.com blob URL to its raw.githubusercontent.com equivalent;
+// leave a raw URL (or anything else) untouched.
+//   https://github.com/<o>/<r>/blob/<ref>/<path>  →
+//   https://raw.githubusercontent.com/<o>/<r>/<ref>/<path>
+function toRawUrl(url) {
+  const m = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
+  return m ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/${m[3]}` : url;
+}
+
+// Load a submission's source from a local path or an http(s) URL.
+async function loadSource(target) {
+  if (/^https?:\/\//i.test(target)) {
+    const url = toRawUrl(target);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`fetch ${url} → ${resp.status} ${resp.statusText}`);
+    return { source: await resp.text(), origin: url };
+  }
+  return { source: readFileSync(target, "utf8"), origin: resolve(target) };
 }
 
 // ── repo access ──────────────────────────────────────────────────────────────
@@ -173,6 +207,7 @@ async function gradeStudent(entry, opts) {
     if (!getAssignment(sub.id)) { results[a.id] = { solved: false, points: 0, max: a.points ?? 0, note: "unknown assignment id" }; continue; }
     const r = await gradeInWorker(a, sub.source, opts.timeout);
     results[a.id] = scoreResult(a, r);
+    if (opts.verbose) reportVerbose(a, r, a.id);
   }
   // Flag submissions that don't match any known assignment.
   for (const s of submitted) {
@@ -182,6 +217,31 @@ async function gradeStudent(entry, opts) {
 }
 
 // ── reporting ────────────────────────────────────────────────────────────────
+// Print a per-problem pass/fail breakdown for one graded submission (stderr,
+// alongside the progress log). A standalone assignment reports a single line; a
+// lesson assignment reports one line per problem with its points or the reason
+// it failed.
+function reportVerbose(assignment, r, label) {
+  const line = s => process.stderr.write(s + "\n");
+  const checks = c => `[${(c && c.length ? c : ["beepers", "position", "direction", "colors"]).join(", ")}]`;
+  line(`  ${label}`);
+  if (Array.isArray(assignment.problems)) {
+    if (r.error && !r.perProblem) { line(`    ✗ (all)  — ${r.error}`); return; }
+    const per = r.perProblem || {};
+    const w = Math.max(...assignment.problems.map(p => p.key.length));
+    for (const p of assignment.problems) {
+      const pr = per[p.key] || { solved: false, error: "no result" };
+      line(pr.solved
+        ? `    ✓ ${p.key.padEnd(w)}  ${p.points ?? 0} pts  ${checks(p.check)}`
+        : `    ✗ ${p.key.padEnd(w)}  ${checks(p.check)}  — ${pr.error || "wrong result"}`);
+    }
+  } else {
+    line(r.solved
+      ? `    ✓ solved  ${checks(assignment.check)}`
+      : `    ✗ ${checks(assignment.check)}  — ${r.error || "wrong result"}`);
+  }
+}
+
 function printTable(gradebook) {
   const ids = assignments.map(a => a.id);
   const nameW = Math.max(7, ...gradebook.map(g => (g.student.name || g.student.github || "").length));
@@ -202,9 +262,44 @@ function printTable(gradebook) {
   console.log("\nLegend: ✓ solved · no submission ✗ wrong/error\n");
 }
 
+// Grade a single submission file (path or URL) against one assignment, print a
+// one-line verdict, and return true iff it was solved. No roster, no clone.
+async function gradeSingleFile(opts) {
+  let source, origin;
+  try {
+    ({ source, origin } = await loadSource(opts.file));
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+  const headerId = (source.match(/^\s*\/\/\s*assignment:\s*(\S+)\s*$/m) || [])[1];
+  const id = opts.id || headerId;
+  if (!id) {
+    console.error("No `// assignment: <id>` header in the file; pass --id <assignmentId>.");
+    process.exit(1);
+  }
+  const assignment = getAssignment(id);
+  if (!assignment) {
+    console.error(`Unknown assignment id: ${id}`);
+    process.exit(1);
+  }
+  process.stderr.write(`Grading ${origin} as "${id}"…${opts.verbose ? "\n" : " "}`);
+  const r = await gradeInWorker(assignment, source, opts.timeout);
+  if (opts.verbose) reportVerbose(assignment, r, id);
+  process.stderr.write("done\n");
+  const score = scoreResult(assignment, r);
+  const mark = score.solved ? "✓" : "✗";
+  console.log(`\n${mark} ${id}  ${score.points}/${score.max}${score.note ? `  — ${score.note}` : ""}`);
+  return score.solved;
+}
+
 // ── main ─────────────────────────────────────────────────────────────────────
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.file) {
+    const solved = await gradeSingleFile(opts);
+    process.exit(solved ? 0 : 1);
+  }
   if (!existsSync(opts.roster)) {
     console.error(`Roster not found: ${opts.roster}`);
     process.exit(1);
@@ -220,7 +315,7 @@ async function main() {
 
   const gradebook = [];
   for (const entry of roster) {
-    process.stderr.write(`Grading ${entry.name || entry.github}… `);
+    process.stderr.write(`Grading ${entry.name || entry.github}…${opts.verbose ? "\n" : " "}`);
     const g = await gradeStudent(entry, opts);
     gradebook.push(g);
     process.stderr.write((g.repo ? "done" : `skipped (${g.repoNote || "no repo"})`) + "\n");

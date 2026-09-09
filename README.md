@@ -332,6 +332,13 @@ node tools/grade.js --roster tools/roster.json
 #   --out <file>     gradebook JSON (default gradebook.json)
 #   --timeout <ms>   per-submission budget (default 5000)
 #   --no-pull        grade already-cloned repos without git pull
+
+# Grade a single submission by path or URL — no roster, no clone
+node tools/grade.js --file submissions/lab02.js
+node tools/grade.js --file https://github.com/user/repo/blob/main/lab02.js
+#   --id <id>        override the assignment id (default: the file's `// assignment:` header)
+# A github.com/…/blob/… URL is auto-rewritten to raw.githubusercontent.com.
+# Prints a one-line verdict; exit status is 0 when solved, 1 otherwise.
 ```
 
 A `repoUrl` in the roster may be a git URL **or** a local path (used in place — handy for testing).
