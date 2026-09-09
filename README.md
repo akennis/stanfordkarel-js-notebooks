@@ -339,6 +339,18 @@ node tools/grade.js --file https://github.com/user/repo/blob/main/lab02.js
 #   --id <id>        override the assignment id (default: the file's `// assignment:` header)
 # A github.com/…/blob/… URL is auto-rewritten to raw.githubusercontent.com.
 # Prints a one-line verdict; exit status is 0 when solved, 1 otherwise.
+
+# Optional: per-problem LLM code-quality review (advisory — never changes points)
+node tools/grade.js --file submissions/lab02.js \
+  --llm-endpoint http://localhost:11434 --llm-model gemma2:12b
+#   --llm-endpoint <url>   OpenAI-compatible base URL (Ollama's /v1, or a gateway); enables reviews
+#   --llm-model <name>     model id, required alongside --llm-endpoint
+#   --llm-token <bearer>   optional Authorization: Bearer token
+#   --llm-timeout <ms>     per-review budget (default 60000)
+# For every graded problem, the student's code and the golden solution are sent to
+# the endpoint and a prose critique (decomposition, naming, repetition, right
+# construct, readability, Karel idioms) is printed to stdout, ready to paste into
+# an online gradebook. Endpoint failures are logged to stderr and skipped.
 ```
 
 A `repoUrl` in the roster may be a git URL **or** a local path (used in place — handy for testing).
@@ -407,7 +419,7 @@ See `lessons/square.html` for this example running as a standalone page.
 | `site-nav.js` | Shared navbar and prev/next pager for every page, driven by one site map |
 | `lessons/` | The ten lesson pages, plus `lesson.js` / `lesson.css` and the `square.html` demo |
 | `assignments/` | Graded-assignment manifests (`index.js`, `collect-all.js`, …) and the shared student page (`assignment.html` / `assignment.js`) |
-| `tools/` | `grade.js` (teacher batch grader), `grade-worker.js`, `seal.js` (solution-sealing helper), `roster.example.json` |
+| `tools/` | `grade.js` (teacher batch grader), `grade-worker.js`, `llm-review.js` (optional LLM code-quality critique), `seal.js` (solution-sealing helper), `roster.example.json` |
 | `student-template/` | Starter repo layout students copy to submit their work |
 
 Published to npm (see the `files` field in `package.json`): `stanfordkarel.js`, `worlds/`, `assignments/`, `tools/`, `LICENSE`, and `README.md`. The course pages (`index.html`, `lessons/`, `site-nav.js`, `student-template/`) live in the repo and are meant to be served as static files.

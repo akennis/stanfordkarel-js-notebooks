@@ -14,6 +14,16 @@
  *   node tools/grade.js --roster r.json --no-pull      # don't git-pull existing clones
  *   node tools/grade.js --roster r.json --verbose      # print every problem's pass/fail as it's checked
  *
+ * Optional LLM code-quality review (advisory — never changes points). When
+ * --llm-endpoint and --llm-model are given, each graded problem also gets a
+ * prose critique (student code vs. the golden solution) printed to stdout, ready
+ * to paste into an online gradebook. The endpoint is any OpenAI-compatible
+ * chat-completions server (Ollama's, or a gateway):
+ *   node tools/grade.js --file submissions/lab02.js \
+ *     --llm-endpoint http://localhost:11434 --llm-model gemma2:12b
+ *   node tools/grade.js --roster r.json --llm-endpoint https://host/v1 \
+ *     --llm-model llama3.1:8b --llm-token $TOKEN --llm-timeout 90000
+ *
  * Single file (no roster, no clone) — grade one submission by path or URL:
  *   node tools/grade.js --file submissions/lab02.js
  *   node tools/grade.js --file https://github.com/ha2700/repo/blob/main/lab02.js
@@ -38,13 +48,14 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { assignments, getAssignment } from "../assignments/index.js";
 import { unsealSolution } from "../stanfordkarel.js";
+import { reviewSolution } from "./llm-review.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORKER = join(HERE, "grade-worker.js");
 
 // ── args ─────────────────────────────────────────────────────────────────────
 function parseArgs(argv) {
-  const opts = { roster: "tools/roster.json", cache: ".grade-cache", out: "gradebook.json", timeout: 5000, pull: true, file: null, id: null, verbose: false };
+  const opts = { roster: "tools/roster.json", cache: ".grade-cache", out: "gradebook.json", timeout: 5000, pull: true, file: null, id: null, verbose: false, llmEndpoint: null, llmModel: null, llmToken: null, llmTimeout: 60000 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--roster") opts.roster = argv[++i];
@@ -55,6 +66,10 @@ function parseArgs(argv) {
     else if (a === "--verbose" || a === "-v") opts.verbose = true;
     else if (a === "--file") opts.file = argv[++i];
     else if (a === "--id") opts.id = argv[++i];
+    else if (a === "--llm-endpoint") opts.llmEndpoint = argv[++i];
+    else if (a === "--llm-model") opts.llmModel = argv[++i];
+    else if (a === "--llm-token") opts.llmToken = argv[++i];
+    else if (a === "--llm-timeout") opts.llmTimeout = Number(argv[++i]);
     else if (a === "-h" || a === "--help") { printHelp(); process.exit(0); }
     else { console.error(`Unknown argument: ${a}`); process.exit(1); }
   }
@@ -63,7 +78,14 @@ function parseArgs(argv) {
 function printHelp() {
   console.log("Usage: node tools/grade.js --roster <file> [--cache <dir>] [--out <file>] [--timeout <ms>] [--no-pull] [--verbose]");
   console.log("       node tools/grade.js --file <path-or-url> [--id <assignmentId>] [--timeout <ms>] [--verbose]");
+  console.log("");
+  console.log("LLM code-quality review (advisory, does not affect points) — prints a critique to stdout per problem:");
+  console.log("  --llm-endpoint <url>   OpenAI-compatible base URL, e.g. http://localhost:11434 (enables reviews)");
+  console.log("  --llm-model <name>     model to use, e.g. gemma2:12b (required with --llm-endpoint)");
+  console.log("  --llm-token <bearer>   optional Authorization: Bearer token for the endpoint");
+  console.log("  --llm-timeout <ms>     per-review budget (default 60000)");
 }
+function llmEnabled(opts) { return Boolean(opts.llmEndpoint && opts.llmModel); }
 
 // Rewrite a github.com blob URL to its raw.githubusercontent.com equivalent;
 // leave a raw URL (or anything else) untouched.
@@ -195,11 +217,122 @@ function scoreResult(assignment, r) {
   };
 }
 
+// ── LLM review (advisory) ────────────────────────────────────────────────────
+// When --llm-endpoint/--llm-model are set, each graded problem also gets a prose
+// code-quality critique printed to stdout (progress + table stay elsewhere, so
+// `grade.js … > reviews.txt` captures just the critiques and the score table).
+// Never affects points; any endpoint failure is logged to stderr and skipped.
+
+// Flatten HTML prompt copy to plain text for the model.
+function stripHtml(html) {
+  return String(html || "")
+    .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+    .replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+// Strip a common leading indent from every line of a block.
+function dedent(text) {
+  const lines = text.replace(/\t/g, "  ").split("\n");
+  const indents = lines.filter(l => l.trim()).map(l => l.match(/^ */)[0].length);
+  const min = indents.length ? Math.min(...indents) : 0;
+  return lines.map(l => l.slice(min)).join("\n");
+}
+
+// Unwrap the `function problem_<n>() { …; return main; }` framing a submission
+// carries (1-based position) so the model sees the program as authored — helpers
+// plus `function main(k)`, without the outer wrapper or its trailing
+// `return main`. Falls back to the source (minus the `// assignment:` header)
+// when there is no such wrapper — a hand-written bare `main`. Brace-matched;
+// naive about braces inside strings/comments.
+function unwrapSubmission(source, n) {
+  const bare = () => source.replace(/^[ \t]*\/\/[ \t]*assignment:.*$/m, "").trim();
+  const m = new RegExp(`function\\s+problem_${n}\\s*\\([^)]*\\)`).exec(source);
+  if (!m) return bare();
+  const open = source.indexOf("{", m.index + m[0].length);
+  if (open === -1) return bare();
+  let depth = 0, close = -1;
+  for (let i = open; i < source.length; i++) {
+    if (source[i] === "{") depth++;
+    else if (source[i] === "}" && --depth === 0) { close = i; break; }
+  }
+  if (close === -1) return bare();
+  const body = source.slice(open + 1, close).replace(/\n?[ \t]*return\s+main\s*;?[ \t]*(?=\n|$)/, "\n");
+  return dedent(body).trim();
+}
+
+// One-line verdict string handed to the model alongside the code.
+function verdictLine(v, check) {
+  const aspects = (check && check.length ? check : ["beepers", "position", "direction", "colors"]).join(", ");
+  if (v && v.error) return `solved: false — execution error: ${v.error}; checked aspects: [${aspects}]`;
+  return `solved: ${Boolean(v && v.solved)}; checked aspects: [${aspects}]`;
+}
+
+// For a graded assignment + its worker result, ask the LLM to review each
+// problem and print the critique to stdout. `showHeader` is called (once) right
+// before the first critique so a skipped student prints no header.
+async function emitReviews(assignment, source, workerResult, opts, showHeader) {
+  const per = workerResult.perProblem || {};
+  const items = Array.isArray(assignment.problems)
+    ? assignment.problems.map((p, i) => ({
+        label: `${assignment.id} · ${p.key}`,
+        promptText: stripHtml(p.prompt),
+        worldText: p.world,
+        goldenSource: unsealSolution(p.solution),
+        studentSource: unwrapSubmission(source, i + 1),
+        verdict: per[p.key] || { solved: false, error: workerResult.error || "no result" },
+        check: p.check,
+      }))
+    : [{
+        label: assignment.id,
+        promptText: stripHtml(assignment.prompt),
+        worldText: assignment.world,
+        goldenSource: unsealSolution(assignment.solution),
+        studentSource: unwrapSubmission(source, 1),
+        verdict: workerResult,
+        check: assignment.check,
+      }];
+
+  for (const it of items) {
+    const res = await reviewSolution(
+      { endpoint: opts.llmEndpoint, model: opts.llmModel, token: opts.llmToken, timeout: opts.llmTimeout },
+      {
+        label: it.label,
+        promptText: it.promptText,
+        worldText: it.worldText,
+        goldenSource: it.goldenSource,
+        studentSource: it.studentSource,
+        verdict: verdictLine(it.verdict, it.check),
+      },
+    );
+    if (res.error) {
+      process.stderr.write(`  [llm review unavailable for ${it.label}: ${res.error}]\n`);
+      continue;
+    }
+    showHeader();
+    const mark = it.verdict.solved ? "✓ solved" : `✗ ${it.verdict.error || "wrong result"}`;
+    console.log(`\n── ${it.label} ──  (${mark})`);
+    console.log(res.text.trim());
+  }
+}
+
 async function gradeStudent(entry, opts) {
   const { dir, note } = ensureRepo(entry, opts.cache, opts.pull);
   const results = {};
   const submitted = dir ? readSubmissions(dir) : [];
   const byId = new Map(submitted.map(s => [s.id, s]));
+
+  let headerShown = false;
+  const showHeader = () => {
+    if (headerShown) return;
+    headerShown = true;
+    const who = entry.name || entry.github || "student";
+    const tag = entry.github && entry.github !== who ? `  (${entry.github})` : "";
+    console.log(`\n════════ ${who}${tag} ════════`);
+  };
 
   for (const a of assignments) {
     const sub = byId.get(a.id);
@@ -208,6 +341,7 @@ async function gradeStudent(entry, opts) {
     const r = await gradeInWorker(a, sub.source, opts.timeout);
     results[a.id] = scoreResult(a, r);
     if (opts.verbose) reportVerbose(a, r, a.id);
+    if (llmEnabled(opts)) await emitReviews(a, sub.source, r, opts, showHeader);
   }
   // Flag submissions that don't match any known assignment.
   for (const s of submitted) {
@@ -290,12 +424,16 @@ async function gradeSingleFile(opts) {
   const score = scoreResult(assignment, r);
   const mark = score.solved ? "✓" : "✗";
   console.log(`\n${mark} ${id}  ${score.points}/${score.max}${score.note ? `  — ${score.note}` : ""}`);
+  if (llmEnabled(opts)) await emitReviews(assignment, source, r, opts, () => {});
   return score.solved;
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.llmEndpoint && !opts.llmModel) {
+    console.error("--llm-endpoint requires --llm-model <name>; skipping LLM reviews.");
+  }
   if (opts.file) {
     const solved = await gradeSingleFile(opts);
     process.exit(solved ? 0 : 1);
