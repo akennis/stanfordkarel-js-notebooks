@@ -126,7 +126,7 @@ Speed: n                           # animation speed (float)</code></pre>
   </details>
 
   <script type="module">
-    import { runKarel, worlds } from "./stanfordkarel.js";
+    import { runKarel, runKarelInWorker, worlds } from "./stanfordkarel.js";
 
     const worldEl   = document.getElementById("world");
     const codeEl    = document.getElementById("code");
@@ -151,6 +151,17 @@ Speed: n                           # animation speed (float)</code></pre>
     codeEl.value = STARTER_CODE;
 
     const OPTS = { cellSize: 46, delay: 150 };
+
+    // Playground code is arbitrary and untrusted, unlike a lesson/assignment
+    // program (small, purpose-built worlds). A tight loop that *does* call a
+    // Karel action on every iteration (e.g. `while (true) { k.move(); }`) trips
+    // runKarelInWorker's maxFrames cap almost instantly, but the library still
+    // renders + GIF-encodes every captured frame afterwards — with the library
+    // default of 2000 frames that encode alone can take upwards of 15 seconds
+    // (worse on a slower machine), which reads as "never finishes." Cap it much
+    // lower here so a runaway loop still shows its error in a couple of seconds;
+    // legitimate playground demos don't need anywhere near 2000 actions.
+    const RUN_OPTS = { ...OPTS, maxFrames: 400 };
 
     // ─────────────────── legacy "KarelWorld" format support ───────────────────
     // Some tools export worlds in an older, colon-free style:
@@ -398,8 +409,9 @@ Speed: n                           # animation speed (float)</code></pre>
       }
     }
 
-    // Compile the editor text into a main() the same way the lessons do, then
-    // run it against the current world and show the animation.
+    // Compile the editor text into a main() the same way the lessons do. This
+    // only *parses* the code (it's never called), so it's a safe, cheap check
+    // for a syntax error or a missing main() before we bother running.
     function compileMain(src) {
       const factory = new Function(`"use strict";\n${src}\n;return typeof main === "function" ? main : null;`);
       const fn = factory();
@@ -413,16 +425,20 @@ Speed: n                           # animation speed (float)</code></pre>
       codeOut.replaceChildren(
         Object.assign(document.createElement("span"), { className: "status", textContent: "Running…" })
       );
-      let main;
       try {
-        main = compileMain(codeEl.value);
+        compileMain(codeEl.value);
       } catch (err) {
         showError(codeOut, err instanceof SyntaxError ? "Syntax error: " + err.message : err.message);
         runBtn.disabled = false;
         return;
       }
       try {
-        const img = await runKarel(worldText(), main, OPTS);
+        // Run in a Web Worker, passed as source text: playground code is
+        // arbitrary and untrusted (e.g. `while (true) {}`, which never calls a
+        // Karel action and so can't be caught by maxFrames), so isolate it the
+        // same way lesson challenges and assignments do — a runaway program
+        // gets killed by the worker's timeout instead of freezing the page.
+        const img = await runKarelInWorker(worldText(), codeEl.value, RUN_OPTS);
         codeOut.replaceChildren(img);
         if (img.dataset.error) {
           const e = document.createElement("div");
