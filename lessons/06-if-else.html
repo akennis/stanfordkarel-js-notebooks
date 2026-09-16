@@ -10,10 +10,10 @@
   <header class="course">
     <div class="crumb">Learning JavaScript with Karel · Lesson 6 of 18</div>
     <h1>6 · <code>if</code> / <code>else</code></h1>
-    <p class="lead">Choose between two different actions depending on a condition.</p>
+    <p class="lead">Choose between two different actions depending on a condition — then between many, in priority order.</p>
   </header>
 
-  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-06">✏️ Practice this lesson → Assignment 6 (3 problems)</a></p>
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-06">✏️ Practice this lesson → Assignment 6 (4 problems)</a></p>
   <main id="notebook"></main>
 
   <script type="module">
@@ -23,7 +23,13 @@
       { md: `<h2>This <em>or</em> that</h2>
       <p>Often you want one action when a condition is true and a <em>different</em> action when it's
       false. That's what <code>else</code> is for: <code>if</code> handles the true case, <code>else</code>
-      handles everything else. Exactly one of the two blocks runs.</p>` },
+      handles everything else. Exactly one of the two blocks runs.</p>
+      <div class="callout"><strong>Anatomy of an if / else</strong>
+      <code>if (condition) { …A… } else { …B… }</code><br>
+      • when the condition is <code>true</code>, block A runs and block B is skipped<br>
+      • when it's <code>false</code>, block A is skipped and block B runs<br>
+      • there is no third possibility — one of the two <em>always</em> runs</div>` },
+
       { md: `<h2>Toggling a row of beepers</h2>
       <p>At each square Karel asks: is a beeper here? If so, pick it up; otherwise, put one down. The
       row starts with beepers on squares 1, 3, and 5 — watch how every square flips to its opposite.</p>` },
@@ -47,6 +53,7 @@ Beeper: (5, 1); 1`, code: `function main(k) {
     k.putBeeper();
   }
 }` },
+
       { md: `<h2>Deciding how to move</h2>
       <p><code>if</code> / <code>else</code> is the heart of navigation. Here Karel's front is blocked by
       the edge of a narrow world, so the condition is <code>false</code> and the <code>else</code> branch
@@ -62,9 +69,535 @@ BeeperBag: INFINITY`, code: `function main(k) {
   k.move();
   k.move();
 }` },
+
+      { md: `<h2>Walking the walls</h2>
+      <p>Put that same decision inside a loop and Karel can walk the whole edge of a two-dimensional room
+      without knowing where the corners are. The rule at every step is simply: <em>if the way ahead is
+      clear, step forward and drop a beeper; otherwise, turn left</em>. The walls tell Karel when to turn.
+      In this 4 × 4 room a full lap is 12 moves and 4 turns, so the loop runs 16 times and Karel ends up
+      back where it started, facing east.</p>` },
+      { world: `Dimension: (4, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  for (let i = 0; i < 16; i++) {
+    if (k.frontIsClear()) {
+      k.move();
+      k.putBeeper();
+    } else {
+      k.turnLeft();
+    }
+  }
+}` },
+      { md: `<h3>Challenge · Ring a wider room</h3>
+      <p>This room is 6 avenues wide and 4 streets tall. Use the same move-or-turn rule to lay a ring of
+      beepers around its edge and bring Karel back to <strong>(1, 1)</strong> facing <strong>east</strong>.
+      Count carefully: each pass of the loop is either one move or one turn, so a lap is
+      5 + 1 + 3 + 1 + 5 + 1 + 3 + 1 = <strong>20</strong> passes.</p>` },
+      { world: `Dimension: (6, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Inside a <code>for</code> loop that runs 20 times: <code>if (k.frontIsClear())</code>
+        then <code>move()</code> and <code>putBeeper()</code>, <code>else</code> <code>turnLeft()</code>.
+        Karel should finish on <strong>(1, 1)</strong> facing <strong>east</strong> with one beeper on every
+        edge corner.`,
+        starter: `function main(k) {
+  for (let i = 0; i < 20; i++) {
+    // if the front is clear: move, then put a beeper
+    // otherwise: turn left
+  }
+}`,
+        solution: function main(k) {
+          for (let i = 0; i < 20; i++) {
+            if (k.frontIsClear()) {
+              k.move();
+              k.putBeeper();
+            } else {
+              k.turnLeft();
+            }
+          }
+        } },
+
+      { md: `<h2>Snaking through a room</h2>
+      <p>To visit <em>every</em> corner of a room, Karel sweeps it row by row like a lawnmower: east along
+      the first street, up one, west along the second, up one, east again. The tricky part is the turn at
+      the end of each row — and which way to turn <strong>depends on which way Karel is facing</strong>.
+      At the east end (facing east) the next row is to the <em>left</em>; at the west end (facing west) it's
+      to the <em>right</em>. That's an <code>if</code> / <code>else</code> on <code>facingEast()</code>.</p>
+      <p><code>fillRow</code> walks to the wall dropping a beeper on every corner; <code>climbToNextRow</code>
+      makes the direction-aware U-turn. <code>main</code> alternates the two, finishing with one last row so
+      Karel doesn't try to climb out of the room.</p>` },
+      { world: `Dimension: (5, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function fillRow(k) {
+  k.putBeeper();
+  while (k.frontIsClear()) {
+    k.move();
+    k.putBeeper();
+  }
+}
+
+function climbToNextRow(k) {
+  if (k.facingEast()) {
+    k.turnLeft();
+    k.move();
+    k.turnLeft();
+  } else {
+    turnRight(k);
+    k.move();
+    turnRight(k);
+  }
+}
+
+function main(k) {
+  for (let row = 0; row < 2; row++) {
+    fillRow(k);
+    climbToNextRow(k);
+  }
+  fillRow(k);
+}` },
+      { md: `<h3>Challenge · Toggle the whole room</h3>
+      <p>This 4 × 4 room holds a checkerboard of beepers. Snake through every corner and toggle each one —
+      pick up the beeper if there is one, put one down if there isn't — so the pattern flips to its
+      opposite. The row-walking and the main loop are written for you; you fill in the two decisions:
+      <code>toggle</code> (beeper or no beeper?) and <code>climbToNextRow</code> (facing east or not?).</p>` },
+      { world: `Dimension: (4, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 1
+Beeper: (3, 1); 1
+Beeper: (2, 2); 1
+Beeper: (4, 2); 1
+Beeper: (1, 3); 1
+Beeper: (3, 3); 1
+Beeper: (2, 4); 1
+Beeper: (4, 4); 1`,
+        prompt: `Complete <code>toggle(k)</code> — <code>if (k.beepersPresent())</code>
+        <code>pickBeeper()</code> <code>else</code> <code>putBeeper()</code> — and
+        <code>climbToNextRow(k)</code> — <code>if (k.facingEast())</code> turn left, move, turn left;
+        <code>else</code> turn right, move, turn right. Every corner should end up flipped, with Karel on
+        <strong>(1, 4)</strong> facing <strong>west</strong>.`,
+        starter: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function toggle(k) {
+  // if a beeper is here, pick it up; otherwise put one down
+}
+
+function toggleRow(k) {
+  toggle(k);
+  while (k.frontIsClear()) {
+    k.move();
+    toggle(k);
+  }
+}
+
+function climbToNextRow(k) {
+  // facing east: turn left, move, turn left
+  // otherwise:   turn right, move, turn right
+}
+
+function main(k) {
+  for (let row = 0; row < 3; row++) {
+    toggleRow(k);
+    climbToNextRow(k);
+  }
+  toggleRow(k);
+}`,
+        solution: function main(k) {
+          function turnRight(k) {
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+          }
+          function toggle(k) {
+            if (k.beepersPresent()) {
+              k.pickBeeper();
+            } else {
+              k.putBeeper();
+            }
+          }
+          function toggleRow(k) {
+            toggle(k);
+            while (k.frontIsClear()) {
+              k.move();
+              toggle(k);
+            }
+          }
+          function climbToNextRow(k) {
+            if (k.facingEast()) {
+              k.turnLeft();
+              k.move();
+              k.turnLeft();
+            } else {
+              turnRight(k);
+              k.move();
+              turnRight(k);
+            }
+          }
+          for (let row = 0; row < 3; row++) {
+            toggleRow(k);
+            climbToNextRow(k);
+          }
+          toggleRow(k);
+        } },
+
+      { md: `<h2>More than two choices: <code>else if</code></h2>
+      <p>Sometimes there are more than two cases. You could nest an <code>if</code> inside an
+      <code>else</code>, but JavaScript has a cleaner way to write it: a chain of <code>else if</code>
+      branches, optionally ending in a plain <code>else</code>.</p>
+      <div class="callout"><strong>Anatomy of an if / else if / else chain</strong>
+      <code>if (c1) { …A… } else if (c2) { …B… } else if (c3) { …C… } else { …D… }</code><br>
+      • the conditions are tested <strong>top to bottom</strong><br>
+      • the block of the <strong>first</strong> condition that is <code>true</code> runs; everything
+      below it is skipped<br>
+      • the final <code>else</code> runs only when <em>none</em> of the conditions were true — and it's
+      optional: leave it out and the chain does nothing when nothing matches</div>
+      <p>Here's a stock-room job. Karel snakes through a room of colored corners and stocks each one by
+      color: <strong>6</strong> beepers on a <span style="color:#c00">red</span> corner, <strong>3</strong>
+      on a <span style="color:#080">green</span> one, <strong>1</strong> on a
+      <span style="color:#00c">blue</span> one, and nothing on an unpainted corner. The whole decision
+      lives in <code>stockCorner</code>; the rest is the same snake walk as before.</p>` },
+      { world: `Dimension: (4, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (3, 1); Green
+Color: (4, 1); Blue
+Color: (2, 2); Blue
+Color: (3, 2); Red
+Color: (1, 3); Green
+Color: (2, 3); Red
+Color: (4, 3); Green`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function stockCorner(k) {
+  if (k.cornerColorIs("Red")) {
+    for (let i = 0; i < 6; i++) {
+      k.putBeeper();
+    }
+  } else if (k.cornerColorIs("Green")) {
+    for (let i = 0; i < 3; i++) {
+      k.putBeeper();
+    }
+  } else if (k.cornerColorIs("Blue")) {
+    k.putBeeper();
+  }
+}
+
+function stockRow(k) {
+  stockCorner(k);
+  while (k.frontIsClear()) {
+    k.move();
+    stockCorner(k);
+  }
+}
+
+function climbToNextRow(k) {
+  if (k.facingEast()) {
+    k.turnLeft();
+    k.move();
+    k.turnLeft();
+  } else {
+    turnRight(k);
+    k.move();
+    turnRight(k);
+  }
+}
+
+function main(k) {
+  for (let row = 0; row < 2; row++) {
+    stockRow(k);
+    climbToNextRow(k);
+  }
+  stockRow(k);
+}` },
+      { md: `<p>A corner has only one color, so in this chain at most one condition can be true and the order
+      of the branches doesn't change the result. That is <em>not</em> always the case — and when it
+      isn't, the order becomes the most important thing about the chain.</p>` },
+
+      { md: `<h2>Order matters: the first true branch wins</h2>
+      <p>Because the chain stops at the first <code>true</code> condition, an <code>else if</code> branch
+      is really saying <em>"…and none of the branches above me applied."</em> When two conditions can be
+      true <strong>at the same time</strong>, whichever you list first takes priority, and the other one
+      never gets a chance to run. So write the chain in <strong>priority order</strong>: the rule that
+      must win goes at the top.</p>
+      <p>Watch it happen. Karel starts at <strong>(1, 1)</strong> facing north and hunts for a beeper at
+      <strong>(4, 1)</strong> using three rules, checked in this order:</p>
+      <ol>
+        <li>if the <strong>right</strong> is clear, turn right and step;</li>
+        <li>else if the <strong>front</strong> is clear, step;</li>
+        <li>else turn left.</li>
+      </ol>
+      <p>At the very first corner rules 1 <em>and</em> 2 are both true — Karel's right (east) and front
+      (north) are both open. Rule 1 is listed first, so it wins: Karel turns east straight away and
+      reaches the beeper in three steps.</p>` },
+      { world: `Dimension: (4, 4)
+Karel: (1, 1); north
+BeeperBag: INFINITY
+Beeper: (4, 1); 1`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  while (k.noBeepersPresent()) {
+    if (k.rightIsClear()) {
+      turnRight(k);
+      k.move();
+    } else if (k.frontIsClear()) {
+      k.move();
+    } else {
+      k.turnLeft();
+    }
+  }
+}` },
+      { md: `<p>Now the <em>same three rules</em> with the first two swapped — "go straight if you can, otherwise
+      turn right". Same world, same beeper, same conditions; only the priority changed. This time the
+      front-is-clear rule wins that opening tie, so Karel marches all the way up the west wall, along the
+      north wall and down the east side: nine steps instead of three.</p>` },
+      { world: `Dimension: (4, 4)
+Karel: (1, 1); north
+BeeperBag: INFINITY
+Beeper: (4, 1); 1`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  while (k.noBeepersPresent()) {
+    if (k.frontIsClear()) {
+      k.move();
+    } else if (k.rightIsClear()) {
+      turnRight(k);
+      k.move();
+    } else {
+      k.turnLeft();
+    }
+  }
+}` },
+      { md: `<div class="callout warn"><strong>Overlapping conditions</strong>
+      Before you write an <code>else if</code> chain, ask: <em>can two of these conditions be true at
+      once?</em> If they can, the order is part of the logic, not just style. Put the branch with the
+      highest priority first — usually the most specific rule, the safety check, or the "special case"
+      — and let the more general rules follow. A branch that is placed <em>after</em> one that already
+      covers it will never run.</div>` },
+
+      { md: `<h2>Priority at work: restock only the empty corners</h2>
+      <p>Back to the stock room, with a new rule from the manager: <em>a corner that already holds a beeper
+      has been stocked — leave it alone, whatever its color.</em> Now the conditions overlap: a red corner
+      that already has a beeper is both "red" <em>and</em> "already stocked". Which rule should win? The
+      "leave it alone" rule — it's the special case that overrides the color rules.</p>
+      <p>The program below gets the logic right but the <strong>order wrong</strong>: the "already stocked"
+      check was tacked onto the <em>end</em> of the chain. Watch the three corners that start with a
+      beeper — the red one at (2, 2) ends up with seven, because <code>cornerColorIs("Red")</code> is
+      tested first, wins, and the <code>beepersPresent()</code> branch below it is never even looked at.</p>` },
+      { world: `Dimension: (4, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (3, 1); Green
+Color: (4, 1); Blue
+Color: (1, 2); Blue
+Color: (2, 2); Red
+Color: (4, 2); Green
+Color: (1, 3); Green
+Color: (2, 3); Blue
+Color: (3, 3); Red
+Beeper: (4, 1); 1
+Beeper: (2, 2); 1
+Beeper: (1, 3); 1`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function stockCorner(k) {
+  if (k.cornerColorIs("Red")) {
+    for (let i = 0; i < 6; i++) {
+      k.putBeeper();
+    }
+  } else if (k.cornerColorIs("Green")) {
+    for (let i = 0; i < 3; i++) {
+      k.putBeeper();
+    }
+  } else if (k.cornerColorIs("Blue")) {
+    k.putBeeper();
+  } else if (k.beepersPresent()) {
+    // already stocked - leave it alone  (too late: a colored corner never gets here!)
+  }
+}
+
+function stockRow(k) {
+  stockCorner(k);
+  while (k.frontIsClear()) {
+    k.move();
+    stockCorner(k);
+  }
+}
+
+function climbToNextRow(k) {
+  if (k.facingEast()) {
+    k.turnLeft();
+    k.move();
+    k.turnLeft();
+  } else {
+    turnRight(k);
+    k.move();
+    turnRight(k);
+  }
+}
+
+function main(k) {
+  for (let row = 0; row < 2; row++) {
+    stockRow(k);
+    climbToNextRow(k);
+  }
+  stockRow(k);
+}` },
+      { md: `<div class="callout tip"><strong>An empty branch is a real branch</strong>
+      <code>{ }</code> with nothing but a comment inside is a perfectly good way to say "in this case, do
+      nothing". It matters because a branch that matches also <em>blocks</em> every branch below it — so an
+      empty branch at the top of the chain is how you say "this case is handled: don't apply the other
+      rules to it".</div>
+      <h3>Challenge · Fix the priority</h3>
+      <p>The editor starts with the wrong-order program above. Don't rewrite it — just <strong>move the
+      <code>beepersPresent()</code> branch to the top</strong> of the chain so that already-stocked corners
+      are skipped before any color is considered. When the order is right, every corner that started with a
+      beeper still has exactly one, and every other colored corner gets its 6, 3, or 1.</p>` },
+      { world: `Dimension: (4, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (3, 1); Green
+Color: (4, 1); Blue
+Color: (1, 2); Blue
+Color: (2, 2); Red
+Color: (4, 2); Green
+Color: (1, 3); Green
+Color: (2, 3); Blue
+Color: (3, 3); Red
+Beeper: (4, 1); 1
+Beeper: (2, 2); 1
+Beeper: (1, 3); 1`,
+        prompt: `Reorder the chain in <code>stockCorner</code>: <code>if (k.beepersPresent())</code> first
+        (do nothing), <em>then</em> the Red / Green / Blue branches. The three pre-stocked corners should
+        keep their single beeper; the rest get 6 on red, 3 on green, 1 on blue.`,
+        starter: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function stockCorner(k) {
+  if (k.cornerColorIs("Red")) {
+    for (let i = 0; i < 6; i++) {
+      k.putBeeper();
+    }
+  } else if (k.cornerColorIs("Green")) {
+    for (let i = 0; i < 3; i++) {
+      k.putBeeper();
+    }
+  } else if (k.cornerColorIs("Blue")) {
+    k.putBeeper();
+  } else if (k.beepersPresent()) {
+    // already stocked - leave it alone
+  }
+}
+
+function stockRow(k) {
+  stockCorner(k);
+  while (k.frontIsClear()) {
+    k.move();
+    stockCorner(k);
+  }
+}
+
+function climbToNextRow(k) {
+  if (k.facingEast()) {
+    k.turnLeft();
+    k.move();
+    k.turnLeft();
+  } else {
+    turnRight(k);
+    k.move();
+    turnRight(k);
+  }
+}
+
+function main(k) {
+  for (let row = 0; row < 2; row++) {
+    stockRow(k);
+    climbToNextRow(k);
+  }
+  stockRow(k);
+}`,
+        solution: function main(k) {
+          function turnRight(k) {
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+          }
+          function stockCorner(k) {
+            if (k.beepersPresent()) {
+              // already stocked - leave it alone
+            } else if (k.cornerColorIs("Red")) {
+              for (let i = 0; i < 6; i++) {
+                k.putBeeper();
+              }
+            } else if (k.cornerColorIs("Green")) {
+              for (let i = 0; i < 3; i++) {
+                k.putBeeper();
+              }
+            } else if (k.cornerColorIs("Blue")) {
+              k.putBeeper();
+            }
+          }
+          function stockRow(k) {
+            stockCorner(k);
+            while (k.frontIsClear()) {
+              k.move();
+              stockCorner(k);
+            }
+          }
+          function climbToNextRow(k) {
+            if (k.facingEast()) {
+              k.turnLeft();
+              k.move();
+              k.turnLeft();
+            } else {
+              turnRight(k);
+              k.move();
+              turnRight(k);
+            }
+          }
+          for (let row = 0; row < 2; row++) {
+            stockRow(k);
+            climbToNextRow(k);
+          }
+          stockRow(k);
+        } },
+
       { md: `<div class="callout tip"><strong>You learned</strong>
       <code>if (condition) { … } else { … }</code> chooses between two actions: the first block runs when
-      the condition is true, the second when it's false. Exactly one branch always runs.</div>` },
+      the condition is true, the second when it's false. Exactly one branch always runs.
+      <code>else if</code> extends the choice to many cases: the conditions are tested top to bottom, the
+      <strong>first true one runs and the rest are skipped</strong>. When conditions can overlap, that makes
+      the order part of your logic — list the branches in priority order, with the rule that must win at
+      the top. A final <code>else</code> catches whatever nothing else matched.</div>` },
     ];
 
     renderNotebook(cells);
