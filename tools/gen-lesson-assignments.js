@@ -218,8 +218,9 @@ const LESSONS = {
       {
         key: "moderate", label: "Moderate", points: 10,
         world: `Dimension: (5, 4)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
-        prompt: `Karel starts at <code>(1, 1)</code> facing east in a 5&times;4 room. Walk along <strong>three</strong> walls &mdash; east along the south wall, north up the east wall, then west along the north wall &mdash; dropping a beeper on every corner Karel steps <em>onto</em> (the starting corner stays empty). Stop when Karel reaches <code>(1, 4)</code>.\n<p>Don't count the moves per side. Use one decision inside a loop, exactly as in the lesson: <code>if (k.frontIsClear())</code> move and put a beeper, <code>else</code> turn left &mdash; the walls tell Karel when to turn. The trip is 11 moves plus 2 turns, so the loop runs <strong>13</strong> times.</p>`,
-        starter: STUB, check: ["beepers", "position"],
+        prompt: `Karel starts at <code>(1, 1)</code> facing east in a 5&times;4 room. Walk along <strong>three</strong> walls &mdash; east along the south wall, north up the east wall, then west along the north wall &mdash; dropping a beeper on every corner Karel steps <em>onto</em> (the starting corner stays empty). Stop when Karel reaches <code>(1, 4)</code>.\n<p>Don't count the moves per side. Use one decision inside a loop, exactly as in the lesson: <code>if (k.frontIsClear())</code> move and put a beeper, <code>else</code> turn left &mdash; the walls tell Karel when to turn. The trip is 11 moves plus 2 turns, so the loop runs <strong>13</strong> times &mdash; that loop is already in the editor; fill in its body.</p>`,
+        starter: `function main(k) {\n  for (let i = 0; i < 13; i++) {\n    \n  }\n}\n`,
+        check: ["beepers", "position"],
         solution: `function main(k) {\n  for (let i = 0; i < 13; i++) {\n    if (k.frontIsClear()) {\n      k.move();\n      k.putBeeper();\n    } else {\n      k.turnLeft();\n    }\n  }\n}`,
       },
       {
