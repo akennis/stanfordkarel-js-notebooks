@@ -13,25 +13,50 @@
     <p class="lead">Write one flexible function that takes an input and behaves differently each time.</p>
   </header>
 
-  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-07">✏️ Practice this lesson → Assignment 7 (3 problems)</a></p>
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-07">✏️ Practice this lesson → Assignment 7 (4 problems)</a></p>
   <main id="notebook"></main>
 
   <script type="module">
     import { renderNotebook } from "./lesson.js";
 
     const cells = [
-      { md: `<h2>Functions that take input</h2>
-      <p>In Lesson 2 our functions always did the same thing. A <strong>parameter</strong> is a named
-      input listed inside a function's parentheses. When you <em>call</em> the function you pass an
-      <strong>argument</strong> — an actual value — and the function uses it.</p>
-      <div class="callout"><strong>Parameter vs. argument</strong>
-      In <code>function moveN(k, n) { … }</code>, <code>k</code> is the robot and <code>n</code> is the
-      parameter we care about (a placeholder). In the call <code>moveN(k, 3)</code>, the <code>3</code> is
-      the argument that fills in for <code>n</code>.</div>` },
-      { md: `<h2>Move any number of steps</h2>
-      <p>Here <code>moveN</code> combines a parameter with a <code>for</code> loop from Lesson 3. It sits
-      next to <code>main</code> and takes the robot <code>k</code> plus a count <code>n</code>. One
-      definition now handles any distance — <code>moveN(k, 3)</code>, <code>moveN(k, 2)</code>, and so on.</p>` },
+      { md: `<h2>Functions that fit more than one situation</h2>
+      <p>Every function you wrote in Lesson 2 did exactly one thing, the same way, every time.
+      <code>turnRight</code> is a fine example — there is only one way to turn right, so it never needs
+      to change. But a lot of functions are <em>almost</em> reusable: they do the right kind of thing,
+      just with one number baked in that happens to fit a single spot in your program.</p>
+      <p>A <strong>parameter</strong> fixes that. It is a named input listed inside the function's
+      parentheses, and it lets the caller decide the detail that changes — how far, how many, how tall —
+      each time the function is used. The function stops being pre-configured for one circumstance and
+      becomes a tool you can apply anywhere.</p>
+      <h3>Without parameters: one function per situation</h3>
+      <p>Here Karel needs to walk three squares east, then two squares north. <code>moveThree</code>
+      works perfectly for the first leg, but it is useless for the second — so we end up writing a
+      near-identical <code>moveTwo</code>. Need five moves later? That's a third copy. The functions
+      are locked to the one distance they were written for.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function moveThree(k) {
+  k.move();
+  k.move();
+  k.move();
+}
+
+function moveTwo(k) {
+  k.move();
+  k.move();
+}
+
+function main(k) {
+  moveThree(k);
+  k.turnLeft();
+  moveTwo(k);
+}` },
+      { md: `<h3>With a parameter: one function, any situation</h3>
+      <p>Now the distance is a parameter called <code>n</code>. Inside the function, a <code>for</code>
+      loop from Lesson 4 repeats <code>move()</code> <code>n</code> times. The same
+      <code>moveN</code> handles both legs of the trip — and any other distance you ever need — from a
+      single definition. Nothing is copied; only the number in the call changes.</p>` },
       { world: `Dimension: (5, 5)
 Karel: (1, 1); east
 BeeperBag: INFINITY`, code: `function moveN(k, n) {
@@ -45,29 +70,478 @@ function main(k) {
   k.turnLeft();
   moveN(k, 2);
 }` },
+      { md: `<h2>Parameter vs. argument</h2>
+      <p>Two words describe the two sides of this hand-off. Inside the function definition, the name in
+      the parentheses is a <strong>parameter</strong> — a placeholder that stands for "whatever value
+      the caller gives me." At the call site, the actual value you write is an <strong>argument</strong>.
+      When the call happens, the argument is copied into the parameter, and the body runs using it.</p>
+      <div class="callout"><strong>Parameter vs. argument</strong>
+      In <code>function moveN(k, n) { … }</code>, <code>k</code> and <code>n</code> are the
+      <em>parameters</em>: <code>k</code> is the robot and <code>n</code> is the count. In the call
+      <code>moveN(k, 3)</code>, the <code>3</code> is the <em>argument</em> that fills in for
+      <code>n</code>. Calling <code>moveN(k, 10)</code> later fills <code>n</code> with 10 instead —
+      the definition doesn't change, only the argument does.</div>
+      <p>Notice that <code>k</code> has been a parameter all along: every function we've written takes
+      the robot as its first input, and <code>main(k)</code> passes it through. Adding <code>n</code>
+      simply gives the function a second thing it can be told.</p>` },
       { md: `<h2>Building a bar chart</h2>
-      <p>Parameters shine when the value changes each call. <code>dropBeepers(k, n)</code> stacks
-      <code>n</code> beepers on the current square; calling it with 1, then 2, then 3 draws a little
-      ascending chart.</p>` },
-      { world: `Dimension: (3, 1)
+      <p>Parameters shine when the value changes on every call. <code>drawBar(k, height)</code> draws
+      one vertical bar: with Karel facing north at the bottom of a column, it drops a beeper, moves up,
+      drops another — one beeper per corner — until the bar is <code>height</code> tall, then walks back
+      down to where it started. <code>nextColumn</code> shifts Karel one avenue east, ready for the next
+      bar. A <code>for</code> loop in <code>main</code> then draws five bars, passing
+      <code>i + 1</code> as the height each time — so the chart climbs 1, 2, 3, 4, 5.</p>
+      <p>Look at how loops and parameters build on each other: <code>drawBar</code> uses
+      <code>moveN</code> to come back down with the argument <code>height - 1</code>, and
+      <code>main</code> feeds its loop counter to <code>drawBar</code> as <code>i + 1</code>. An argument
+      can be any expression, not just a bare number.</p>` },
+      { world: `Dimension: (6, 5)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: `function dropBeepers(k, n) {
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  for (let i = 0; i < 3; i++) {
+    k.turnLeft();
+  }
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function moveN(k, n) {
   for (let i = 0; i < n; i++) {
+    k.move();
+  }
+}
+
+function drawBar(k, height) {
+  for (let i = 0; i < height - 1; i++) {
     k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+  turnAround(k);
+  moveN(k, height - 1);
+  turnAround(k);
+}
+
+function nextColumn(k) {
+  turnRight(k);
+  k.move();
+  k.turnLeft();
+}
+
+function main(k) {
+  k.turnLeft();
+  for (let i = 0; i < 5; i++) {
+    drawBar(k, i + 1);
+    nextColumn(k);
+  }
+}` },
+      { md: `<h3>Challenge · Draw a bar chart</h3>
+      <p>This time only <code>turnRight</code> and <code>turnAround</code> are provided. Write your own
+      <code>drawBar(k, height)</code> (and any other helpers you want, such as <code>moveN</code> and
+      <code>nextColumn</code>), then use it to draw bars of height <strong>3, 1, 4, 2</strong> on avenues
+      1 through 4. Karel starts facing <strong>east</strong>, so turn to face north first. Only the
+      beepers are graded — Karel may finish anywhere.</p>` },
+      { world: `Dimension: (5, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Write <code>drawBar(k, height)</code> so it stacks <code>height</code> beepers north
+        of (and including) the current corner, one per corner, and returns to the bottom. Then call it four
+        times with heights 3, 1, 4, 2, stepping one avenue east between bars.`,
+        starter: `function turnRight(k) {
+  for (let i = 0; i < 3; i++) {
+    k.turnLeft();
+  }
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+
+}`,
+        check: ["beepers"],
+        solution: function main(k) {
+          function turnRight(k) { k.turnLeft(); k.turnLeft(); k.turnLeft(); }
+          function turnAround(k) { k.turnLeft(); k.turnLeft(); }
+          function moveN(k, n) { for (let i = 0; i < n; i++) k.move(); }
+          function nextColumn(k) { turnRight(k); k.move(); k.turnLeft(); }
+          function drawBar(k, height) {
+            for (let i = 0; i < height - 1; i++) { k.putBeeper(); k.move(); }
+            k.putBeeper();
+            turnAround(k);
+            moveN(k, height - 1);
+            turnAround(k);
+          }
+          k.turnLeft();
+          drawBar(k, 3);
+          nextColumn(k);
+          drawBar(k, 1);
+          nextColumn(k);
+          drawBar(k, 4);
+          nextColumn(k);
+          drawBar(k, 2);
+        } },
+      { md: `<h3>Challenge · A staircase from a loop</h3>
+      <p>The demo turned its loop counter into a height with <code>i + 1</code>. Now draw a staircase
+      that goes the other way: six bars whose heights go <strong>6, 5, 4, 3, 2, 1</strong>, using a
+      single <code>for</code> loop that calls <code>drawBar</code> once per pass. Think about what
+      expression turns a counter that runs 0, 1, 2, … into 6, 5, 4, ….</p>` },
+      { world: `Dimension: (7, 6)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Write <code>main</code> as a loop: on each pass call <code>drawBar</code> with a height
+        computed from <code>i</code>, then <code>nextColumn(k)</code>. Six bars, heights 6 down to 1.
+        Only the beepers are graded.`,
+        starter: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function moveN(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.move();
+  }
+}
+
+function drawBar(k, height) {
+  for (let i = 0; i < height - 1; i++) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+  turnAround(k);
+  moveN(k, height - 1);
+  turnAround(k);
+}
+
+function nextColumn(k) {
+  turnRight(k);
+  k.move();
+  k.turnLeft();
+}
+
+function main(k) {
+  k.turnLeft();
+  for (let i = 0; i < 6; i++) {
+    // draw one bar, then step to the next column
+  }
+}`,
+        check: ["beepers"],
+        solution: function main(k) {
+          function turnRight(k) { k.turnLeft(); k.turnLeft(); k.turnLeft(); }
+          function turnAround(k) { k.turnLeft(); k.turnLeft(); }
+          function moveN(k, n) { for (let i = 0; i < n; i++) k.move(); }
+          function nextColumn(k) { turnRight(k); k.move(); k.turnLeft(); }
+          function drawBar(k, height) {
+            for (let i = 0; i < height - 1; i++) { k.putBeeper(); k.move(); }
+            k.putBeeper();
+            turnAround(k);
+            moveN(k, height - 1);
+            turnAround(k);
+          }
+          k.turnLeft();
+          for (let i = 0; i < 6; i++) {
+            drawBar(k, 6 - i);
+            nextColumn(k);
+          }
+        } },
+      { md: `<h2>Multiple parameters</h2>
+      <p>A function can take as many parameters as it needs — list them in the parentheses separated by
+      commas, and pass the arguments in the <strong>same order</strong>. Order is the only thing that
+      connects an argument to its parameter, so <code>drawBlock(k, 2, 4)</code> and
+      <code>drawBlock(k, 4, 2)</code> mean different things.</p>
+      <pre class="code">function drawBlock(k, width, height) {
+  …
+}
+
+drawBlock(k, 3, 2);   // width = 3, height = 2
+drawBlock(k, 2, 4);   // width = 2, height = 4</pre>
+      <p>Here's the payoff of building on parameters. <code>drawBar</code> already draws one column of
+      any height. Put it inside a loop that runs <code>width</code> times, stepping east between
+      columns, and you get <code>drawBlock</code>: a solid rectangle of beepers of any size. The same
+      function then draws a wide, short block and a narrow, tall one, just by changing the arguments.</p>` },
+      { world: `Dimension: (8, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function moveN(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.move();
+  }
+}
+
+function drawBar(k, height) {
+  for (let i = 0; i < height - 1; i++) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+  turnAround(k);
+  moveN(k, height - 1);
+  turnAround(k);
+}
+
+function nextColumn(k) {
+  turnRight(k);
+  k.move();
+  k.turnLeft();
+}
+
+function drawBlock(k, width, height) {
+  for (let i = 0; i < width; i++) {
+    drawBar(k, height);
+    nextColumn(k);
   }
 }
 
 function main(k) {
-  dropBeepers(k, 1);
-  k.move();
-  dropBeepers(k, 2);
-  k.move();
-  dropBeepers(k, 3);
+  k.turnLeft();
+  drawBlock(k, 3, 2);
+  nextColumn(k);
+  drawBlock(k, 2, 4);
 }` },
+      { md: `<div class="callout tip"><strong>Name parameters for what they mean</strong>
+      <code>width</code> and <code>height</code> tell the reader (and future you) which number is which.
+      <code>drawBlock(k, a, b)</code> would run exactly the same, but every call would be a guessing
+      game.</div>` },
+      { md: `<h3>Challenge · Fill a rectangle</h3>
+      <p>Write <code>drawBlock(k, width, height)</code> yourself — <code>drawBar</code> and
+      <code>nextColumn</code> are provided — and use it to fill a block <strong>4 wide and 3 tall</strong>
+      in the bottom-left of the world. Only the beepers are graded.</p>` },
+      { world: `Dimension: (5, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Complete <code>drawBlock</code>: loop <code>width</code> times, drawing a bar of
+        <code>height</code> and then stepping to the next column each pass. Then call it once from
+        <code>main</code> to draw a 4 × 3 block.`,
+        starter: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function moveN(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.move();
+  }
+}
+
+function drawBar(k, height) {
+  for (let i = 0; i < height - 1; i++) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+  turnAround(k);
+  moveN(k, height - 1);
+  turnAround(k);
+}
+
+function nextColumn(k) {
+  turnRight(k);
+  k.move();
+  k.turnLeft();
+}
+
+function drawBlock(k, width, height) {
+  // one bar per column, width columns in total
+}
+
+function main(k) {
+  k.turnLeft();
+  // draw a block 4 wide and 3 tall
+}`,
+        check: ["beepers"],
+        solution: function main(k) {
+          function turnRight(k) { k.turnLeft(); k.turnLeft(); k.turnLeft(); }
+          function turnAround(k) { k.turnLeft(); k.turnLeft(); }
+          function moveN(k, n) { for (let i = 0; i < n; i++) k.move(); }
+          function nextColumn(k) { turnRight(k); k.move(); k.turnLeft(); }
+          function drawBar(k, height) {
+            for (let i = 0; i < height - 1; i++) { k.putBeeper(); k.move(); }
+            k.putBeeper();
+            turnAround(k);
+            moveN(k, height - 1);
+            turnAround(k);
+          }
+          function drawBlock(k, width, height) {
+            for (let i = 0; i < width; i++) { drawBar(k, height); nextColumn(k); }
+          }
+          k.turnLeft();
+          drawBlock(k, 4, 3);
+        } },
+      { md: `<h3>Challenge · Two blocks, one function</h3>
+      <p>Now apply the finished <code>drawBlock</code> in two places with different arguments. Draw a
+      block <strong>2 wide and 3 tall</strong> starting at avenue 1, leave <strong>one empty avenue</strong>,
+      then draw a block <strong>3 wide and 2 tall</strong>. Watch the argument order — swapping
+      <code>width</code> and <code>height</code> gives a different picture. Only the beepers are graded.</p>` },
+      { world: `Dimension: (7, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `In <code>main</code>: face north, draw a 2 × 3 block, skip one column with
+        <code>nextColumn(k)</code>, then draw a 3 × 2 block. Remember that <code>drawBlock</code> already
+        leaves Karel one column past the block it drew.`,
+        starter: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function moveN(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.move();
+  }
+}
+
+function drawBar(k, height) {
+  for (let i = 0; i < height - 1; i++) {
+    k.putBeeper();
+    k.move();
+  }
+  k.putBeeper();
+  turnAround(k);
+  moveN(k, height - 1);
+  turnAround(k);
+}
+
+function nextColumn(k) {
+  turnRight(k);
+  k.move();
+  k.turnLeft();
+}
+
+function drawBlock(k, width, height) {
+  for (let i = 0; i < width; i++) {
+    drawBar(k, height);
+    nextColumn(k);
+  }
+}
+
+function main(k) {
+  k.turnLeft();
+  // 2 wide × 3 tall, a gap, then 3 wide × 2 tall
+}`,
+        check: ["beepers"],
+        solution: function main(k) {
+          function turnRight(k) { k.turnLeft(); k.turnLeft(); k.turnLeft(); }
+          function turnAround(k) { k.turnLeft(); k.turnLeft(); }
+          function moveN(k, n) { for (let i = 0; i < n; i++) k.move(); }
+          function nextColumn(k) { turnRight(k); k.move(); k.turnLeft(); }
+          function drawBar(k, height) {
+            for (let i = 0; i < height - 1; i++) { k.putBeeper(); k.move(); }
+            k.putBeeper();
+            turnAround(k);
+            moveN(k, height - 1);
+            turnAround(k);
+          }
+          function drawBlock(k, width, height) {
+            for (let i = 0; i < width; i++) { drawBar(k, height); nextColumn(k); }
+          }
+          k.turnLeft();
+          drawBlock(k, 2, 3);
+          nextColumn(k);
+          drawBlock(k, 3, 2);
+        } },
+      { md: `<h2>Arguments don't have to be numbers</h2>
+      <p>So far every argument has been a number. But a parameter is just a name for "whatever the
+      caller passes," and the caller can pass a <strong>string</strong> — text in quotes — just as easily.
+      You have been passing strings since Lesson 3: <code>k.paintCorner("Red")</code> hands the text
+      <code>"Red"</code> to <code>paintCorner</code>.</p>
+      <p><code>paintN(k, c, n)</code> takes two inputs of different kinds: <code>c</code> is a color
+      string and <code>n</code> is a number of steps. It paints the current corner <code>c</code>, steps
+      forward, and repeats <code>n</code> times. Inside the body, <code>c</code> is passed straight on to
+      <code>paintCorner</code>, so whichever color the caller chose is the one that gets painted. Three
+      calls with three different colors and lengths paint a bent path — no copy of the function per
+      color.</p>
+      <div class="callout"><strong>No quotes around a parameter</strong>
+      Inside <code>paintN</code> we write <code>k.paintCorner(c)</code>, not
+      <code>k.paintCorner("c")</code>. Bare <code>c</code> is the parameter — it holds
+      <code>"Red"</code> or <code>"Blue"</code>, whatever was passed in. <code>"c"</code> with quotes is
+      the one-letter text <em>c</em>, which is not a color at all.</div>` },
+      { world: `Dimension: (5, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function paintN(k, c, n) {
+  for (let i = 0; i < n; i++) {
+    k.paintCorner(c);
+    k.move();
+  }
+}
+
+function main(k) {
+  paintN(k, "Red", 3);
+  k.turnLeft();
+  paintN(k, "Green", 2);
+  k.turnLeft();
+  paintN(k, "Blue", 2);
+}` },
+      { md: `<h3>Challenge · A four-color square</h3>
+      <p>Use <code>paintN</code> to paint the border of a 4 × 4 room, one color per side. Starting
+      at <code>(1, 1)</code> facing east, paint <strong>3 Red</strong> corners, turn left, <strong>3
+      Blue</strong>, turn left, <strong>3 Green</strong>, turn left, <strong>3 Yellow</strong>. Because
+      each call paints where Karel stands before stepping, the four legs meet neatly at the corners, and
+      Karel ends back at <code>(1, 1)</code>. Only the paint is graded.</p>` },
+      { world: `Dimension: (4, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Write <code>paintN(k, c, n)</code>, then call it four times from <code>main</code> —
+        <code>"Red"</code>, <code>"Blue"</code>, <code>"Green"</code>, <code>"Yellow"</code>, three steps
+        each — with a <code>turnLeft()</code> between calls.`,
+        starter: `function paintN(k, c, n) {
+  // paint this corner c, then step forward; n times
+}
+
+function main(k) {
+
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          function paintN(k, c, n) {
+            for (let i = 0; i < n; i++) { k.paintCorner(c); k.move(); }
+          }
+          paintN(k, "Red", 3);
+          k.turnLeft();
+          paintN(k, "Blue", 3);
+          k.turnLeft();
+          paintN(k, "Green", 3);
+          k.turnLeft();
+          paintN(k, "Yellow", 3);
+        } },
       { md: `<div class="callout tip"><strong>You learned</strong>
-      A parameter lets a function accept input. You supply an argument when calling it, and the same
-      function can produce different results — <code>moveN(k, 3)</code> vs. <code>moveN(k, 10)</code> — from
-      a single definition.</div>` },
+      A parameter lets a function accept input, so one definition can be applied wherever the same kind of
+      job comes up — <code>moveN(k, 3)</code> here, <code>moveN(k, 10)</code> there — instead of a
+      separate copy for each situation. The value you pass is an argument, and it can be a number, an
+      expression like <code>height - 1</code>, a loop counter, or a string like <code>"Red"</code>.
+      Functions can take several parameters; arguments match them by position, so order matters.</div>` },
     ];
 
     renderNotebook(cells);
