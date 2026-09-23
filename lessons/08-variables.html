@@ -13,68 +13,556 @@
     <p class="lead">Give the computer a memory: store a value, then read and update it as the program runs.</p>
   </header>
 
-  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-08">✏️ Practice this lesson → Assignment 8 (3 problems)</a></p>
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-08">✏️ Practice this lesson → Assignment 8 (4 problems)</a></p>
   <main id="notebook"></main>
 
   <script type="module">
     import { renderNotebook } from "./lesson.js";
 
     const cells = [
-      { md: `<h2>Remembering a value</h2>
-      <p>A <strong>variable</strong> is a named box that holds a value. You create one with
-      <code>let</code>, and you can change what's inside it later. This lets a program <em>count</em>,
-      <em>track</em>, and <em>remember</em> things as it runs.</p>
-      <div class="callout"><strong>Creating and changing a variable</strong>
-      <code>let count = 0;</code> makes a box named <code>count</code> holding 0.
-      <code>count = count + 1;</code> puts a new value in it. The shortcut <code>count++</code> means the
-      same thing: add one.</div>` },
-      { md: `<h2>Counting beepers</h2>
-      <p>Karel walks the row, and every time it finds a beeper it picks it up and adds one to
-      <code>count</code>. At the end, Karel drops <code>count</code> beepers in a single pile — a visible
-      tally of how many were collected.</p>` },
-      { world: `Dimension: (6, 1)
-Karel: (1, 1); east
-BeeperBag: 0
-Beeper: (1, 1); 1
-Beeper: (3, 1); 1
-Beeper: (5, 1); 1`, code: `function main(k) {
-  let count = 0;
-  while (k.frontIsClear()) {
-    if (k.beepersPresent()) {
-      k.pickBeeper();
-      count = count + 1;
-    }
-    k.move();
-  }
-  if (k.beepersPresent()) {
-    k.pickBeeper();
-    count++;
-  }
-  for (let i = 0; i < count; i++) {
-    k.putBeeper();
-  }
-}` },
-      { md: `<h2>A variable can steer a loop</h2>
-      <p>Variables often control how a loop behaves. Here <code>beepersLeft</code> starts at 4 and
-      counts <em>down</em>; the while loop keeps running as long as it's above zero. When it hits zero,
-      Karel stops.</p>` },
-      { world: `Dimension: (5, 1)
+      { md: `<h2>A variable is a box in memory</h2>
+      <p>Every running program needs somewhere to keep track of things — a step count, a color, whether it
+      has found what it's looking for. That "somewhere" is a <strong>variable</strong>: a labeled box inside
+      the computer's memory. You give the box a name, put a piece of data inside it — a number, a word, a
+      fact that's true or false — and the computer remembers it for you. Later, anywhere in your code, you
+      can open that box by name to <em>read</em> what's inside, or you can put something new in it to
+      <em>update</em> it.</p>
+      <p>This is what separates a program from a fixed script: a script says "move, move, move" the same
+      way every time; a program with variables can count how many times it moved, remember which way it
+      turned, or carry a fact from one part of the code to another.</p>` },
+
+      { md: `<h2>Creating, reading, and updating a variable</h2>
+      <p>You create a variable with <code>let</code>, followed by a name and a starting value. That's
+      <strong>declaring</strong> and <strong>initializing</strong> it in one line. From then on, writing the
+      name anywhere <em>reads</em> the value currently in the box; writing <code>name = …</code>
+      <em>replaces</em> it with a new one — the box keeps its label but its contents change.</p>
+      <div class="callout"><strong>Anatomy of a variable</strong>
+      <code>let steps = 3;</code> — create a box named <code>steps</code>, put <code>3</code> inside.<br>
+      <code>steps</code> — read whatever is currently inside the box.<br>
+      <code>steps = 2;</code> — empty the box and put <code>2</code> in its place.</div>
+      <div class="callout tip"><strong>A very common pattern: incrementing by 1</strong>
+      Counting things is so common that it comes up constantly: <code>count = count + 1;</code> reads
+      <code>count</code>, adds one, and stores the result right back in the same box — the box grows by one
+      each time the line runs. JavaScript has a shortcut for exactly this, <code>count++;</code>, which means
+      the same thing. You'll see this pattern — called <strong>incrementing</strong> — everywhere a variable
+      needs to keep a running count.</div>
+      <p>Below, Karel doesn't know in advance how far it can go — so it counts as it moves. A
+      <code>while</code> loop paired with <code>k.frontIsClear()</code> steps Karel forward one corner at a
+      time, adding one to <code>steps</code> on every move, until a wall or the edge of the world stops it.
+      Karel does this once heading east, then turns and does it again heading north — each time <em>reading</em>
+      the box's current count and <em>storing</em> a new one right back into it. By the end,
+      <code>steps</code> holds the total distance traveled in both directions, and Karel drops that many
+      beepers in a single pile.</p>` },
+      { world: `Dimension: (4, 3)
 Karel: (1, 1); east
 BeeperBag: INFINITY`, code: `function main(k) {
-  let beepersLeft = 4;
-  while (beepersLeft > 0) {
-    k.putBeeper();
+  let steps = 0;                // create the box and put 0 in it
+  while (k.frontIsClear()) {
     k.move();
-    beepersLeft = beepersLeft - 1;
+    steps = steps + 1;          // read steps, store the new count back in it
+  }
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+    steps = steps + 1;          // keep adding to the same box
+  }
+  for (let i = 0; i < steps; i++) {
+    k.putBeeper();
   }
 }` },
+      { md: `<h3>Challenge · Count red corners</h3>
+      <p>This grid has a few corners painted <strong>red</strong>, scattered among plain ones. Using
+      <code>while</code> loops driven by Karel's senses — no <code>for</code> loops this time — visit every
+      corner and count the red ones in a variable. Once you've checked the whole grid, make your way back to
+      the <strong>home corner (1, 1)</strong> and drop a beeper for each red corner you found.</p>` },
+      { world: `Dimension: (3, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (2, 1); Red
+Color: (3, 2); Red
+Color: (1, 2); Red`,
+        prompt: `<code>k.cornerColorIs("Red")</code> tells you about the corner Karel's standing on right
+        now; <code>k.frontIsClear()</code> tells you whether there's more row left to sweep. You'll need to
+        cross into the second row partway through, and turn around to get home at the end.`,
+        starter: `function main(k) {
+  let redCount = 0;
+  // sweep the grid with while loops, counting red corners as you go
+
+  // then make your way back to (1, 1) and drop redCount beepers
+}`,
+        check: ["beepers", "position", "direction"],
+        solution: function main(k) {
+          let redCount = 0;
+          if (k.cornerColorIs("Red")) redCount++;
+          while (k.frontIsClear()) {
+            k.move();
+            if (k.cornerColorIs("Red")) redCount++;
+          }
+          k.turnLeft();
+          if (k.frontIsClear()) {
+            k.move();
+          }
+          k.turnLeft();
+          if (k.cornerColorIs("Red")) redCount++;
+          while (k.frontIsClear()) {
+            k.move();
+            if (k.cornerColorIs("Red")) redCount++;
+          }
+          k.turnLeft();
+          if (k.frontIsClear()) {
+            k.move();
+          }
+          for (let i = 0; i < redCount; i++) {
+            k.putBeeper();
+          }
+        } },
+
+      { md: `<h2>Combining variables to solve bigger problems</h2>
+      <p>One box is useful; several working together are much more powerful. A more complex task often
+      breaks down into pieces, each tracked in its own variable, that your code then compares or
+      combines. Below, Karel sweeps a world with several rows, each scattered with red and green
+      corners. Two counters, <code>redCount</code> and <code>greenCount</code>, track what Karel senses
+      as it moves east across a row — a <code>while</code> loop driven by <code>k.frontIsClear()</code>
+      and <code>k.cornerColorIs(...)</code>, not a <code>for</code> loop, since Karel doesn't know in
+      advance how wide the world is. Once it reaches the end of a row, Karel turns around and senses its
+      way back to the first avenue the exact same way, then paints that corner whichever color it
+      counted more of. Neither counter alone tells you the answer — it's comparing the two that does. A
+      final sense check, "is there another row above?", decides whether Karel climbs up and repeats the
+      whole process, or stops. (Karel only has a built-in <code>turnLeft()</code>, so the
+      <code>turnRight</code> helper below — three lefts in a row — is what turns it to climb between rows
+      and back to facing east.)</p>` },
+      { world: `Dimension: (4, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Green
+Color: (2, 1); Red
+Color: (3, 1); Red
+Color: (1, 2); Red
+Color: (2, 2); Green
+Color: (4, 2); Green
+Color: (2, 3); Red
+Color: (3, 3); Red
+Color: (4, 3); Green`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  let checkingRows = true;
+  while (checkingRows) {
+    let redCount = 0;
+    let greenCount = 0;
+    if (k.cornerColorIs("Red")) redCount++;
+    if (k.cornerColorIs("Green")) greenCount++;
+    while (k.frontIsClear()) {
+      k.move();
+      if (k.cornerColorIs("Red")) redCount++;
+      if (k.cornerColorIs("Green")) greenCount++;
+    }
+    k.turnLeft();
+    k.turnLeft();
+    while (k.frontIsClear()) {
+      k.move();
+    }
+    if (redCount >= greenCount) {
+      k.paintCorner("Red");
+    } else {
+      k.paintCorner("Green");
+    }
+    turnRight(k);
+    if (k.frontIsClear()) {
+      k.move();
+      turnRight(k);
+    } else {
+      checkingRows = false;
+    }
+  }
+}` },
+      { md: `<h3>Challenge · Pick the smaller pile</h3>
+      <p>Each row has two piles of beepers — one on Karel's starting corner at the west edge, and one
+      at the east edge — and the two piles are never the same size. Karel has no sensor that counts a
+      pile directly, only <code>k.beepersPresent()</code>, so counting one means picking up every
+      beeper in it while a variable tracks how many that was — then putting the same number back so the
+      pile is undisturbed. Do that at both piles, storing the results in <code>countA</code> and
+      <code>countB</code>. Once both counts are known, comparing the two variables tells you which pile
+      is smaller: travel to it and pick it up for good, leaving the larger pile's beepers exactly where
+      you found them. Do this for every row, climbing to the next one the same sensing way as
+      before.</p>` },
+      { world: `Dimension: (3, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 2
+Beeper: (3, 1); 4
+Beeper: (1, 2); 5
+Beeper: (3, 2); 3`,
+        prompt: `At the west pile, <code>while (k.beepersPresent())</code> pick up every beeper,
+        counting into <code>countA</code>, then put <code>countA</code> beepers back down. Travel
+        east with <code>while (k.frontIsClear())</code>, and do the same at the east pile into
+        <code>countB</code>, restoring it too. Compare <code>countA</code> and <code>countB</code>: if
+        <code>countA</code> is smaller, travel back and pick up <code>countA</code> beepers there for
+        good; otherwise pick up <code>countB</code> beepers from the pile Karel's already standing on.
+        Finish each row back at the west edge, then sense whether another row is waiting above.`,
+        starter: `function main(k) {
+  let checking = true;
+  while (checking) {
+    // count every beeper in the west pile into countA, then put them back
+
+    // travel east to the other pile
+
+    // count every beeper in the east pile into countB, then put them back
+
+    // compare countA and countB: travel to whichever pile is smaller and
+    // pick it up for good, then make sure you end back at the west edge
+
+    // sense whether another row is waiting; climb to it, or stop checking
+  }
+}`,
+        solution: function main(k) {
+          let checking = true;
+          while (checking) {
+            let countA = 0;
+            while (k.beepersPresent()) {
+              k.pickBeeper();
+              countA++;
+            }
+            for (let i = 0; i < countA; i++) k.putBeeper();
+
+            while (k.frontIsClear()) k.move();
+
+            let countB = 0;
+            while (k.beepersPresent()) {
+              k.pickBeeper();
+              countB++;
+            }
+            for (let i = 0; i < countB; i++) k.putBeeper();
+
+            if (countA < countB) {
+              k.turnLeft();
+              k.turnLeft();
+              while (k.frontIsClear()) k.move();
+              for (let i = 0; i < countA; i++) k.pickBeeper();
+            } else {
+              for (let i = 0; i < countB; i++) k.pickBeeper();
+              k.turnLeft();
+              k.turnLeft();
+              while (k.frontIsClear()) k.move();
+            }
+
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+            if (k.frontIsClear()) {
+              k.move();
+              k.turnLeft();
+              k.turnLeft();
+              k.turnLeft();
+            } else {
+              checking = false;
+            }
+          }
+        } },
+
+      { md: `<h2>Numeric variables</h2>
+      <p>A <strong>number</strong> is the most common thing to keep in a box: a count, a total, an index.
+      Below, Karel sweeps every corner of a small grid — east across the bottom row, up one street, then
+      west back across the top row — picking up every beeper it finds and adding one to a
+      <code>total</code> variable each time. At the end, <code>total</code> holds the answer, and Karel
+      drops that many beepers in a single pile.</p>` },
+      { world: `Dimension: (3, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 1
+Beeper: (2, 1); 1
+Beeper: (3, 1); 1
+Beeper: (1, 2); 1
+Beeper: (2, 2); 1
+Beeper: (3, 2); 1`, code: `function main(k) {
+  let total = 0;
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 3; col++) {
+      if (k.beepersPresent()) {
+        k.pickBeeper();
+        total = total + 1;
+      }
+      if (col < 2) k.move();
+    }
+    if (row === 0) {
+      k.turnLeft();
+      k.move();
+      k.turnLeft();
+    }
+  }
+  for (let i = 0; i < total; i++) {
+    k.putBeeper();
+  }
+}` },
+      { md: `<h3>Challenge · Count and pile the grid</h3>
+      <p>Every corner of this <strong>4 × 2</strong> grid has one beeper. Sweep the whole grid the same way
+      as above — east across the bottom row, up, then west across the top row — counting every beeper you
+      pick up in a <code>total</code> variable. Finish by dropping <code>total</code> beepers in a single
+      pile on Karel's final corner.</p>` },
+      { world: `Dimension: (4, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 1
+Beeper: (2, 1); 1
+Beeper: (3, 1); 1
+Beeper: (4, 1); 1
+Beeper: (1, 2); 1
+Beeper: (2, 2); 1
+Beeper: (3, 2); 1
+Beeper: (4, 2); 1`,
+        prompt: `Nest a nested loop (row, then column) over the 4 × 2 grid. On each corner, if a beeper is
+        present, pick it up and add one to <code>total</code>. Move along the row, and at the end of the
+        first row, turn to sweep back across the second. Finally, put down <code>total</code> beepers where
+        Karel ends up.`,
+        starter: `function main(k) {
+  let total = 0;
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 4; col++) {
+      // pick up a beeper here if there is one, and count it
+
+      // move to the next corner in this row (unless it's the last one)
+
+    }
+    // at the end of the first row, turn to face the next row
+  }
+  // drop "total" beepers in a single pile
+}`,
+        solution: function main(k) {
+          let total = 0;
+          for (let row = 0; row < 2; row++) {
+            for (let col = 0; col < 4; col++) {
+              if (k.beepersPresent()) {
+                k.pickBeeper();
+                total = total + 1;
+              }
+              if (col < 3) k.move();
+            }
+            if (row === 0) {
+              k.turnLeft();
+              k.move();
+              k.turnLeft();
+            }
+          }
+          for (let i = 0; i < total; i++) {
+            k.putBeeper();
+          }
+        } },
+
+      { md: `<h2>Boolean variables</h2>
+      <p>A <strong>boolean</strong> variable holds one of exactly two values: <code>true</code> or
+      <code>false</code> — the same yes/no answers Karel's sensors give back. You've already used one:
+      <code>checkingRows</code> above is a boolean that stays <code>true</code> until Karel finds there's no
+      row left, and then flips to <code>false</code> to end the loop.</p>
+      <p>A sensor only answers about <em>right now</em>, <em>right here</em>. The moment Karel moves, or picks
+      something up, the old answer is gone. A boolean variable keeps it. Below, Karel asks
+      <code>k.beepersPresent()</code> on its starting corner and stores the answer in
+      <code>hadBeeper</code>. Then it picks the beeper up — so asking the sensor again would now say
+      <code>false</code> — and walks to the far wall. There, the variable still remembers what the start
+      corner looked like: Karel puts the beeper down if there was one, or paints the corner red to report
+      that there wasn't.</p>` },
+      { world: `Dimension: (5, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 1`, code: `function main(k) {
+  let hadBeeper = k.beepersPresent();  // ask now, while Karel is standing here
+  if (hadBeeper) {
+    k.pickBeeper();                    // this changes the sensor's answer...
+  }
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  if (hadBeeper) {                     // ...but the variable still remembers
+    k.putBeeper();
+  } else {
+    k.paintCorner("Red");
+  }
+}` },
+      { md: `<h3>Challenge · Which rows have beepers?</h3>
+      <p>Some rows of this room have beepers in them and some are empty. Sweep each row east, then come
+      back to its west-end corner and paint that corner <strong>green</strong> if the row had at least one
+      beeper, or <strong>red</strong> if it had none. Leave the beepers where they are.</p>
+      <p>By the time Karel is back at the west end, it can't sense the rest of the row any more, so it needs
+      a boolean that remembers. Start each row with <code>let found = false;</code> and set it to
+      <code>true</code> whenever Karel stands on a beeper. Once it's <code>true</code>, nothing sets it back
+      to <code>false</code> — so after the sweep it answers "did I see a beeper <em>anywhere</em> in this
+      row?"</p>` },
+      { world: `Dimension: (5, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (3, 1); 1
+Beeper: (2, 3); 1
+Beeper: (5, 3); 1
+Beeper: (5, 4); 1`,
+        prompt: `Paint each row's west-end corner <code>"Green"</code> if the row has a beeper anywhere
+        in it, <code>"Red"</code> if it doesn't. Don't pick any beepers up. Climb between rows the same
+        sensing way as the examples above.`,
+        starter: `function main(k) {
+  let checking = true;
+  while (checking) {
+    let found = false;
+    // sweep east, setting found = true on any corner with a beeper
+
+    // walk back to the west end and paint it based on found
+
+    // sense whether another row is waiting; climb to it, or stop checking
+  }
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          let checking = true;
+          while (checking) {
+            let found = false;
+            if (k.beepersPresent()) found = true;
+            while (k.frontIsClear()) {
+              k.move();
+              if (k.beepersPresent()) found = true;
+            }
+            k.turnLeft();
+            k.turnLeft();
+            while (k.frontIsClear()) k.move();
+            if (found) {
+              k.paintCorner("Green");
+            } else {
+              k.paintCorner("Red");
+            }
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+            if (k.frontIsClear()) {
+              k.move();
+              k.turnLeft();
+              k.turnLeft();
+              k.turnLeft();
+            } else {
+              checking = false;
+            }
+          }
+        } },
+
+      { md: `<h2>String variables</h2>
+      <p>A <strong>string</strong> variable holds text, written between quotes. Karel's own color names —
+      <code>"Red"</code>, <code>"Green"</code>, <code>"Blue"</code>, <code>"Yellow"</code>, and the rest —
+      are strings, so a variable can hold the color Karel should paint with. Code that paints with
+      <code>k.paintCorner(color)</code> doesn't need to know <em>which</em> color that is. It paints
+      with whatever the box holds right now, and a different part of the program decides what goes in the
+      box.</p>
+      <p>Below, Karel paints stripes. Each row is painted entirely with <code>color</code>. At the end of a
+      row, Karel reads the box, compares it with <code>===</code> (which asks "are these exactly equal?"),
+      and swaps in the other color for the next row. The painting loop never changes; only the value it
+      reads does.</p>` },
+      { world: `Dimension: (5, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  let color = "Red";              // a string variable — the box holds text
+  let checkingRows = true;
+  while (checkingRows) {
+    k.paintCorner(color);
+    while (k.frontIsClear()) {
+      k.move();
+      k.paintCorner(color);
+    }
+    k.turnLeft();
+    k.turnLeft();
+    while (k.frontIsClear()) {
+      k.move();
+    }
+    if (color === "Red") {        // read the box...
+      color = "Blue";             // ...and store the other color for the next row
+    } else {
+      color = "Red";
+    }
+    turnRight(k);
+    if (k.frontIsClear()) {
+      k.move();
+      turnRight(k);
+    } else {
+      checkingRows = false;
+    }
+  }
+}` },
+      { md: `<h3>Challenge · Copy the color down the row</h3>
+      <p>Each row's west-end corner is already painted <strong>red</strong>, <strong>green</strong>,
+      <strong>blue</strong>, or <strong>yellow</strong>, and the rest of the row is blank. Paint every
+      corner in each row to match its west-end corner.</p>
+      <p>Karel can't ask a corner "what color are you?", only "are you this color?" with
+      <code>k.cornerColorIs(...)</code>. Work out the color once, while Karel is standing on the west end,
+      store it in a string variable, and let that variable carry the answer across the row.</p>` },
+      { world: `Dimension: (5, 4)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Green
+Color: (1, 2); Blue
+Color: (1, 3); Yellow
+Color: (1, 4); Red`,
+        prompt: `On each row's west-end corner, use an <code>if</code> / <code>else if</code> chain of
+        <code>k.cornerColorIs(...)</code> checks to decide what to store in <code>color</code>. Then paint
+        every other corner in the row with <code>color</code> as you cross it.`,
+        starter: `function main(k) {
+  let checking = true;
+  while (checking) {
+    let color = "Red";
+    // work out this row's color and store it in color
+
+    // sweep east, painting every corner with color
+
+    // walk back to the west end, then climb to the next row or stop checking
+  }
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          let checking = true;
+          while (checking) {
+            let color = "Red";
+            if (k.cornerColorIs("Green")) {
+              color = "Green";
+            } else if (k.cornerColorIs("Blue")) {
+              color = "Blue";
+            } else if (k.cornerColorIs("Yellow")) {
+              color = "Yellow";
+            }
+            while (k.frontIsClear()) {
+              k.move();
+              k.paintCorner(color);
+            }
+            k.turnLeft();
+            k.turnLeft();
+            while (k.frontIsClear()) k.move();
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+            if (k.frontIsClear()) {
+              k.move();
+              k.turnLeft();
+              k.turnLeft();
+              k.turnLeft();
+            } else {
+              checking = false;
+            }
+          }
+        } },
+
       { md: `<div class="callout tip"><strong>You learned</strong>
-      Declare a variable with <code>let name = value;</code>, read it by name, and update it with
-      <code>name = …</code> or <code>name++</code>. Variables give your program a memory — essential for
-      counting and keeping track of progress.</div>` },
+      A variable is a named box in memory: <code>let name = value;</code> creates and initializes it,
+      <code>name</code> reads what's inside, and <code>name = …</code> stores something new there. Several
+      variables can work together to describe a bigger problem — a width and a height, say. Numbers,
+      booleans, and strings are all things a box can hold: numbers count and total; booleans remember a
+      yes/no fact after the sensor can no longer see it, or flip once something has been found; and
+      strings carry a choice, like a color name, from where it's decided to where it's used. Variables are what let a Karel
+      program remember, decide, and combine facts instead of just repeating fixed commands.</div>` },
     ];
 
-    renderNotebook(cells);
+    // isolate: run reader-submitted challenge code in a Web Worker so a mistake
+    // like an endless loop can't freeze the page (grading is unchanged).
+    renderNotebook(cells, undefined, { isolate: true });
   </script>
 
   <script type="module" src="../site-nav.js"></script>

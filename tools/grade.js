@@ -15,14 +15,21 @@
  *   node tools/grade.js --roster r.json --verbose      # print every problem's pass/fail as it's checked
  *
  * Optional LLM code-quality review (advisory — never changes points). When
- * --llm-endpoint and --llm-model are given, each graded problem also gets a
- * prose critique (student code vs. the golden solution) printed to stdout, ready
- * to paste into an online gradebook. The endpoint is any OpenAI-compatible
- * chat-completions server (Ollama's, or a gateway):
- *   node tools/grade.js --file submissions/lab02.js \
- *     --llm-endpoint http://localhost:11434 --llm-model gemma2:12b
- *   node tools/grade.js --roster r.json --llm-endpoint https://host/v1 \
- *     --llm-model llama3.1:8b --llm-token $TOKEN --llm-timeout 90000
+ * enabled, each graded problem also gets a prose critique (student code vs. the
+ * golden solution) printed to stdout, ready to paste into an online gradebook.
+ * Two providers:
+ *   --llm-provider openai (default): any OpenAI-compatible chat-completions
+ *   server (Ollama's, or a gateway); needs --llm-endpoint and --llm-model.
+ *     node tools/grade.js --file submissions/lab02.js \
+ *       --llm-endpoint http://localhost:11434 --llm-model gemma2:12b
+ *     node tools/grade.js --roster r.json --llm-endpoint https://host/v1 \
+ *       --llm-model llama3.1:8b --llm-token $TOKEN --llm-timeout 90000
+ *   --llm-provider anthropic: the Anthropic Messages API. The API key is read
+ *   from the ANTHROPIC_API_KEY_KAREL environment variable; the model defaults to
+ *   claude-sonnet-5 and the endpoint to https://api.anthropic.com (both
+ *   overridable with --llm-model / --llm-endpoint).
+ *     ANTHROPIC_API_KEY_KAREL=sk-ant-… node tools/grade.js --file submissions/lab02.js \
+ *       --llm-provider anthropic
  *
  * Single file (no roster, no clone) — grade one submission by path or URL:
  *   node tools/grade.js --file submissions/lab02.js
@@ -55,7 +62,7 @@ const WORKER = join(HERE, "grade-worker.js");
 
 // ── args ─────────────────────────────────────────────────────────────────────
 function parseArgs(argv) {
-  const opts = { roster: "tools/roster.json", cache: ".grade-cache", out: "gradebook.json", timeout: 5000, pull: true, file: null, id: null, verbose: false, llmEndpoint: null, llmModel: null, llmToken: null, llmTimeout: 60000 };
+  const opts = { roster: "tools/roster.json", cache: ".grade-cache", out: "gradebook.json", timeout: 5000, pull: true, file: null, id: null, verbose: false, llmProvider: "openai", llmEndpoint: null, llmModel: null, llmToken: null, llmTimeout: 60000 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--roster") opts.roster = argv[++i];
@@ -66,6 +73,7 @@ function parseArgs(argv) {
     else if (a === "--verbose" || a === "-v") opts.verbose = true;
     else if (a === "--file") opts.file = argv[++i];
     else if (a === "--id") opts.id = argv[++i];
+    else if (a === "--llm-provider") opts.llmProvider = argv[++i];
     else if (a === "--llm-endpoint") opts.llmEndpoint = argv[++i];
     else if (a === "--llm-model") opts.llmModel = argv[++i];
     else if (a === "--llm-token") opts.llmToken = argv[++i];
@@ -80,12 +88,19 @@ function printHelp() {
   console.log("       node tools/grade.js --file <path-or-url> [--id <assignmentId>] [--timeout <ms>] [--verbose]");
   console.log("");
   console.log("LLM code-quality review (advisory, does not affect points) — prints a critique to stdout per problem:");
-  console.log("  --llm-endpoint <url>   OpenAI-compatible base URL, e.g. http://localhost:11434 (enables reviews)");
-  console.log("  --llm-model <name>     model to use, e.g. gemma2:12b (required with --llm-endpoint)");
-  console.log("  --llm-token <bearer>   optional Authorization: Bearer token for the endpoint");
+  console.log("  --llm-provider <p>     openai (default) or anthropic");
+  console.log("    openai:    --llm-endpoint <url>   OpenAI-compatible base URL, e.g. http://localhost:11434 (enables reviews)");
+  console.log("               --llm-model <name>     model to use, e.g. gemma2:12b (required with --llm-endpoint)");
+  console.log("               --llm-token <bearer>   optional Authorization: Bearer token for the endpoint");
+  console.log("    anthropic: enables reviews by itself; reads the key from the ANTHROPIC_API_KEY_KAREL env var");
+  console.log("               --llm-model <name>     defaults to claude-sonnet-5");
+  console.log("               --llm-endpoint <url>   defaults to https://api.anthropic.com (set for a proxy)");
   console.log("  --llm-timeout <ms>     per-review budget (default 60000)");
 }
-function llmEnabled(opts) { return Boolean(opts.llmEndpoint && opts.llmModel); }
+function llmEnabled(opts) {
+  if (opts.llmProvider === "anthropic") return true;
+  return Boolean(opts.llmEndpoint && opts.llmModel);
+}
 
 // Rewrite a github.com blob URL to its raw.githubusercontent.com equivalent;
 // leave a raw URL (or anything else) untouched.
@@ -298,7 +313,7 @@ async function emitReviews(assignment, source, workerResult, opts, showHeader) {
 
   for (const it of items) {
     const res = await reviewSolution(
-      { endpoint: opts.llmEndpoint, model: opts.llmModel, token: opts.llmToken, timeout: opts.llmTimeout },
+      { provider: opts.llmProvider, endpoint: opts.llmEndpoint, model: opts.llmModel, token: opts.llmToken, timeout: opts.llmTimeout },
       {
         label: it.label,
         promptText: it.promptText,
@@ -431,7 +446,13 @@ async function gradeSingleFile(opts) {
 // ── main ─────────────────────────────────────────────────────────────────────
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
-  if (opts.llmEndpoint && !opts.llmModel) {
+  if (!["openai", "anthropic"].includes(opts.llmProvider)) {
+    console.error(`Unknown --llm-provider "${opts.llmProvider}" (expected openai or anthropic); skipping LLM reviews.`);
+    opts.llmProvider = "openai"; opts.llmEndpoint = null;
+  } else if (opts.llmProvider === "anthropic" && !opts.llmToken && !process.env.ANTHROPIC_API_KEY_KAREL) {
+    console.error("--llm-provider anthropic needs ANTHROPIC_API_KEY_KAREL in the environment; skipping LLM reviews.");
+    opts.llmProvider = "openai"; opts.llmEndpoint = null;
+  } else if (opts.llmProvider === "openai" && opts.llmEndpoint && !opts.llmModel) {
     console.error("--llm-endpoint requires --llm-model <name>; skipping LLM reviews.");
   }
   if (opts.file) {

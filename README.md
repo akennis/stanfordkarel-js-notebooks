@@ -341,14 +341,22 @@ node tools/grade.js --file https://github.com/user/repo/blob/main/lab02.js
 # Prints a one-line verdict; exit status is 0 when solved, 1 otherwise.
 
 # Optional: per-problem LLM code-quality review (advisory — never changes points)
+# Provider 1 — any OpenAI-compatible chat endpoint (Ollama, a gateway):
 node tools/grade.js --file submissions/lab02.js \
   --llm-endpoint http://localhost:11434 --llm-model gemma2:12b
 #   --llm-endpoint <url>   OpenAI-compatible base URL (Ollama's /v1, or a gateway); enables reviews
 #   --llm-model <name>     model id, required alongside --llm-endpoint
 #   --llm-token <bearer>   optional Authorization: Bearer token
+# Provider 2 — the Anthropic API (key read from the ANTHROPIC_API_KEY_KAREL env var):
+export ANTHROPIC_API_KEY_KAREL=sk-ant-…
+node tools/grade.js --file submissions/lab02.js --llm-provider anthropic
+#   --llm-provider anthropic   enables reviews on its own; no endpoint/model needed
+#   --llm-model <name>         defaults to claude-sonnet-5
+#   --llm-endpoint <url>       defaults to https://api.anthropic.com (set it for a proxy)
+# Either provider:
 #   --llm-timeout <ms>     per-review budget (default 60000)
 # For every graded problem, the student's code and the golden solution are sent to
-# the endpoint and a prose critique (decomposition, naming, repetition, right
+# the model and a prose critique (decomposition, naming, repetition, right
 # construct, readability, Karel idioms) is printed to stdout, ready to paste into
 # an online gradebook. Endpoint failures are logged to stderr and skipped.
 ```
