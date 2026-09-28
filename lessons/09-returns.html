@@ -28,16 +28,15 @@
       command gives you directly.</p>
       <div class="callout"><strong>The <code>return</code> keyword</strong>
       <pre class="code">function isRoomCorner(k) {
-  if (k.frontIsBlocked()) {
-    if (k.rightIsBlocked()) return true;
-  }
-  return false;
+  return k.frontIsBlocked() && k.rightIsBlocked();
 }</pre>
       Karel has no single command that means "am I at a corner of the room" — but a wall dead ahead
-      <em>and</em> a wall to the right, at the same time, means exactly that. <code>isRoomCorner(k)</code>
-      checks both and <code>return</code>s the answer as one reusable fact, so it can be used anywhere a
-      value can: straight in an <code>if</code>'s condition, stored in a variable, or handed to another
-      function.</div>` },
+      <em>and</em> a wall to the right, at the same time, means exactly that. Since <code>&&</code>
+      already evaluates to <code>true</code> or <code>false</code>, a function that answers a yes/no
+      question can just <code>return</code> the combined expression directly — no <code>if</code> needed
+      at all. <code>isRoomCorner(k)</code> hands back that fact as one reusable value, so it can be used
+      anywhere a value can: straight in an <code>if</code>'s condition, stored in a variable, or handed
+      to another function.</div>` },
 
       { md: `<h2>Used right where you ask it</h2>
       <p>The simplest way to consume a return value is to drop the call straight into an
@@ -48,10 +47,7 @@
       { world: `Dimension: (4, 3)
 Karel: (1, 1); east
 BeeperBag: 0`, code: `function isRoomCorner(k) {
-  if (k.frontIsBlocked()) {
-    if (k.rightIsBlocked()) return true;
-  }
-  return false;
+  return k.frontIsBlocked() && k.rightIsBlocked();
 }
 
 function main(k) {
@@ -71,9 +67,9 @@ function main(k) {
       against a wall. Sweep the room the same way as the earlier lesson examples (east across row 1, turn,
       west across row 2) and paint <code>"Orange"</code> only the corners where a beeper is <em>pinned
       against the wall</em> — leave beepers that aren't touching a wall alone. Write
-      <code>isBeeperAtWall(k)</code> yourself: it combines two different signals than
-      <code>isRoomCorner(k)</code> did — <code>k.frontIsBlocked()</code> and <code>k.beepersPresent()</code>
-      — both true at once.</p>` },
+      <code>isBeeperAtWall(k)</code> yourself: combine <code>k.frontIsBlocked()</code> and
+      <code>k.beepersPresent()</code> with <code>&&</code> and <code>return</code> the result
+      directly — no <code>if</code> needed inside the function.</p>` },
       { world: `Dimension: (4, 2)
 Karel: (1, 1); east
 BeeperBag: INFINITY
@@ -81,9 +77,8 @@ Beeper: (2, 1); 1
 Beeper: (4, 1); 1
 Beeper: (3, 2); 1
 Beeper: (1, 2); 1`,
-        prompt: `Write <code>isBeeperAtWall(k)</code>: <code>if (k.frontIsBlocked())</code>, then nested
-        inside, <code>if (k.beepersPresent()) return true;</code> — otherwise <code>return false;</code>.
-        Call it directly inside the <code>if</code> below, at every corner, before moving on.`,
+        prompt: `Write <code>isBeeperAtWall(k)</code>: <code>return k.frontIsBlocked() && k.beepersPresent()</code>
+        directly. Call it directly inside the <code>if</code> below, at every corner, before moving on.`,
         starter: `function isBeeperAtWall(k) {
 
 }
@@ -108,10 +103,7 @@ function main(k) {
         end: { avenue: 1, street: 2, direction: "west" },
         solution: function main(k) {
           function isBeeperAtWall(kk) {
-            if (kk.frontIsBlocked()) {
-              if (kk.beepersPresent()) return true;
-            }
-            return false;
+            return kk.frontIsBlocked() && kk.beepersPresent();
           }
           for (let i = 0; i < 3; i++) {
             if (isBeeperAtWall(k)) k.paintCorner("Orange");
@@ -140,10 +132,7 @@ Karel: (1, 1); east
 BeeperBag: INFINITY
 Beeper: (1, 1); 1
 Color: (1, 1); Green`, code: `function isBeeperCorner(k) {
-  if (k.beepersPresent()) {
-    if (k.cornerColorIs("Green")) return true;
-  }
-  return false;
+  return k.beepersPresent() && k.cornerColorIs("Green");
 }
 
 function main(k) {
@@ -176,9 +165,8 @@ function main(k) {
 Karel: (1, 1); west
 BeeperBag: INFINITY
 Color: (1, 1); Red`,
-        prompt: `Write <code>isRedWall(k)</code> with nested <code>if</code>s over
-        <code>k.frontIsBlocked()</code> and <code>k.cornerColorIs("Red")</code>. Call it <em>once</em>,
-        into a variable, before Karel turns around.`,
+        prompt: `Write <code>isRedWall(k)</code>: <code>return k.frontIsBlocked() && k.cornerColorIs("Red")</code>
+        directly. Call it <em>once</em>, into a variable, before Karel turns around.`,
         starter: `function isRedWall(k) {
 
 }
@@ -201,10 +189,7 @@ function main(k) {
         end: { avenue: 3, street: 3, direction: "north" },
         solution: function main(k) {
           function isRedWall(kk) {
-            if (kk.frontIsBlocked()) {
-              if (kk.cornerColorIs("Red")) return true;
-            }
-            return false;
+            return kk.frontIsBlocked() && kk.cornerColorIs("Red");
           }
           const wasRedWall = isRedWall(k);
           k.turnLeft();

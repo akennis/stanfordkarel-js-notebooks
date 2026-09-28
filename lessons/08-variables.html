@@ -117,6 +117,59 @@ Color: (1, 2); Red`,
           }
         } },
 
+      { md: `<h2>Where a variable lives: scope</h2>
+      <p>A variable declared with <code>let</code> only exists inside the nearest pair of curly braces
+      that surround it — its <strong>scope</strong>. Step outside those braces and the box is gone; step
+      inside a loop or an <code>if</code>, and any <code>let</code> written there creates a box that
+      disappears again the moment that block finishes.</p>
+      <p>This matters most inside a loop. A variable declared <em>inside</em> the loop body is a brand
+      new box on every pass — perfect for something that should reset each time around, like counting the
+      red corners in <em>this</em> row. A variable declared <em>outside</em> the loop, before it starts,
+      is one box that survives every pass — perfect for a running total that needs to remember what
+      happened on earlier rows. Below, <code>redCount</code> is declared inside the row loop and starts
+      over at every row; <code>total</code> is declared outside it, so it keeps growing as each row folds
+      its count in.</p>
+      <div class="callout"><strong>Rule of thumb</strong>
+      Need to remember something across the whole run? Declare it <em>outside</em> the loop, once. Need
+      to start counting fresh each time around? Declare it <em>inside</em> the loop body, so a new box is
+      made every iteration.</div>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (2, 1); Red
+Color: (1, 2); Red
+Color: (3, 2); Red
+Color: (2, 3); Red
+Color: (3, 3); Red`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  let total = 0;                  // outside every loop — one box for the whole run
+  let checkingRows = true;
+  while (checkingRows) {
+    let redCount = 0;             // inside the loop — a fresh box every row
+    if (k.cornerColorIs("Red")) redCount++;
+    while (k.frontIsClear()) {
+      k.move();
+      if (k.cornerColorIs("Red")) redCount++;
+    }
+    total = total + redCount;     // fold this row's count into the outer box before redCount is gone
+    turnRight(k);
+    if (k.frontIsClear()) {
+      k.move();
+      turnRight(k);
+    } else {
+      checkingRows = false;
+    }
+  }
+  for (let i = 0; i < total; i++) {
+    k.putBeeper();
+  }
+}` },
+
       { md: `<h2>Combining variables to solve bigger problems</h2>
       <p>One box is useful; several working together are much more powerful. A more complex task often
       breaks down into pieces, each tracked in its own variable, that your code then compares or
