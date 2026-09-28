@@ -25,7 +25,7 @@ The ten lessons build on one another in order:
 | 06 | `if` / `else` | Choose between two different actions |
 | 07 | Parameters | Functions that take input and adapt their behaviour |
 | 08 | Variables | Give a program a memory: store, read, and update values |
-| 09 | Return Values & Logic | Functions that answer questions; `and` / `or` / `not` |
+| 09 | Return Values | Functions that answer questions — used directly, or captured for later |
 | 10 | Putting It All Together | Nested loops and every concept, in one program |
 
 Each lesson is a standalone HTML page under `lessons/` that pulls the library from a CDN, so the pages work as static files — serve the folder (or the whole repo) over any static host, or open a page directly. `lessons/square.html` is a longer, standalone demo (Karel walks a perimeter collecting beepers).

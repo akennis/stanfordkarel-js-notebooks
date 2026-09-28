@@ -29,7 +29,7 @@ export const lesson10 = {
       label: "Moderate",
       points: 10,
       world: "Dimension: (3, 3)\nKarel: (1, 1); east\nBeeperBag: INFINITY",
-      prompt: "Fill the entire 3×3 grid with beepers, one on every corner. Sweep the rows in a snake (boustrophedon) pattern so you never waste moves.",
+      prompt: "Fill the entire 3×3 grid with beepers, one on every corner. Sweep the rows in a back-and-forth snake pattern so you never waste moves.",
       starter: "function turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  \n}\n",
       check: ["beepers"],
       solution: "DRQcBhhEDB0RREMTQyEMBgQRTEZfERBrUkUHAxcGQ156BEsHTUhXb0QNHR8fFAALIEgFBxkZDWsNUw5PGBAWQzpUDRVaTFcnHnk7VkMPTgcMDgJFCUwfX0MKW0UXJ0NTV19EQQUfABVMFwtaVgxLUUlFHkIUUw0QBVoNAQoWR05NDQ07S0FSRQpCEVMZXFMVDRpFXExVXw0fEVdBQV5MREhYGBBNaw1TRUFMRQ8DBkQfIxcAHEgRWxgLPEENU0VBTAwCDV5YS11SV0UNCF1cX0AEBVpea0xFRA0LO0tBUkUFS0NbQ19BQRFTV0hMHm4NVhFLQVIMCg1LGB9WVwJEHQIkDRYQBV8YSxpSDkJZFgFffFMHWVtMWkwOSkAZRw5JW15MRk0HREJYLUgVEUlFXkRQfBFLQVJFTEgPAFQQTUFZBhcPPgwDRQIZAEhJRQcDDhxHVR5IFlMRFB4LNkQRWR9JGUxXDR55ERAWQVB5RUERbxk=",

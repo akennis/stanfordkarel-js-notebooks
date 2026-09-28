@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>9 · Return Values — Karel JS</title>
+  <link rel="stylesheet" href="lesson.css">
+</head>
+<body>
+  <header class="course">
+    <div class="crumb">Learning JavaScript with Karel · Lesson 9 of 18</div>
+    <h1>9 · Return Values</h1>
+    <p class="lead">Write functions that answer questions, then use the answer — right away or later on.</p>
+  </header>
+
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-09">✏️ Practice this lesson → Assignment 9 (4 problems)</a></p>
+  <main id="notebook"></main>
+
+  <script type="module">
+    import { renderNotebook } from "./lesson.js";
+
+    const cells = [
+      { md: `<h2>Functions that give an answer</h2>
+      <p>Every function you've written so far <em>did</em> something — moved, turned, painted a corner.
+      A function can also <strong>answer a question</strong>: it computes a value and hands it back to
+      whoever called it, using the <code>return</code> keyword. The interesting case isn't forwarding a
+      single built-in sense — it's <em>combining</em> what Karel can sense into a new fact that no single
+      command gives you directly.</p>
+      <div class="callout"><strong>The <code>return</code> keyword</strong>
+      <pre class="code">function isRoomCorner(k) {
+  if (k.frontIsBlocked()) {
+    if (k.rightIsBlocked()) return true;
+  }
+  return false;
+}</pre>
+      Karel has no single command that means "am I at a corner of the room" — but a wall dead ahead
+      <em>and</em> a wall to the right, at the same time, means exactly that. <code>isRoomCorner(k)</code>
+      checks both and <code>return</code>s the answer as one reusable fact, so it can be used anywhere a
+      value can: straight in an <code>if</code>'s condition, stored in a variable, or handed to another
+      function.</div>` },
+
+      { md: `<h2>Used right where you ask it</h2>
+      <p>The simplest way to consume a return value is to drop the call straight into an
+      <code>if</code>'s condition. Below, Karel walks the entire border of a 4×3 room — moving to the end
+      of each side, then turning left — and paints every corner where <code>isRoomCorner(k)</code> comes
+      back <code>true</code>. Watch how it lights up exactly the four physical corners of the room, and
+      nowhere along the straight edges in between.</p>` },
+      { world: `Dimension: (4, 3)
+Karel: (1, 1); east
+BeeperBag: 0`, code: `function isRoomCorner(k) {
+  if (k.frontIsBlocked()) {
+    if (k.rightIsBlocked()) return true;
+  }
+  return false;
+}
+
+function main(k) {
+  for (let side = 0; side < 4; side++) {
+    while (k.frontIsClear()) {
+      k.move();
+    }
+    if (isRoomCorner(k)) {
+      k.paintCorner("Yellow");
+    }
+    k.turnLeft();
+  }
+}` },
+
+      { md: `<h3>Challenge · Beepers against the wall</h3>
+      <p>A 4×2 room has beepers scattered on both rows — some sitting out in the open, some pinned right
+      against a wall. Sweep the room the same way as the earlier lesson examples (east across row 1, turn,
+      west across row 2) and paint <code>"Orange"</code> only the corners where a beeper is <em>pinned
+      against the wall</em> — leave beepers that aren't touching a wall alone. Write
+      <code>isBeeperAtWall(k)</code> yourself: it combines two different signals than
+      <code>isRoomCorner(k)</code> did — <code>k.frontIsBlocked()</code> and <code>k.beepersPresent()</code>
+      — both true at once.</p>` },
+      { world: `Dimension: (4, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (2, 1); 1
+Beeper: (4, 1); 1
+Beeper: (3, 2); 1
+Beeper: (1, 2); 1`,
+        prompt: `Write <code>isBeeperAtWall(k)</code>: <code>if (k.frontIsBlocked())</code>, then nested
+        inside, <code>if (k.beepersPresent()) return true;</code> — otherwise <code>return false;</code>.
+        Call it directly inside the <code>if</code> below, at every corner, before moving on.`,
+        starter: `function isBeeperAtWall(k) {
+
+}
+
+function main(k) {
+  for (let i = 0; i < 3; i++) {
+    // check isBeeperAtWall(k) here and paint "Orange" if it's true
+    k.move();
+  }
+  // check the last corner of row 1 too
+  k.turnLeft();
+  k.move();
+  k.turnLeft();
+  for (let i = 0; i < 3; i++) {
+    // check isBeeperAtWall(k) here and paint "Orange" if it's true
+    k.move();
+  }
+  // check the last corner of row 2 too
+}
+`,
+        check: ["colors"],
+        end: { avenue: 1, street: 2, direction: "west" },
+        solution: function main(k) {
+          function isBeeperAtWall(kk) {
+            if (kk.frontIsBlocked()) {
+              if (kk.beepersPresent()) return true;
+            }
+            return false;
+          }
+          for (let i = 0; i < 3; i++) {
+            if (isBeeperAtWall(k)) k.paintCorner("Orange");
+            k.move();
+          }
+          if (isBeeperAtWall(k)) k.paintCorner("Orange");
+          k.turnLeft();
+          k.move();
+          k.turnLeft();
+          for (let i = 0; i < 3; i++) {
+            if (isBeeperAtWall(k)) k.paintCorner("Orange");
+            k.move();
+          }
+          if (isBeeperAtWall(k)) k.paintCorner("Orange");
+        } },
+
+      { md: `<h2>Captured into a variable, for later</h2>
+      <p>Sometimes you need an answer <em>after</em> Karel has already moved away from the one corner
+      that could give it — and by then, its sensors can only tell it about wherever it's <em>currently</em>
+      standing. Call the function once while you're still there, store the result in a variable, and that
+      answer survives the trip. Below, <code>isBeeperCorner(k)</code> checks two different signals at
+      once — a beeper <em>and</em> green paint, together — and Karel remembers the verdict in
+      <code>wasSpecial</code> before crossing the room.</p>` },
+      { world: `Dimension: (4, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 1
+Color: (1, 1); Green`, code: `function isBeeperCorner(k) {
+  if (k.beepersPresent()) {
+    if (k.cornerColorIs("Green")) return true;
+  }
+  return false;
+}
+
+function main(k) {
+  const wasSpecial = isBeeperCorner(k);
+  for (let i = 0; i < 3; i++) {
+    k.move();
+  }
+  k.turnLeft();
+  for (let i = 0; i < 2; i++) {
+    k.move();
+  }
+  if (wasSpecial) {
+    k.paintCorner("Green");
+  }
+}` },
+      { md: `<div class="callout tip"><strong>Why capture it?</strong>
+      By the time Karel reaches <code>(4, 3)</code>, calling <code>isBeeperCorner(k)</code> again would
+      check the <em>wrong</em> corner — Karel isn't standing on <code>(1, 1)</code> anymore, and none of
+      its sensing commands can reach back and ask about a corner it already left. The variable
+      <code>wasSpecial</code> is a snapshot of the answer, taken at the one moment it was true to ask.</div>` },
+
+      { md: `<h3>Challenge · Remember and match</h3>
+      <p>Karel starts at the west wall, facing <strong>west</strong>, in a 3×3 room. Write
+      <code>isRedWall(k)</code>, returning <code>true</code> when the front is blocked <em>and</em> the
+      corner is painted <code>"Red"</code>. Capture the answer into a variable right away — before turning
+      around. Then turn <strong>around</strong> (two <code>turnLeft()</code>s) and travel to
+      <strong>(3, 3)</strong> (east 2, then north 2). If the remembered variable was <code>true</code>,
+      paint <code>(3, 3)</code> <code>"Red"</code> too; otherwise leave it blank.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); west
+BeeperBag: INFINITY
+Color: (1, 1); Red`,
+        prompt: `Write <code>isRedWall(k)</code> with nested <code>if</code>s over
+        <code>k.frontIsBlocked()</code> and <code>k.cornerColorIs("Red")</code>. Call it <em>once</em>,
+        into a variable, before Karel turns around.`,
+        starter: `function isRedWall(k) {
+
+}
+
+function main(k) {
+  // capture isRedWall(k) into a variable here, before turning around
+  k.turnLeft();
+  k.turnLeft();
+  for (let i = 0; i < 2; i++) {
+    k.move();
+  }
+  k.turnLeft();
+  for (let i = 0; i < 2; i++) {
+    k.move();
+  }
+  // use the remembered variable to decide whether to paint
+}
+`,
+        check: ["colors"],
+        end: { avenue: 3, street: 3, direction: "north" },
+        solution: function main(k) {
+          function isRedWall(kk) {
+            if (kk.frontIsBlocked()) {
+              if (kk.cornerColorIs("Red")) return true;
+            }
+            return false;
+          }
+          const wasRedWall = isRedWall(k);
+          k.turnLeft();
+          k.turnLeft();
+          for (let i = 0; i < 2; i++) {
+            k.move();
+          }
+          k.turnLeft();
+          for (let i = 0; i < 2; i++) {
+            k.move();
+          }
+          if (wasRedWall) {
+            k.paintCorner("Red");
+          }
+        } },
+
+      { md: `<h2>Not just true and false</h2>
+      <p>A return value doesn't have to be a boolean — a function can hand back a <strong>number</strong>
+      too, computed however you like. Below, <code>countBeepers(k)</code> sweeps across row 1, counting
+      corners that have a beeper, and returns the total. <code>main</code> captures that number in
+      <code>total</code>, then uses it as the number of times to loop when stacking beepers on a corner in
+      row 2.</p>` },
+      { world: `Dimension: (4, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 1
+Beeper: (3, 1); 1
+Beeper: (4, 1); 1`, code: `function countBeepers(k) {
+  let count = 0;
+  if (k.beepersPresent()) count++;
+  for (let i = 0; i < 3; i++) {
+    k.move();
+    if (k.beepersPresent()) count++;
+  }
+  return count;
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  const total = countBeepers(k);
+  k.turnLeft();
+  k.move();
+  turnRight(k);
+  for (let i = 0; i < total; i++) {
+    k.putBeeper();
+  }
+}` },
+
+      { md: `<h3>Challenge · Count then act</h3>
+      <p>Karel starts at the west end of row 1 in a 5×2 room. Some corners along row 1 are blank and some
+      are painted <code>"Green"</code>. Write <code>countGreen(k)</code> that sweeps row 1 and
+      <code>return</code>s how many corners are green. Capture that number in a variable, then walk to
+      <strong>(1, 2)</strong> and drop that many beepers there.</p>` },
+      { world: `Dimension: (5, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Green
+Color: (3, 1); Green
+Color: (5, 1); Green`,
+        prompt: `Write <code>countGreen(k)</code>: start a counter at 0, add 1 whenever
+        <code>k.cornerColorIs("Green")</code> as you sweep row 1, and <code>return</code> the counter.
+        Capture the result in a variable before Karel leaves row 1, then use it as a loop count at
+        <strong>(1, 2)</strong>.`,
+        starter: `function countGreen(k) {
+  let count = 0;
+
+  return count;
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  // capture the count from row 1 here
+  // turn around and walk back to (1, 1), then face north into row 2
+  // drop that many beepers at (1, 2)
+}
+`,
+        check: ["beepers", "position"],
+        end: { avenue: 1, street: 2, direction: "north" },
+        solution: function main(k) {
+          function countGreen(kk) {
+            let count = 0;
+            if (kk.cornerColorIs("Green")) count++;
+            for (let i = 0; i < 4; i++) {
+              kk.move();
+              if (kk.cornerColorIs("Green")) count++;
+            }
+            return count;
+          }
+          function turnRight(kk) {
+            kk.turnLeft();
+            kk.turnLeft();
+            kk.turnLeft();
+          }
+          const total = countGreen(k);
+          turnRight(k);
+          turnRight(k);
+          for (let i = 0; i < 4; i++) {
+            k.move();
+          }
+          turnRight(k);
+          turnRight(k);
+          k.turnLeft();
+          k.move();
+          for (let i = 0; i < total; i++) {
+            k.putBeeper();
+          }
+        } },
+
+      { md: `<div class="callout tip"><strong>You learned</strong>
+      <code>return</code> hands a value back from a function, and the interesting functions
+      <em>compute</em> that value — combining more than one thing Karel can sense into a new fact, or
+      tallying something up across several corners — rather than just forwarding a single built-in sense.
+      That value can be consumed however you need: dropped straight into an <code>if</code>'s condition,
+      captured in a variable so it survives after Karel moves on, or used as a number that drives another
+      loop.</div>` },
+    ];
+
+    renderNotebook(cells, undefined, { isolate: true });
+  </script>
+
+  <script type="module" src="../site-nav.js"></script>
+</body>
+</html>

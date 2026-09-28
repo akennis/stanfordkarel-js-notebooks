@@ -41,7 +41,7 @@ const SECTIONS = [
       ["lessons/06-if-else.html", "if / else"],
       ["lessons/07-parameters.html", "Parameters"],
       ["lessons/08-variables.html", "Variables"],
-      ["lessons/09-booleans-return.html", "Return values"],
+      ["lessons/09-returns.html", "Return values"],
       ["lessons/10-capstone.html", "Capstone"],
       ["lessons/11-numbers-operators.html", "Numbers & Operators"],
       ["lessons/12-strings.html", "Strings"],
