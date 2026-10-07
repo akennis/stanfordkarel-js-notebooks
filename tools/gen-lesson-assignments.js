@@ -394,6 +394,13 @@ const LESSONS = {
         solution: `function main(k) {\n  for (let row = 0; row < 4; row++) {\n    let left = 0;\n    let right = 0;\n    for (let avenue = 1; avenue <= 7; avenue++) {\n      if (k.beepersPresent()) {\n        if (avenue <= 3) left = left + 1;\n        else right = right + 1;\n      }\n      if (avenue < 7) k.move();\n    }\n    k.move();\n    k.move();\n    const total = left + right;\n    for (let i = 0; i < total; i++) {\n      k.putBeeper();\n      k.move();\n    }\n    k.turnLeft();\n    k.turnLeft();\n    for (let i = 0; i < 8 + total; i++) k.move();\n    if (row < 3) {\n      for (let i = 0; i < 3; i++) k.turnLeft();\n      k.move();\n      for (let i = 0; i < 3; i++) k.turnLeft();\n    }\n  }\n}`,
       },
       {
+        key: "moderate", label: "Moderate", points: 10,
+        world: `Dimension: (6, 1)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
+        prompt: `Karel has <strong>17</strong> beepers to pack into boxes that each hold <strong>5</strong>. Starting on avenue 1 and facing east, put one full box (5 beepers) on each corner for as many <em>whole</em> boxes as fit, then put the <em>leftover</em> beepers on the next corner. That is 5, 5, 5 on avenues 1&ndash;3 and 2 on avenue 4. Store <code>17</code> and <code>5</code> in variables and <em>compute</em> the number of full boxes with <code>Math.floor(17 / 5)</code> and the leftover with <code>17 % 5</code>&mdash;don't type <code>3</code> or <code>2</code> yourself. Where Karel ends up is up to you.`,
+        starter: STUB, check: ["beepers"],
+        solution: `function main(k) {\n  const total = 17;\n  const size = 5;\n  const boxes = Math.floor(total / size);\n  const leftover = total % size;\n  for (let b = 0; b < boxes; b++) {\n    for (let i = 0; i < size; i++) k.putBeeper();\n    k.move();\n  }\n  for (let i = 0; i < leftover; i++) k.putBeeper();\n}`,
+      },
+      {
         key: "complex", label: "Complex", points: 15,
         world: `Dimension: (7, 6)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
         prompt: `A multiplication table, wrapped around. On every corner of the 7&times;6 world, put down <code>(avenue * street) % 5</code> beepers: so <code>(3, 4)</code> gets <code>12 % 5 = 2</code> beepers, and <code>(5, 2)</code> gets none. Karel starts on <code>(1, 1)</code> facing east, and the world is empty to begin with. Keep track of the current avenue and street in variables, and let <code>%</code> decide how many beepers each corner gets. Where Karel ends up is up to you.`,

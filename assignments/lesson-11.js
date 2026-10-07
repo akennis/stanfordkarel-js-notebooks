@@ -12,7 +12,7 @@ export const lesson11 = {
   lessonSlug: "11-numbers-operators",
   lessonTitle: "Numbers & Operators",
   title: "Assignment 11 · Numbers & Operators",
-  points: 20,
+  points: 30,
   problems: [
     {
       key: "simple",
@@ -23,6 +23,16 @@ export const lesson11 = {
       starter: "function main(k) {\n  \n}\n",
       check: ["beepers"],
       solution: "DRQcBhhEDB0RXVcIQ1sOSEwebg1WVwQTUk0ASBdTQ19BQRBTVVpMFwtaVg1LVUlFHkIUWBoZFhonU0VBTAkBWVZdDgcGRVENU0g7EBZBDR8AFUwXDUoeRUtcUlVXJ0NTERBQDl9TTQ0JEURMAFQFFBdFUQ1SSBFRQARDBgBBUFhEGk0RChcXCxlISFgYEE1rDVNFQUxFDUtWGQBPEAAJXQYBQmBEBF4WCxVETE0NDTtLQVJFTA1DU1hWFklMBQAPGQBEEUsRWEhSCQlLF1MMEFoESwdFSkxUXydWEUtBUkVMDQYfQlUWE0QUDRVMWERfH1YDFVJOTBxYeREQFkENUxhrTEVEDVYRAgdSTQ1bBh1EVRZdDURMQQdLCUIAVENISW9MDUNTTDoWQQ1TDk8BChJIXhhQa1JFTA0IXVxfQAQFWl5rTEVEDRVeBRIGRRhCFxJdEAtBQRYDFUxORF8fVgMVSW9MDUNTV19EQQUfABVMDEQQVgFQQRtFUA0XHEVRWloNGk5KRUUfJ1YRS0FSRQcDEwZFclMEXRYXSUVebg1WEUtBUg5CQAwFVBgfWidTRUFMGG4NVhFLClwRGV8NP1RWQkkESG9BTEVERlhFHhMcKQlLF1sYCzxBDVNFBwMXRAUaVB9BG0VRDVNIEVkWXQ1LRUpMEQtZF11QQRtORwRDGB9dWRdIW0xaZkVEDVZYDUFaFwNaQ08RAx9BVnlFQUxFRA0QXhlBWgkJWUMaEQ0WURZTDEFQRVcWVlhASltFBwMXBkNeegRLB01IV29EDVYRS0EZSwFCFRYZGQ1rDVNFQUxFAkIEEUMNFxFMRENOEQANQURTWUFfXkREXRpCQRlLGFgRHX1VUBUFWl5rTEVEDQs7S0EPbxE=",
+    },
+    {
+      key: "moderate",
+      label: "Moderate",
+      points: 10,
+      world: "Dimension: (6, 1)\nKarel: (1, 1); east\nBeeperBag: INFINITY",
+      prompt: "Karel has <strong>17</strong> beepers to pack into boxes that each hold <strong>5</strong>. Starting on avenue 1 and facing east, put one full box (5 beepers) on each corner for as many <em>whole</em> boxes as fit, then put the <em>leftover</em> beepers on the next corner. That is 5, 5, 5 on avenues 1&ndash;3 and 2 on avenue 4. Store <code>17</code> and <code>5</code> in variables and <em>compute</em> the number of full boxes with <code>Math.floor(17 / 5)</code> and the leftover with <code>17 % 5</code>&mdash;don't type <code>3</code> or <code>2</code> yourself. Where Karel ends up is up to you.",
+      starter: "function main(k) {\n  \n}\n",
+      check: ["beepers"],
+      solution: "DRQcBhhEDB0RXVcIQ1sOSEwebg1WUgQPARFMWQwHUFwWXA1CUlpmRUROGV8YFVIWBVcGUwwQA1onU0UCAwsXWVZTBBkXFkwQQz5QRF5PSx8KDh5NEEICUAdBXUUfRBkWGAs8QQ0QCg8fEURBE1cfDgQAHg1eU0VfQgBBU0BBHwweSE07S0EUCh4NSx9URBYDDU5FUVdFBg1KEQkOCgAfFkMRGhsfQVZ5RUFMRQJCBBFDDRcRTERDThEADUFEU1lBHwweSE0RAkpZTExGTQNERHQESAMAE0RMXydWEUtBGUsBQhUWGRkNaw1TGGtMRQJCBBFDDRcRTERDThEADUFEU1lBAAACWRlHDhNJRQUGSFoRWxgRWAcnBAkVAV9eGFBrDw==",
     },
     {
       key: "complex",

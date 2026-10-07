@@ -13,7 +13,7 @@
     <p class="lead">Do arithmetic and compare values — the operators that let a program calculate and decide.</p>
   </header>
 
-  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-11">✏️ Practice this lesson → Assignment 11 (2 problems)</a></p>
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-11">✏️ Practice this lesson → Assignment 11 (3 problems)</a></p>
   <main id="notebook"></main>
 
   <script type="module">
@@ -31,7 +31,17 @@
       <code>===</code> (equal), <code>!==</code> (not equal). These don't produce a number — they produce a
       <strong>boolean</strong>, <code>true</code> or <code>false</code>.</div>
       <p>Arithmetic answers <em>"how much?"</em>; comparison answers <em>"is it so?"</em>. We'll start with
-      the smallest possible use of each and build up to a program that plans its own work.</p>` },
+      the smallest possible use of each and build up to a program that plans its own work.</p>
+      <div class="callout"><strong>A note on JavaScript numbers</strong>
+      JavaScript has just one kind of number, and it is a <em>floating-point</em> number. That means the
+      computer stores a value as a binary approximation with a movable ("floating") decimal point, so it can
+      hold <code>7</code>, <code>4.5</code>, or <code>0.1</code> in the same format. The catch is that many
+      fractions can't be stored exactly — <code>0.1 + 0.2</code> comes out as
+      <code>0.30000000000000004</code>, not <code>0.3</code>. Whole numbers (within a very large range) are
+      stored exactly, so they don't have this problem.<br>
+      Karel only ever deals in whole things — steps, turns, beepers, and corner numbers — so in this lesson
+      we'll stick to <em>whole numbers</em>. You'll see a decimal now and then (like
+      <code>9 / 2</code>), but we'll always turn it back into a whole number before Karel uses it.</div>` },
 
       { md: `<h2>The smallest step: a computed count</h2>
       <p>Here's the tiniest meaningful use of arithmetic. Instead of writing <code>6</code>, we let the
@@ -75,6 +85,30 @@ BeeperBag: INFINITY`, code: `function main(k) {
       k.move();
     }
   }
+}` },
+
+      { md: `<h2>Whole-number division: the other half of <code>%</code></h2>
+      <p>Careful: in JavaScript, <code>/</code> does <em>not</em> throw away the fraction. <code>9 / 2</code>
+      is <code>4.5</code>, not <code>4</code>. But Karel can't move four-and-a-half times — we often want the
+      <strong>whole-number</strong> answer, the way you'd divide in grade school: 9 ÷ 2 is <strong>4</strong>
+      with <strong>1</strong> left over.</p>
+      <p>To get it, wrap the division in <code>Math.floor(...)</code>, which rounds down to the nearest whole
+      number. <code>Math.floor(9 / 2)</code> is <code>4</code>, and the leftover is <code>9 % 2</code>, which is
+      <code>1</code>. The two operations are partners:</p>
+      <div class="callout"><strong>Division and remainder together</strong>
+      <code>Math.floor(9 / 2)</code> → <code>4</code> (how many whole 2s fit in 9)<br>
+      <code>9 % 2</code> → <code>1</code> (what's left over)<br>
+      Check: <code>2 * 4 + 1</code> is <code>9</code> again.</div>
+      <p>Here Karel starts at one end of a nine-corner row and walks to the <strong>middle</strong>, which is
+      <code>Math.floor(9 / 2)</code> = 4 moves in, and drops a beeper on corner 5.</p>` },
+      { world: `Dimension: (9, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let half = Math.floor(9 / 2);
+  for (let i = 0; i < half; i++) {
+    k.move();
+  }
+  k.putBeeper();
 }` },
 
       { md: `<h3>Challenge · Calculate the distance</h3>
