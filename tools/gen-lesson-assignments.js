@@ -415,27 +415,34 @@ const LESSONS = {
     problems: [
       {
         key: "simple", label: "Simple", points: 5,
-        world: `Dimension: (1, 1)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
-        prompt: `Use a string's <code>.length</code>: for the word <code>"Karel"</code>, drop one beeper per letter (5 in total).`,
-        starter: `function main(k) {\n  const word = "Karel";\n  \n}\n`,
+        world: `Dimension: (3, 6)\nKarel: (2, 1); north\nBeeperBag: INFINITY`,
+        prompt: `Join <code>first</code> and <code>second</code> into one word (with <code>+</code> or a template literal), then use the joined word's <code>.length</code> to climb the middle column, putting down one beeper per letter. <code>"Kar"</code> + <code>"el"</code> is 5 letters, so 5 beepers.`,
+        starter: `function main(k) {\n  let first = "Kar";\n  let second = "el";\n  \n}\n`,
         check: ["beepers"],
-        solution: `function main(k) {\n  const word = "Karel";\n  for (let i = 0; i < word.length; i++) k.putBeeper();\n}`,
+        solution: `function main(k) {\n  let first = "Kar";\n  let second = "el";\n  let word = \`\${first}\${second}\`;\n  for (let i = 0; i < word.length; i++) {\n    k.putBeeper();\n    k.move();\n  }\n}`,
       },
       {
         key: "moderate", label: "Moderate", points: 10,
-        world: `Dimension: (1, 1)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
-        prompt: `Loop over the characters of <code>"beeper"</code> and count how many are the letter <code>"e"</code>. Drop that many beepers (there are 3).`,
-        starter: `function main(k) {\n  const word = "beeper";\n  \n}\n`,
+        world: `Dimension: (6, 2)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
+        prompt: `For the word <code>"beeper"</code>: loop over its characters and count how many are <code>"e"</code>, and drop that many beepers on Karel's starting corner (there are 3). Then use <code>indexOf</code> to find the position of the first <code>"p"</code>, move east that many corners, and drop one more beeper there.`,
+        starter: `function main(k) {\n  let word = "beeper";\n  \n}\n`,
         check: ["beepers"],
-        solution: `function main(k) {\n  const word = "beeper";\n  let count = 0;\n  for (const c of word) {\n    if (c === "e") count++;\n  }\n  for (let i = 0; i < count; i++) k.putBeeper();\n}`,
+        solution: `function main(k) {\n  let word = "beeper";\n  let count = 0;\n  for (let i = 0; i < word.length; i++) {\n    if (word[i] === "e") count++;\n  }\n  for (let i = 0; i < count; i++) k.putBeeper();\n  let pos = word.indexOf("p");\n  for (let i = 0; i < pos; i++) k.move();\n  k.putBeeper();\n}`,
       },
       {
         key: "complex", label: "Complex", points: 15,
-        world: `Dimension: (5, 5)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
-        prompt: `Treat the string <code>"MMLM"</code> as instructions: <code>"M"</code> means move, <code>"L"</code> means turn left. Run each character in order. Karel should finish at <code>(3, 2)</code> facing north.`,
-        starter: `function main(k) {\n  const cmds = "MMLM";\n  \n}\n`,
+        world: `Dimension: (5, 4)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
+        prompt: `Run the counted tape <code>"m4l1M3L1m2"</code>. Characters come in pairs: a command (<code>M</code> = move, <code>L</code> = turn left, in <em>either</em> case) followed by a one-digit count. Convert the command's case and the count's type before using them. Karel should finish at <code>(3, 4)</code> facing west.`,
+        starter: `function main(k) {\n  let cmds = "m4l1M3L1m2";\n  \n}\n`,
         check: ["position", "direction"],
-        solution: `function main(k) {\n  const cmds = "MMLM";\n  for (const c of cmds) {\n    if (c === "M") k.move();\n    else if (c === "L") k.turnLeft();\n  }\n}`,
+        solution: `function main(k) {\n  let cmds = "m4l1M3L1m2";\n  for (let i = 0; i < cmds.length; i += 2) {\n    let c = cmds[i].toUpperCase();\n    let times = Number(cmds[i + 1]);\n    for (let j = 0; j < times; j++) {\n      if (c === "M") k.move();\n      if (c === "L") k.turnLeft();\n    }\n  }\n}`,
+      },
+      {
+        key: "complex2", label: "Complex II", points: 20,
+        world: `Dimension: (5, 3)\nKarel: (1, 1); east\nBeeperBag: INFINITY`,
+        prompt: `Remix the plan <code>"RGBYC"</code> (R = Red, G = Green, B = Blue, Y = Yellow, C = Cyan) into three rows, each painted west to east starting at column 1. <strong>Bottom row:</strong> the plan as-is. <strong>Middle row:</strong> the plan reversed, built one character at a time with a loop. <strong>Top row:</strong> the plan rotated by one — its first character moved to the end (use <code>slice</code>). Compute every row from <code>plan</code>; don't type the remixed strings by hand.`,
+        starter: STUB, check: ["colors"],
+        solution: `function paint(k, code) {\n  if (code === "R") k.paintCorner("Red");\n  if (code === "G") k.paintCorner("Green");\n  if (code === "B") k.paintCorner("Blue");\n  if (code === "Y") k.paintCorner("Yellow");\n  if (code === "C") k.paintCorner("Cyan");\n}\n\nfunction paintRow(k, row) {\n  for (let i = 0; i < row.length; i++) {\n    paint(k, row[i]);\n    if (k.frontIsClear()) k.move();\n  }\n}\n\nfunction nextRow(k) {\n  k.turnLeft();\n  k.turnLeft();\n  while (k.frontIsClear()) k.move();\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n  k.move();\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  let plan = "RGBYC";\n  let reversed = "";\n  for (let i = 0; i < plan.length; i++) {\n    reversed = plan[i] + reversed;\n  }\n  let rotated = plan.slice(1) + plan[0];\n  paintRow(k, plan);\n  nextRow(k);\n  paintRow(k, reversed);\n  nextRow(k);\n  paintRow(k, rotated);\n}`,
       },
     ],
   },
@@ -707,8 +714,9 @@ async function main() {
     console.error(`\n${failures} problem(s) failed verification — no files written.`);
     process.exit(1);
   }
+  const total = nums.reduce((sum, n) => sum + LESSONS[n].problems.length, 0);
   if (checkOnly) {
-    console.log(`\nAll ${nums.length * 3} problems verified (--check: nothing written).`);
+    console.log(`\nAll ${total} problems verified (--check: nothing written).`);
     return;
   }
   for (const n of nums) {
@@ -717,7 +725,7 @@ async function main() {
     writeFileSync(path, emitManifest(n, LESSONS[n]));
     console.log(`  wrote assignments/${id}.js`);
   }
-  console.log(`\nGenerated ${nums.length} lesson manifests (${nums.length * 3} problems).`);
+  console.log(`\nGenerated ${nums.length} lesson manifests (${total} problems).`);
 }
 
 main();

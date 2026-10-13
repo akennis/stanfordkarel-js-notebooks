@@ -13,7 +13,7 @@
     <p class="lead">Store and work with text — words, labels, and even little programs written as characters.</p>
   </header>
 
-  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-12">✏️ Practice this lesson → Assignment 12 (3 problems)</a></p>
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-12">✏️ Practice this lesson → Assignment 12 (4 problems)</a></p>
   <main id="notebook"></main>
 
   <script type="module">
@@ -23,37 +23,179 @@
       { md: `<h2>Text is data too</h2>
       <p>A <strong>string</strong> is a piece of text — a run of characters wrapped in quotes:
       <code>"Karel"</code>, <code>"Red"</code>, <code>"go north"</code>. You can store one in a variable,
-      compare it, glue strings together, measure it, and pull out individual characters. Strings are how a
-      program holds names, labels, messages — and, as you'll see, tiny instructions.</p>
+      compare it, glue strings together, measure it, cut pieces out of it, and search inside it. Strings are
+      how a program holds names, labels, messages — and, as you'll see, tiny instructions.</p>
+      <p>JavaScript accepts three kinds of quotes. The first two make exactly the same kind of value; the
+      third, backticks, has an extra trick you'll meet below.</p>
+      <pre class="code">"Karel"     // double quotes
+'Karel'     // single quotes: the same string as "Karel"
+\`Karel\`     // backticks: a template literal</pre>
+      <p>The quote that opens a string must also close it. To put a quote character <em>inside</em> a string,
+      either use the other kind of quote around it, or put a backslash in front of it — an
+      <strong>escape</strong> that tells JavaScript "this quote is text, not the end of the string":</p>
+      <pre class="code">"It's sunny"           // a ' inside "…" is fine
+'She said "hi"'        // a " inside '…' is fine
+"She said \\"hi\\""      // \\" is an escaped quote
+"line one\\nline two"   // \\n is a new line</pre>
       <p>You've already used strings without noticing: every color name you paint with is one.</p>` },
 
       { md: `<h2>The smallest use: a color is a string</h2>
       <p>Here is the simplest meaningful string in this course. <code>color</code> holds the text
       <code>"Blue"</code>, and we hand that string straight to <code>paintCorner</code>. The value in the
-      variable <em>is</em> the color name.</p>` },
-      { world: `Dimension: (1, 1)
-Karel: (1, 1); east
+      variable <em>is</em> the color name. The second corner is painted with <code>'Blue'</code> in single
+      quotes — the same string, so the same color.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 2); east
 BeeperBag: INFINITY`, code: `function main(k) {
   let color = "Blue";
   k.paintCorner(color);
+  k.move();
+  k.paintCorner('Blue');  // single quotes: the same string
 }` },
 
-      { md: `<h2>Length and joining</h2>
-      <p>Two everyday string operations: <code>.length</code> tells you how many characters a string has, and
-      <code>+</code> glues strings together (this is called <strong>concatenation</strong>). Since
-      <code>"Karel".length</code> is 5, the loop below walks five corners — the word itself decides the
-      distance.</p>
-      <div class="callout"><strong>Joining vs. adding</strong>
-      The same <code>+</code> does two jobs: with numbers it adds (<code>2 + 3</code> → 5), with strings it
-      joins (<code>"Ka" + "rel"</code> → <code>"Karel"</code>). If either side is a string, JavaScript joins.</div>` },
-      { world: `Dimension: (6, 1)
-Karel: (1, 1); east
+      { md: `<h2>Length: how many characters?</h2>
+      <p><code>.length</code> tells you how many characters a string has. <code>"Karel".length</code> is 5,
+      so the loop below runs five times: Karel stacks one beeper per letter as it climbs the middle column.
+      The word itself decides how tall the stack is — change the word and the column changes with it.</p>
+      <div class="callout"><strong>Length counts every character</strong>
+      Spaces and punctuation count too: <code>"go north".length</code> is 8, not 7. The
+      <strong>empty string</strong> <code>""</code> has no characters at all, so its length is 0. (One
+      technicality: <code>.length</code> really counts storage units, and a few symbols such as emoji use two,
+      so <code>"😀".length</code> is 2. For letters, digits, spaces, and punctuation it's one each.)</div>` },
+      { world: `Dimension: (3, 6)
+Karel: (2, 1); north
 BeeperBag: INFINITY`, code: `function main(k) {
   let word = "Karel";
   for (let i = 0; i < word.length; i++) {
+    k.putBeeper();
     k.move();
   }
 }` },
+
+      { md: `<h2>Joining strings</h2>
+      <p><code>+</code> glues strings together end to end — this is called <strong>concatenation</strong>.
+      <code>"Ka" + "rel"</code> is <code>"Karel"</code>. Some of Karel's color names are two words, so you
+      can build them from parts. Notice the <code>" "</code> in the middle: <code>+</code> adds
+      <em>exactly</em> what you give it, so <code>"Dark" + "Gray"</code> would be <code>"DarkGray"</code>
+      — not a Karel color.</p>
+      <div class="callout"><strong>Joining vs. adding</strong>
+      The same <code>+</code> does two jobs: with numbers it adds (<code>2 + 3</code> → 5), with strings it
+      joins (<code>"Ka" + "rel"</code> → <code>"Karel"</code>). If either side is a string, JavaScript joins
+      — so <code>"2" + 3</code> is <code>"23"</code>, not 5. You'll see how to fix that in
+      <em>Strings that hold numbers</em> below.</div>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let base = "Gray";
+  k.paintCorner(base);                 // "Gray"
+  k.move();
+  k.paintCorner("Dark" + " " + base);  // "Dark Gray"
+  k.turnLeft();
+  k.move();
+  k.paintCorner("Light" + " " + base); // "Light Gray"
+}` },
+
+      { md: `<h3>Challenge · Build the shades</h3>
+      <p>Karel stands at the bottom of the middle column, facing <strong>north</strong>. Starting from
+      <code>base = "Gray"</code>, paint the column from bottom to top: <strong>Light Gray</strong>,
+      <strong>Gray</strong>, <strong>Dark Gray</strong>. Build the two-word names by joining strings
+      onto <code>base</code>.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (2, 1); north
+BeeperBag: INFINITY`,
+        prompt: `Use <code>+</code> to make <code>"Light Gray"</code> and <code>"Dark Gray"</code> from
+        <code>base</code> (don't forget the space). The column should read Light Gray, Gray, Dark Gray from
+        bottom to top.`,
+        starter: `function main(k) {
+  let base = "Gray";
+  // bottom: "Light Gray", middle: base, top: "Dark Gray"
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          let base = "Gray";
+          k.paintCorner("Light" + " " + base);
+          k.move();
+          k.paintCorner(base);
+          k.move();
+          k.paintCorner("Dark" + " " + base);
+        } },
+
+      { md: `<h2>Template literals: filling in the blanks</h2>
+      <p>Joining with <code>+</code> gets noisy fast: <code>"Dark" + " " + base</code> is three pieces and two
+      plus signs just to make two words. A <strong>template literal</strong> — a string written in
+      backticks — lets you write the text once and drop values into it with <code>\${…}</code>:</p>
+      <pre class="code">let shade = "Dark";
+let base = "Gray";
+\`\${shade} \${base}\`     // "Dark Gray"
+\`\${2 + 3} beepers\`     // "5 beepers": any expression works inside \${ }
+"\${shade} \${base}"     // plain quotes: just the text "\${shade} \${base}"</pre>
+      <p>JavaScript works out each <code>\${…}</code> and puts the result into the string at that spot. This
+      only happens in backticks; in <code>"…"</code> or <code>'…'</code>, <code>\${shade}</code> is ordinary
+      text. Most JavaScript you read will build strings this way.</p>
+      <p>Below, the same template, <code>\`\${shade} \${base}\`</code>, produces a different color each time
+      <code>shade</code> changes.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let base = "Gray";
+  let shade = "Dark";
+  k.paintCorner(\`\${shade} \${base}\`);   // "Dark Gray"
+  k.move();
+  shade = "Light";
+  k.paintCorner(\`\${shade} \${base}\`);   // "Light Gray"
+  k.turnLeft();
+  k.move();
+  k.paintCorner(\`\${base}\`);            // just "Gray"
+}` },
+
+      { md: `<h3>Challenge · Gray checkerboard</h3>
+      <p>Karel starts at <strong>(1, 1)</strong> facing <strong>east</strong> in a 4×2 room. The
+      <code>step</code> helper walks Karel east along the bottom row, up at the east wall, and back west along
+      the top, eight corners in all. Paint a checkerboard as it goes: on even steps (<code>i</code> is 0, 2, 4,
+      6) paint <strong>Light Gray</strong>, on odd steps paint <strong>Dark Gray</strong>.</p>` },
+      { world: `Dimension: (4, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Inside the loop, set a <code>shade</code> variable to <code>"Light"</code> or
+        <code>"Dark"</code> (<code>i % 2</code> tells you even or odd), then paint
+        <code>\`\${shade} Gray\`</code> before calling <code>step</code>.`,
+        starter: `// Move to the next corner: east, up at the wall (step 3), then west.
+function step(k, i) {
+  if (i === 3) {
+    k.turnLeft();
+    k.move();
+    k.turnLeft();
+  } else if (k.frontIsClear()) {
+    k.move();
+  }
+}
+
+function main(k) {
+  for (let i = 0; i < 8; i++) {
+    // even i: "Light Gray", odd i: "Dark Gray" (use a template literal)
+    step(k, i);
+  }
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          function step(i) {
+            if (i === 3) {
+              k.turnLeft();
+              k.move();
+              k.turnLeft();
+            } else if (k.frontIsClear()) {
+              k.move();
+            }
+          }
+          for (let i = 0; i < 8; i++) {
+            let shade = "Light";
+            if (i % 2 === 1) {
+              shade = "Dark";
+            }
+            k.paintCorner(`${shade} Gray`);
+            step(i);
+          }
+        } },
 
       { md: `<h2>Reaching into a string</h2>
       <p>A string is a sequence of characters, and — like a row of corners — it's numbered from
@@ -61,9 +203,9 @@ BeeperBag: INFINITY`, code: `function main(k) {
       on. That means a string can act like a <em>list of instructions</em>: read one character per step and
       do what it says.</p>
       <p>Below, the string <code>"RGB"</code> is a paint plan. A helper turns each letter into a color, and
-      Karel walks the row painting corner&nbsp;1 red, 2 green, 3 blue.</p>` },
-      { world: `Dimension: (3, 1)
-Karel: (1, 1); east
+      Karel climbs the middle column painting the bottom corner red, the middle green, and the top blue.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (2, 1); north
 BeeperBag: INFINITY`, code: `function paint(k, code) {
   if (code === "R") k.paintCorner("Red");
   if (code === "G") k.paintCorner("Green");
@@ -81,38 +223,646 @@ function main(k) {
 }` },
 
       { md: `<h3>Challenge · Paint from a code string</h3>
-      <p>Karel faces <strong>east</strong> in a four-wide room. The plan string is <code>"RGBR"</code>. Walk
-      the row and paint each corner the color its letter names — <code>R</code>→Red, <code>G</code>→Green,
-      <code>B</code>→Blue — so the corners read Red, Green, Blue, Red.</p>` },
-      { world: `Dimension: (4, 1)
+      <p>Karel starts at <strong>(1, 1)</strong> facing <strong>east</strong> in a 2×2 room. The plan string
+      is <code>"RGBY"</code>. Walk once around the square counter-clockwise — paint, move, turn left, four
+      times — painting each corner the color its letter names: <code>R</code>→Red, <code>G</code>→Green,
+      <code>B</code>→Blue, <code>Y</code>→Yellow.</p>` },
+      { world: `Dimension: (2, 2)
 Karel: (1, 1); east
 BeeperBag: INFINITY`,
         prompt: `Loop over <code>plan</code> by index. For each character <code>plan[i]</code>, paint the
-        matching color, then move on while the front is clear. Corners should end Red, Green, Blue, Red.`,
+        matching color, then move and turn left. Corners should end (1,1) Red, (2,1) Green, (2,2) Blue,
+        (1,2) Yellow, with Karel back home facing east.`,
         starter: `function main(k) {
-  let plan = "RGBR";
+  let plan = "RGBY";
   for (let i = 0; i < plan.length; i++) {
     let code = plan[i];
-    // paint the matching color: R→Red, G→Green, B→Blue
+    // paint the matching color: R→Red, G→Green, B→Blue, Y→Yellow
+    k.move();
+    k.turnLeft();
+  }
+}`,
+        check: ["colors"],
+        end: { avenue: 1, street: 1, direction: "east" },
+        solution: function main(k) {
+          let plan = "RGBY";
+          for (let i = 0; i < plan.length; i++) {
+            let code = plan[i];
+            if (code === "R") k.paintCorner("Red");
+            if (code === "G") k.paintCorner("Green");
+            if (code === "B") k.paintCorner("Blue");
+            if (code === "Y") k.paintCorner("Yellow");
+            k.move();
+            k.turnLeft();
+          }
+        } },
+
+      { md: `<h3>Slicing: taking more than one character</h3>
+      <p>Square brackets get you <strong>exactly one character</strong>. To take a whole <em>piece</em> of a
+      string, use <code>.slice</code>. The two look similar but answer different questions:</p>
+      <ul>
+        <li><strong>Indexing</strong> — <code>plan[2]</code> asks <em>"what character is at position 2?"</em>
+        It gives back one character, or <code>undefined</code> if there is no position 2.</li>
+        <li><strong>Slicing</strong> — <code>plan.slice(1, 4)</code> asks <em>"what text runs from position 1 up
+        to position 4?"</em> It gives back a new string, which may be several characters, one, or none at
+        all (<code>""</code>). The original string is not changed.</li>
+      </ul>
+      <p>The rule that trips everyone up at first: <code>slice(start, end)</code> includes
+      <code>start</code> but <strong>stops just before</strong> <code>end</code>. Think of the numbers as
+      the gaps <em>between</em> characters rather than the characters themselves:</p>
+      <pre class="code">  R   G   B   Y   C
+0   1   2   3   4   5
+
+"RGBYC".slice(1, 4)   // "GBY" — cut at gap 1 and gap 4</pre>
+      <p>A nice result of that rule: <code>end - start</code> is the length of the piece. <code>slice(1, 4)</code>
+      is 3 characters long.</p>
+      <p>There are a few common shapes of slice:</p>
+      <pre class="code">let plan = "RGBYC";
+
+plan[2]            // "B"     one character (indexing, not slicing)
+plan.slice(1, 4)   // "GBY"   from index 1 up to, not including, 4
+plan.slice(2)      // "BYC"   leave out end: from index 2 to the end
+plan.slice(0, 2)   // "RG"    start at 0: the first 2 characters
+plan.slice(-2)     // "YC"    negative counts from the end: the last 2
+plan.slice(1, -1)  // "GBY"   drop the first and last character
+plan.slice(3, 3)   // ""      start equals end: an empty string</pre>
+      <p>Out-of-range numbers are forgiving with <code>slice</code>: <code>plan.slice(3, 99)</code> just
+      stops at the end and gives <code>"YC"</code>. Indexing past the end, <code>plan[99]</code>, gives
+      <code>undefined</code>.</p>
+      <p>Below, the plan <code>"RGBYC"</code> is painted along the bottom row in full. Each row above it
+      paints one piece, starting under the same column the piece came from, so you can see exactly which
+      characters each line of code takes. From bottom to top: the whole plan, <code>plan[2]</code>,
+      <code>slice(1, 4)</code>, <code>slice(2)</code>, <code>slice(0, 2)</code>, and
+      <code>slice(-2)</code>.</p>` },
+      { world: `Dimension: (5, 6)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function paint(k, code) {
+  if (code === "R") k.paintCorner("Red");
+  if (code === "G") k.paintCorner("Green");
+  if (code === "B") k.paintCorner("Blue");
+  if (code === "Y") k.paintCorner("Yellow");
+  if (code === "C") k.paintCorner("Cyan");
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// Skip ahead to column 'start', then paint each character of 'piece'.
+function paintRow(k, piece, start) {
+  for (let i = 0; i < start; i++) {
+    k.move();
+  }
+  for (let i = 0; i < piece.length; i++) {
+    paint(k, piece[i]);
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}
+
+// Walk back to the west wall and step up one row, facing east.
+function nextRow(k) {
+  k.turnLeft();
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+  k.move();
+  turnRight(k);
+}
+
+function main(k) {
+  let plan = "RGBYC";
+  paintRow(k, plan, 0);              // "RGBYC" the whole string
+  nextRow(k);
+  paintRow(k, plan[2], 2);           // "B"     one character
+  nextRow(k);
+  paintRow(k, plan.slice(1, 4), 1);  // "GBY"   index 1 up to 4
+  nextRow(k);
+  paintRow(k, plan.slice(2), 2);     // "BYC"   index 2 to the end
+  nextRow(k);
+  paintRow(k, plan.slice(0, 2), 0);  // "RG"    the first 2
+  nextRow(k);
+  paintRow(k, plan.slice(-2), 3);    // "YC"    the last 2
+}` },
+
+      { md: `<h3>Challenge · Cut the plan into pieces</h3>
+      <p>Karel starts at <strong>(1, 1)</strong> facing <strong>east</strong> in a 5×3 room. The plan is
+      <code>"CRGBY"</code> (<code>C</code>→Cyan, <code>Y</code>→Yellow, and the rest as before). Paint three
+      slices of it, one per row, each starting in the column it came from:</p>
+      <ul>
+        <li><strong>Bottom row:</strong> the middle, without the first and last characters — <code>"RGB"</code>
+        in columns 2–4.</li>
+        <li><strong>Middle row:</strong> the first two characters — <code>"CR"</code> in columns 1–2.</li>
+        <li><strong>Top row:</strong> everything from index 3 to the end — <code>"BY"</code> in columns 4–5.</li>
+      </ul>` },
+      { world: `Dimension: (5, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Use <code>plan.slice(...)</code> to cut each piece. Don't type the pieces out by hand.
+        <code>paintRow(k, piece, start)</code> skips to column <code>start</code> (counting from 0) and
+        paints the piece, and <code>nextRow(k)</code> moves Karel up to the start of the next row.`,
+        starter: `function paint(k, code) {
+  if (code === "R") k.paintCorner("Red");
+  if (code === "G") k.paintCorner("Green");
+  if (code === "B") k.paintCorner("Blue");
+  if (code === "Y") k.paintCorner("Yellow");
+  if (code === "C") k.paintCorner("Cyan");
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function paintRow(k, piece, start) {
+  for (let i = 0; i < start; i++) {
+    k.move();
+  }
+  for (let i = 0; i < piece.length; i++) {
+    paint(k, piece[i]);
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}
+
+function nextRow(k) {
+  k.turnLeft();
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+  k.move();
+  turnRight(k);
+}
+
+function main(k) {
+  let plan = "CRGBY";
+  // bottom row:  the middle (drop first and last)
+  // middle row:  the first two characters
+  // top row:     from index 3 to the end
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          function paint(code) {
+            if (code === "R") k.paintCorner("Red");
+            if (code === "G") k.paintCorner("Green");
+            if (code === "B") k.paintCorner("Blue");
+            if (code === "Y") k.paintCorner("Yellow");
+            if (code === "C") k.paintCorner("Cyan");
+          }
+          function paintRow(piece, start) {
+            for (let i = 0; i < start; i++) k.move();
+            for (let i = 0; i < piece.length; i++) {
+              paint(piece[i]);
+              if (k.frontIsClear()) k.move();
+            }
+          }
+          function nextRow() {
+            k.turnLeft();
+            k.turnLeft();
+            while (k.frontIsClear()) k.move();
+            k.turnLeft(); k.turnLeft(); k.turnLeft();
+            k.move();
+            k.turnLeft(); k.turnLeft(); k.turnLeft();
+          }
+          let plan = "CRGBY";
+          paintRow(plan.slice(1, -1), 1);
+          nextRow();
+          paintRow(plan.slice(0, 2), 0);
+          nextRow();
+          paintRow(plan.slice(3), 3);
+        } },
+
+      { md: `<h3>Two things square brackets can't do</h3>
+      <p><strong>1. Count from the end.</strong> <code>slice</code> understands negative numbers, but square
+      brackets don't: <code>plan[-1]</code> is <code>undefined</code>, not the last character. To get the
+      last character, either do the arithmetic yourself — <code>plan[plan.length - 1]</code> — or use
+      <code>plan.at(-1)</code>. <code>.at</code> works like brackets but also accepts negative positions.</p>
+      <p><strong>2. Change a character.</strong> Strings are <strong>immutable</strong>: once made, they never
+      change. <code>plan[0] = "Y"</code> is an error in this course's code ("Cannot assign to read only
+      property") — and in older, non-strict JavaScript it's silently ignored, which is worse. Either way,
+      <code>plan</code> stays the same. To "change" a string, build a <em>new</em> one from pieces and store it
+      back in the variable:</p>
+      <pre class="code">plan = "Y" + plan.slice(1);   // "RGB" becomes "YGB"</pre>
+      <p>That's also why <code>slice</code>, and the case methods you'll see below, always <em>return</em> a
+      new string instead of altering the old one.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (2, 1); north
+BeeperBag: INFINITY`, code: `function paint(k, code) {
+  if (code === "R") k.paintCorner("Red");
+  if (code === "G") k.paintCorner("Green");
+  if (code === "B") k.paintCorner("Blue");
+  if (code === "Y") k.paintCorner("Yellow");
+}
+
+function main(k) {
+  let plan = "RGB";
+  paint(k, plan[plan.length - 1]);  // "B": the last character
+  k.move();
+  paint(k, plan.at(-1));            // "B" again: at() counts back from the end
+  k.move();
+  plan = "Y" + plan.slice(1);       // a NEW string, "YGB", stored in plan
+  paint(k, plan[0]);                // "Y"
+}` },
+
+      { md: `<h3>Challenge · Fix the typo</h3>
+      <p>The plan <code>"RGXY"</code> has a typo: the <code>X</code> at index 2 should be a <code>B</code>.
+      You can't assign to <code>plan[2]</code>, so build a corrected string from slices and store it back in
+      <code>plan</code> before the loop runs. Karel then walks the 2×2 square from
+      <strong>(1, 1)</strong> painting Red, Green, Blue, Yellow.</p>` },
+      { world: `Dimension: (2, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Before the loop, replace <code>plan</code> with <em>everything before index 2</em> +
+        <code>"B"</code> + <em>everything after index 2</em>. Use <code>slice</code> rather than retyping the
+        whole plan.`,
+        starter: `function paint(k, code) {
+  if (code === "R") k.paintCorner("Red");
+  if (code === "G") k.paintCorner("Green");
+  if (code === "B") k.paintCorner("Blue");
+  if (code === "Y") k.paintCorner("Yellow");
+}
+
+function main(k) {
+  let plan = "RGXY";
+  // plan[2] = "B" would be an error: build a new string instead
+
+  for (let i = 0; i < plan.length; i++) {
+    paint(k, plan[i]);
+    k.move();
+    k.turnLeft();
+  }
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          let plan = "RGXY";
+          plan = plan.slice(0, 2) + "B" + plan.slice(3);
+          for (let i = 0; i < plan.length; i++) {
+            let code = plan[i];
+            if (code === "R") k.paintCorner("Red");
+            if (code === "G") k.paintCorner("Green");
+            if (code === "B") k.paintCorner("Blue");
+            if (code === "Y") k.paintCorner("Yellow");
+            k.move();
+            k.turnLeft();
+          }
+        } },
+
+      { md: `<h2>Building a string piece by piece</h2>
+      <p>Since a string can't be changed, a program that needs to <em>assemble</em> text starts with the empty
+      string <code>""</code> and keeps making a longer one, a piece at a time. The shortcut <code>+=</code>
+      does exactly that: <code>clean += "R"</code> means <code>clean = clean + "R"</code>.</p>
+      <p>Below, the plan <code>"R-G--B"</code> has dashes mixed in, and the bottom row of the world is painted
+      to match it, gaps and all. The first loop builds <code>clean</code> by adding every character that is
+      <em>not</em> a dash (<code>!==</code> means "is not equal to"). The second loop paints
+      <code>clean</code> — now <code>"RGB"</code> — along the top row with no gaps.</p>` },
+      { world: `Dimension: (6, 2)
+Karel: (1, 2); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (3, 1); Green
+Color: (6, 1); Blue`, code: `function paint(k, code) {
+  if (code === "R") k.paintCorner("Red");
+  if (code === "G") k.paintCorner("Green");
+  if (code === "B") k.paintCorner("Blue");
+}
+
+function main(k) {
+  let raw = "R-G--B";
+  let clean = "";
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i] !== "-") {
+      clean += raw[i];  // keep every character that isn't a dash
+    }
+  }
+  // clean is now "RGB"
+  for (let i = 0; i < clean.length; i++) {
+    paint(k, clean[i]);
+    k.move();
+  }
+}` },
+
+      { md: `<h3>Challenge · Reverse the plan</h3>
+      <p>The bottom row of this 4×2 world is already painted from the plan <code>"RGBY"</code>. Karel stands
+      above it at <strong>(1, 2)</strong> facing <strong>east</strong>. Build <code>reversed</code> —
+      <code>"YBGR"</code> — one character at a time, then let the given loop paint it along the top row so it
+      mirrors the row below.</p>` },
+      { world: `Dimension: (4, 2)
+Karel: (1, 2); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (2, 1); Green
+Color: (3, 1); Blue
+Color: (4, 1); Yellow`,
+        prompt: `Loop over <code>plan</code> from the start, but put each character on the <em>front</em> of
+        <code>reversed</code> instead of the back: <code>reversed = plan[i] + reversed</code>. Don't type
+        <code>"YBGR"</code> by hand.`,
+        starter: `function paint(k, code) {
+  if (code === "R") k.paintCorner("Red");
+  if (code === "G") k.paintCorner("Green");
+  if (code === "B") k.paintCorner("Blue");
+  if (code === "Y") k.paintCorner("Yellow");
+}
+
+function main(k) {
+  let plan = "RGBY";
+  let reversed = "";
+  // build reversed one character at a time
+
+  for (let i = 0; i < reversed.length; i++) {
+    paint(k, reversed[i]);
     if (k.frontIsClear()) {
       k.move();
     }
   }
 }`,
         check: ["colors"],
-        end: { avenue: 4, street: 1, direction: "east" },
         solution: function main(k) {
-          let plan = "RGBR";
+          let plan = "RGBY";
+          let reversed = "";
           for (let i = 0; i < plan.length; i++) {
-            let code = plan[i];
+            reversed = plan[i] + reversed;
+          }
+          for (let i = 0; i < reversed.length; i++) {
+            let code = reversed[i];
             if (code === "R") k.paintCorner("Red");
             if (code === "G") k.paintCorner("Green");
             if (code === "B") k.paintCorner("Blue");
-            if (k.frontIsClear()) {
-              k.move();
-            }
+            if (code === "Y") k.paintCorner("Yellow");
+            if (k.frontIsClear()) k.move();
           }
         } },
+
+      { md: `<h2>Searching inside a string</h2>
+      <p>Often you don't want a character at a known position — you want to know <em>whether</em> some text
+      appears, or <em>where</em>. Strings have methods for that:</p>
+      <pre class="code">let plan = "GRBYB";
+
+plan.includes("Y")      // true    "Y" appears somewhere
+plan.includes("C")      // false
+plan.indexOf("B")       // 2       position of the FIRST "B"
+plan.indexOf("BY")      // 2       works for longer text too
+plan.indexOf("C")       // -1      -1 means "not found"
+plan.startsWith("GR")   // true
+plan.endsWith("Y")      // false   it ends with "B"</pre>
+      <p><code>indexOf</code> returning <code>-1</code> is worth remembering: -1 can never be a real position,
+      so it's JavaScript's way of saying "nowhere." Searching is case-sensitive, like everything else with
+      strings — more on that in the next section.</p>
+      <p>Below, the bottom row is painted from <code>"GRBYB"</code>. Karel uses <code>indexOf</code> to walk
+      to the first <code>"B"</code> and drops a beeper above it. The <code>includes("C")</code> test is
+      false, so the second beeper is never placed.</p>` },
+      { world: `Dimension: (5, 2)
+Karel: (1, 2); east
+BeeperBag: INFINITY
+Color: (1, 1); Green
+Color: (2, 1); Red
+Color: (3, 1); Blue
+Color: (4, 1); Yellow
+Color: (5, 1); Blue`, code: `function main(k) {
+  let plan = "GRBYB";
+  let pos = plan.indexOf("B");  // 2: the first "B"
+  for (let i = 0; i < pos; i++) {
+    k.move();
+  }
+  k.putBeeper();                // above the first blue corner
+  if (plan.includes("C")) {     // no "C" in the plan, so this is skipped
+    k.putBeeper();
+  }
+}` },
+
+      { md: `<h3>Challenge · Find the yellow</h3>
+      <p>The bottom row of this 6×2 world is painted from the plan <code>"RBGYGY"</code>. Karel stands above
+      it at <strong>(1, 2)</strong> facing <strong>east</strong>. Use string searches — not counting by eye
+      — to do two things:</p>
+      <ol>
+        <li>If the plan <strong>starts with</strong> <code>"R"</code>, paint Karel's starting corner Red.</li>
+        <li>Move to the column above the <strong>first</strong> <code>"Y"</code> and put down one beeper.</li>
+      </ol>` },
+      { world: `Dimension: (6, 2)
+Karel: (1, 2); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (2, 1); Blue
+Color: (3, 1); Green
+Color: (4, 1); Yellow
+Color: (5, 1); Green
+Color: (6, 1); Yellow`,
+        prompt: `Use <code>plan.startsWith("R")</code> for step 1 and <code>plan.indexOf("Y")</code> to know how
+        many times to move for step 2.`,
+        starter: `function main(k) {
+  let plan = "RBGYGY";
+  // 1. if plan starts with "R", paint this corner Red
+  // 2. move above the first "Y" and put down a beeper
+}`,
+        check: ["colors", "beepers"],
+        solution: function main(k) {
+          let plan = "RBGYGY";
+          if (plan.startsWith("R")) {
+            k.paintCorner("Red");
+          }
+          let pos = plan.indexOf("Y");
+          for (let i = 0; i < pos; i++) {
+            k.move();
+          }
+          k.putBeeper();
+        } },
+
+      { md: `<h2>Upper case, lower case</h2>
+      <p>To JavaScript, <code>"R"</code> and <code>"r"</code> are <em>different characters</em>. Strings are
+      <strong>case-sensitive</strong>: <code>===</code> compares them character by character, so
+      <code>"Blue" === "blue"</code> is <code>false</code>, and <code>"Blue".includes("b")</code> is
+      <code>false</code> too. That matters any time text comes from a person, who might type
+      <code>"BLUE"</code>, <code>"blue"</code>, or <code>"bLuE"</code>.</p>
+      <p>Two methods make a <em>new</em> string with the case changed (the original is untouched, as
+      always):</p>
+      <pre class="code">"Blue".toUpperCase()   // "BLUE"
+"Blue".toLowerCase()   // "blue"</pre>
+      <p>Here's what that costs. The paint plan <code>"GbRbG"</code> was typed with some letters in lower
+      case. The <code>paint</code> helper only knows the capitals <code>"R"</code>, <code>"G"</code>, and
+      <code>"B"</code>, so on the <strong>bottom row</strong>, where Karel uses each letter exactly as
+      typed, <code>"b" === "B"</code> is <code>false</code> and those corners stay blank.</p>
+      <p>On the <strong>top row</strong>, Karel calls <code>.toUpperCase()</code> on each letter
+      before handing it to <code>paint</code>. Now <code>"b"</code> becomes <code>"B"</code>, the
+      comparison succeeds, and every corner gets painted. (Karel paints the top row walking west, so the
+      plan reads the same in both directions.)</p>` },
+      { world: `Dimension: (5, 2)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function paint(k, code) {
+  if (code === "R") k.paintCorner("Red");
+  if (code === "G") k.paintCorner("Green");
+  if (code === "B") k.paintCorner("Blue");
+}
+
+function main(k) {
+  let plan = "GbRbG";
+
+  // Bottom row: letters exactly as typed. "b" is not "B".
+  for (let i = 0; i < plan.length; i++) {
+    paint(k, plan[i]);
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+
+  // Step up to the top row, facing west.
+  k.turnLeft();
+  k.move();
+  k.turnLeft();
+
+  // Top row: upper-case each letter first. "b" becomes "B".
+  for (let i = 0; i < plan.length; i++) {
+    paint(k, plan[i].toUpperCase());
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<div class="callout"><strong>Case-insensitive comparison</strong>
+      Convert to one case, then compare. Here <code>"B"</code> is a capital we wrote ourselves, so only the
+      typed letter needs converting. When <em>both</em> sides could be in any case, convert both:
+      <code>a.toLowerCase() === b.toLowerCase()</code> is <code>true</code> for <code>"Blue"</code> and
+      <code>"bLUE"</code>. The same trick makes searching case-insensitive:
+      <code>plan.toUpperCase().includes("B")</code>.</div>` },
+
+      { md: `<h3>Cleaning up typed text</h3>
+      <p>Karel's color names are case-sensitive too: <code>paintCorner</code> accepts <code>"Green"</code>
+      but not <code>"green"</code> or <code>"GREEN"</code>. Typed text often has stray spaces as well, and
+      <code>"Green "</code> isn't a color either. Two tools fix that:</p>
+      <ul>
+        <li><code>.trim()</code> returns the string with spaces removed from both ends:
+        <code>"  gREEN ".trim()</code> is <code>"gREEN"</code>. Spaces in the middle stay.</li>
+        <li>A <code>capitalize</code> helper upper-cases the first character (<code>word[0]</code>),
+        lower-cases the rest (<code>word.slice(1)</code>), and joins them.</li>
+      </ul>
+      <p>Watch out for the empty string: <code>""[0]</code> is <code>undefined</code>, and calling
+      <code>.toUpperCase()</code> on <code>undefined</code> crashes the program. The helper below checks for
+      that first.</p>
+      <p>The first paint below works. The second paints <code>"GREEN"</code>, which isn't a Karel color, so
+      the run stops with Karel drawn in red — on purpose, to show the cost of the wrong case.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `function capitalize(word) {
+  if (word.length === 0) {
+    return word;  // "" has no first letter to capitalize
+  }
+  return word[0].toUpperCase() + word.slice(1).toLowerCase();
+}
+
+function main(k) {
+  let typed = "  gREEN ";
+  k.paintCorner(capitalize(typed.trim()));    // "Green" works
+  k.turnLeft();
+  k.move();
+  k.paintCorner(typed.trim().toUpperCase());  // "GREEN" is not a Karel color
+}` },
+
+      { md: `<h3>Challenge · Clean up the colors</h3>
+      <p>Someone typed three color names carelessly: <code>"pINK"</code>, <code>"oRANGE"</code>, and
+      <code>"  CYAN "</code> (with spaces). Karel starts at <strong>(1, 1)</strong> facing
+      <strong>east</strong> in a 3×3 room. Paint the diagonal — <strong>(1, 1)</strong> Pink,
+      <strong>(2, 2)</strong> Orange, <strong>(3, 3)</strong> Cyan — by cleaning up each typed name.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `Finish <code>capitalize</code> so it returns the word with an upper-case first letter and
+        the rest lower-case, then paint each corner with the cleaned-up name. One name also needs
+        <code>.trim()</code>. <code>climb</code> moves Karel one step up the diagonal.`,
+        starter: `function capitalize(word) {
+  // first character upper case + the rest lower case
+  return word;
+}
+
+function climb(k) {
+  k.move();
+  k.turnLeft();
+  k.move();
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  let a = "pINK";
+  let b = "oRANGE";
+  let c = "  CYAN ";
+  k.paintCorner(capitalize(a));
+  climb(k);
+  // paint b, climb, paint c
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          function capitalize(word) {
+            return word[0].toUpperCase() + word.slice(1).toLowerCase();
+          }
+          function climb(k) {
+            k.move();
+            k.turnLeft();
+            k.move();
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+          }
+          k.paintCorner(capitalize("pINK"));
+          climb(k);
+          k.paintCorner(capitalize("oRANGE"));
+          climb(k);
+          k.paintCorner(capitalize("  CYAN ".trim()));
+        } },
+
+      { md: `<h2>Strings that hold numbers</h2>
+      <p><code>"3"</code> and <code>3</code> are different values: the first is a string containing the
+      character 3, the second is a number you can do arithmetic with. Mixing them up is one of the most common
+      JavaScript bugs, because <code>+</code> quietly joins instead of adding:</p>
+      <pre class="code">"2" + 1           // "21"   a string: joined
+Number("2") + 1   // 3      converted to a number first, then added
+Number("hi")      // NaN    "Not a Number": the text isn't a number
+String(3)         // "3"    a number turned into a string
+\`\${3}\`             // "3"    a template literal does the same</pre>
+      <p>This matters with instruction strings: in <code>"M3"</code>, the character <code>"M3"[1]</code> is
+      the <em>string</em> <code>"3"</code>. Convert it with <code>Number</code> before you use it as a count.</p>` },
+      { world: `Dimension: (3, 5)
+Karel: (2, 1); north
+BeeperBag: INFINITY`, code: `function main(k) {
+  let a = "2";
+  let b = "1";
+  let joined = a + b;                 // "21": joined, not added
+  let total = Number(a) + Number(b);  // 3: converted, then added
+  for (let i = 0; i < total; i++) {
+    k.putBeeper();
+    k.move();
+  }
+}` },
+
+      { md: `<h3>A preview: splitting a string apart</h3>
+      <p><code>.split(separator)</code> cuts a string at every separator and gives back the pieces as an
+      <strong>array</strong> — a list of values, which is the subject of the next lesson. For now, it's
+      enough to know that you read an array's pieces the same way you read a string's characters: with
+      <code>[i]</code> and <code>.length</code>.</p>
+      <pre class="code">"Dark Gray".split(" ")      // ["Dark", "Gray"]
+"Cyan,Pink,Yellow".split(",")   // ["Cyan", "Pink", "Yellow"]</pre>
+      <p>Notice the difference: <code>order[0]</code> is the single character <code>"C"</code>, but after
+      splitting, <code>colors[0]</code> is the whole word <code>"Cyan"</code>.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 2); east
+BeeperBag: INFINITY`, code: `function main(k) {
+  let order = "Cyan,Pink,Yellow";
+  let colors = order.split(",");  // ["Cyan", "Pink", "Yellow"]
+  for (let i = 0; i < colors.length; i++) {
+    k.paintCorner(colors[i]);
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
+}` },
 
       { md: `<h2>A string as a tiny program</h2>
       <p>If one character can mean "paint red," another can mean "move" or "turn." A string of such characters
@@ -121,38 +871,87 @@ BeeperBag: INFINITY`,
       short string can steer Karel around a corner.</p>` },
       { md: `<h3>Challenge · Run the instruction tape</h3>
       <p>Karel starts at <strong>(1, 1)</strong> facing <strong>east</strong> in a 3×3 room. Read the command
-      string <code>"MMLMM"</code> character by character: on <code>"M"</code> move, on <code>"L"</code> turn
-      left. Executed in order, Karel should finish in the top-right corner <strong>(3, 3)</strong> facing
+      string <code>"MmLmM"</code> character by character: <code>M</code> means move and <code>L</code> means
+      turn left — and whoever typed it wasn't careful about case, so <code>m</code> means move too. Executed
+      in order, Karel should finish in the top-right corner <strong>(3, 3)</strong> facing
       <strong>north</strong>.</p>` },
       { world: `Dimension: (3, 3)
 Karel: (1, 1); east
 BeeperBag: INFINITY`,
-        prompt: `Loop over <code>cmds</code>. For each character: if it's <code>"M"</code> call
-        <code>move()</code>; if it's <code>"L"</code> call <code>turnLeft()</code>. Karel should end at
-        <strong>(3, 3)</strong> facing <strong>north</strong>.`,
+        prompt: `Loop over <code>cmds</code>. Convert each character to one case first, then: if it's
+        <code>"M"</code> call <code>move()</code>; if it's <code>"L"</code> call <code>turnLeft()</code>.
+        Karel should end at <strong>(3, 3)</strong> facing <strong>north</strong>.`,
         starter: `function main(k) {
-  let cmds = "MMLMM";
+  let cmds = "MmLmM";
   for (let i = 0; i < cmds.length; i++) {
     let c = cmds[i];
-    // "M" → move, "L" → turnLeft
+    // "M" or "m" → move, "L" or "l" → turnLeft
   }
 }`,
         check: ["position"],
         end: { avenue: 3, street: 3, direction: "north" },
         solution: function main(k) {
-          let cmds = "MMLMM";
+          let cmds = "MmLmM";
           for (let i = 0; i < cmds.length; i++) {
-            let c = cmds[i];
+            let c = cmds[i].toUpperCase();
             if (c === "M") k.move();
             if (c === "L") k.turnLeft();
           }
         } },
 
+      { md: `<h3>Challenge · Run a counted tape</h3>
+      <p>Writing <code>MMM</code> gets tedious, so this tape pairs each command with a count:
+      <code>"M3L1M2L1M1"</code> means move 3, turn left 1, move 2, turn left 1, move 1. Karel starts at
+      <strong>(1, 1)</strong> facing <strong>east</strong> in a 4×3 room and should finish at
+      <strong>(3, 3)</strong> facing <strong>west</strong>.</p>` },
+      { world: `Dimension: (4, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `The loop already jumps two characters at a time (<code>i += 2</code>), so
+        <code>cmds[i]</code> is the command and <code>cmds[i + 1]</code> is its count — as a string. Convert
+        the count with <code>Number</code>, then repeat the command that many times.`,
+        starter: `function main(k) {
+  let cmds = "M3L1M2L1M1";
+  for (let i = 0; i < cmds.length; i += 2) {
+    let c = cmds[i];
+    let times = cmds[i + 1];  // a string: "3", not 3
+    // repeat the command Number(times) times
+  }
+}`,
+        check: ["position"],
+        end: { avenue: 3, street: 3, direction: "west" },
+        solution: function main(k) {
+          let cmds = "M3L1M2L1M1";
+          for (let i = 0; i < cmds.length; i += 2) {
+            let c = cmds[i];
+            let times = Number(cmds[i + 1]);
+            for (let j = 0; j < times; j++) {
+              if (c === "M") k.move();
+              if (c === "L") k.turnLeft();
+            }
+          }
+        } },
+
       { md: `<div class="callout tip"><strong>You learned</strong>
-      A string is text in quotes. <code>.length</code> counts its characters, <code>+</code> joins strings,
-      and <code>str[i]</code> reads the character at position <code>i</code> (counting from 0). Because a
-      string is just an ordered sequence of characters, you can loop over it and treat each character as an
-      instruction — a compact, readable way to describe a plan.</div>` },
+      <ul>
+        <li>A string is text in <code>"double"</code>, <code>'single'</code>, or <code>\`back\`</code> quotes;
+        <code>\\"</code> escapes a quote inside one.</li>
+        <li><code>.length</code> counts characters; <code>""</code> is the empty string, length 0.</li>
+        <li><code>+</code> joins strings, and a template literal fills in values:
+        <code>\`\${shade} Gray\`</code>.</li>
+        <li><code>str[i]</code> reads <em>one</em> character, counting from 0; <code>str.at(-1)</code> reads
+        from the end. <code>str.slice(start, end)</code> cuts out a <em>piece</em>, stopping just before
+        <code>end</code>.</li>
+        <li>Strings are immutable: you never change one, you build a new one — often starting from
+        <code>""</code> and adding with <code>+=</code>.</li>
+        <li><code>includes</code>, <code>indexOf</code> (-1 if not found), <code>startsWith</code>, and
+        <code>endsWith</code> search inside a string.</li>
+        <li>Strings are case-sensitive — <code>"Red" !== "red"</code> — so compare case-insensitively by
+        calling <code>.toLowerCase()</code> (or <code>.toUpperCase()</code>) on both sides; <code>.trim()</code>
+        removes stray spaces.</li>
+        <li><code>"2"</code> is not <code>2</code>: convert with <code>Number</code> before doing arithmetic.</li>
+        <li><code>split</code> turns a string into an array of pieces — more on arrays next lesson.</li>
+      </ul></div>` },
     ];
 
     renderNotebook(cells, undefined, { isolate: true });
