@@ -10,156 +10,790 @@
   <header class="course">
     <div class="crumb">Learning JavaScript with Karel · Lesson 13 of 18</div>
     <h1>13 · Arrays</h1>
-    <p class="lead">An ordered list of values you can index into, measure, loop over, and grow.</p>
+    <p class="lead">Give Karel a memory: an ordered list of values you can fill, read back, grow, shrink, and even stack into a grid.</p>
   </header>
 
-  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-13">✏️ Practice this lesson → Assignment 13 (3 problems)</a></p>
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-13">✏️ Practice this lesson → Assignment 13 (4 problems)</a></p>
   <main id="notebook"></main>
 
   <script type="module">
     import { renderNotebook } from "./lesson.js";
 
     const cells = [
-      { md: `<h2>Many values, one name</h2>
-      <p>A variable holds one value. An <strong>array</strong> holds a whole <em>ordered list</em> of them
-      under a single name, written with square brackets: <code>[3, 1, 2]</code>. Each slot has a position — an
-      <strong>index</strong> — counting from <strong>0</strong>. Arrays are the workhorse data structure: a
-      row of pile heights, a palette of colors, a queue of instructions.</p>
-      <div class="callout"><strong>Index from zero</strong>
-      For <code>let a = [3, 1, 2]</code>: <code>a[0]</code> is 3, <code>a[1]</code> is 1, <code>a[2]</code> is
-      2. The last index is always <code>a.length - 1</code>. Ask for <code>a[3]</code> here and you get
-      <code>undefined</code> — there's no such slot.</div>` },
+      // ─── Intro: what an array is, creating one, reading and writing slots ───
 
-      { md: `<h2>The smallest use: a list and one index</h2>
-      <p>Start tiny. This array holds three color names; we reach in for the first one with
-      <code>palette[0]</code> and paint with it. An array is just several values you can address by number.</p>` },
-      { world: `Dimension: (1, 1)
+      { md: `<h2>Karel has a short memory</h2>
+      <p>A variable holds <em>one</em> value. That's fine for "how many beepers were on the last corner," but
+      many problems need Karel to remember a whole <em>list</em> of things — every pile in a row, every color
+      up a pole — and use them later, somewhere else, often in a different order. You can't write
+      <code>pile1</code>, <code>pile2</code>, <code>pile3</code>… when you don't even know how many piles
+      there will be.</p>
+      <p>An <strong>array</strong> solves this. It's one value that holds an <em>ordered list</em> of values,
+      written with square brackets:</p>
+      <pre class="code">let heights = [3, 1, 4];
+let colors  = ["Red", "Green", "Blue"];
+let empty   = [];</pre>
+      <p>Each slot has a position number, its <strong>index</strong>, and indexes start at <strong>0</strong>.
+      You read a slot with <code>name[index]</code>:</p>
+      <pre class="code">heights[0]       // 3   the first slot
+heights[2]       // 4   the third slot
+heights.length   // 3   how many slots there are
+heights[3]       // undefined: there is no fourth slot</pre>
+      <div class="callout"><strong>Index from zero</strong>
+      An array of length <code>n</code> has indexes <code>0</code> through <code>n - 1</code>. The last
+      element is always <code>a[a.length - 1]</code>. You saw the same rule with string characters in the
+      last lesson.</div>` },
+
+      { md: `<h2>Reading a slot: an array as a lookup table</h2>
+      <p><strong>Problem.</strong> The bottom row holds <em>code piles</em>: 0 to 3 beepers each. Above every
+      code, Karel must paint the whole column with the color that code stands for: 0 → Yellow, 1 → Red,
+      2 → Green, 3 → Blue.</p>
+      <p>Without an array you'd need an <code>if</code> for every code, and another one each time a
+      color is added. With an array, the code <em>is</em> the index: <code>palette[code]</code> finds the
+      color in one step. Add a fifth color and nothing else in the program changes.</p>` },
+      { world: `Dimension: (5, 3)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: `function main(k) {
-  let palette = ["Red", "Green", "Blue"];
-  k.paintCorner(palette[0]);
+BeeperBag: INFINITY
+Beeper: (1, 1); 2
+Beeper: (3, 1); 1
+Beeper: (4, 1); 3
+Beeper: (5, 1); 1`, code: `// Count the pile on this corner, then put it back as it was.
+function countPile(k) {
+  let n = 0;
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+    n++;
+  }
+  for (let i = 0; i < n; i++) {
+    k.putBeeper();
+  }
+  return n;
+}
+
+// Climb the column painting every corner above, then come back down facing east.
+function paintColumn(k, color) {
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+    k.paintCorner(color);
+  }
+  k.turnLeft();
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+}
+
+function main(k) {
+  let palette = ["Yellow", "Red", "Green", "Blue"];
+  for (let col = 0; col < 5; col++) {
+    let code = countPile(k);
+    paintColumn(k, palette[code]);
+    if (k.frontIsClear()) {
+      k.move();
+    }
+  }
 }` },
 
-      { md: `<h2>Length and looping by index</h2>
-      <p>The real power comes from looping. <code>.length</code> is the count of slots, so a
-      <code>for</code> loop from 0 up to <code>heights.length</code> visits every element in order. Here the
-      array <code>[3, 1, 2]</code> is a little bar chart: at each corner Karel drops <code>heights[i]</code>
-      beepers, then steps right.</p>` },
-      { world: `Dimension: (3, 1)
+      { md: `<h2>Making an array of a fixed size and filling it in</h2>
+      <p>Sometimes you know how many slots you need but not yet what goes in them. <code>new Array(n)</code>
+      makes an array with <code>n</code> empty slots; adding <code>.fill(value)</code> starts every slot at
+      that value. Then you <strong>assign</strong> to a slot exactly the way you assign to a variable:</p>
+      <pre class="code">let counts = new Array(4).fill(0);   // [0, 0, 0, 0]
+counts[2] = 5;                       // [0, 0, 5, 0]
+counts[2] = counts[2] + 1;           // [0, 0, 6, 0]
+counts[0]++;                         // [1, 0, 6, 0]</pre>
+      <p>An index doesn't have to be a number you type. It can be any expression, like a variable or a count
+      Karel just measured. That's what makes the next example work.</p>` },
+
+      { md: `<h3>Example · Tally the pile sizes</h3>
+      <p><strong>Problem.</strong> A 3×3 field is scattered with piles of 1, 2, or 3 beepers. Karel must
+      sweep the field, picking everything up, and then build a <em>bar chart</em> on the top row: avenue 1
+      shows how many 1-piles there were, avenue 2 how many 2-piles, avenue 3 how many 3-piles.</p>
+      <p>The chart is built <em>after</em> the sweep, so Karel has to remember three running counts the whole
+      time. One array does it: <code>tally[size]</code> is "how many piles of this size so far." Every pile
+      adds one to its own slot: <code>tally[size] = tally[size] + 1</code>. Slot 0 counts the empty corners;
+      we just never chart it.</p>` },
+      { world: `Dimension: (3, 4)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: `function main(k) {
-  let heights = [3, 1, 2];
-  for (let i = 0; i < heights.length; i++) {
-    for (let b = 0; b < heights[i]; b++) {
+BeeperBag: INFINITY
+Beeper: (1, 1); 2
+Beeper: (3, 1); 3
+Beeper: (1, 2); 1
+Beeper: (2, 2); 2
+Beeper: (3, 2); 1
+Beeper: (2, 3); 1`, code: `// Pick up the whole pile on this corner and return its size.
+function takePile(k) {
+  let n = 0;
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+    n++;
+  }
+  return n;
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  let tally = new Array(4).fill(0);  // tally[size]: piles of that size seen so far
+
+  // Sweep the three rows in a zigzag, tallying every pile.
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      let size = takePile(k);
+      tally[size] = tally[size] + 1;
+      if (col < 2) {
+        k.move();
+      }
+    }
+    if (row % 2 === 0) {
+      k.turnLeft();
+      k.move();
+      k.turnLeft();
+    } else {
+      turnRight(k);
+      k.move();
+      turnRight(k);
+    }
+  }
+
+  // Karel is on the top row at avenue 3, facing west: draw the chart.
+  for (let size = 3; size >= 1; size--) {
+    for (let b = 0; b < tally[size]; b++) {
       k.putBeeper();
     }
+    if (size > 1) {
+      k.move();
+    }
+  }
+}` },
+
+      { md: `<h3>Challenge · Rotate the ring</h3>
+      <p>The eight outer corners of this 3×3 room are painted, a different color each. Rotate the ring
+      <strong>one step counter-clockwise</strong>: every color moves to the next corner along Karel's walk
+      (east along the bottom, north up the east side, west along the top, south down the west side), and
+      the color on the last corner wraps around to <strong>(1, 1)</strong>. The center stays unpainted.</p>
+      <p>Painting a corner wipes out the color that was there, so Karel can't do this one corner at a time.
+      Make one lap to <em>record</em> all eight colors into a fixed-size array, then a second lap to
+      <em>repaint</em> them shifted.</p>` },
+      { world: `Dimension: (3, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (1, 1); Red
+Color: (2, 1); Orange
+Color: (3, 1); Yellow
+Color: (3, 2); Green
+Color: (3, 3); Blue
+Color: (2, 3); Cyan
+Color: (1, 3); Magenta
+Color: (1, 2); Pink`,
+        prompt: `Lap one: for <code>i</code> from 0 to 7, store <code>colors[i] = readColor(k)</code>, then
+        <code>step(k)</code>. Lap two: corner <code>i</code> gets the color that was on corner
+        <code>i - 1</code>, and corner 0 gets <code>colors[7]</code>. (<code>(i + 7) % 8</code> does both in
+        one expression.) Corners should end (2,1) Red, (3,1) Orange, …, (1,1) Pink.`,
+        starter: `// Return the name of this corner's color.
+function readColor(k) {
+  let candidates = ["Red", "Orange", "Yellow", "Green", "Blue", "Cyan", "Magenta", "Pink"];
+  for (let i = 0; i < candidates.length; i++) {
+    if (k.cornerColorIs(candidates[i])) {
+      return candidates[i];
+    }
+  }
+  return "";
+}
+
+// Move to the next corner of the ring, turning left at each wall.
+function step(k) {
+  if (!k.frontIsClear()) {
+    k.turnLeft();
+  }
+  k.move();
+}
+
+function main(k) {
+  let colors = new Array(8);
+  // lap one: record colors[i] for every corner
+
+  // lap two: repaint every corner, shifted one step
+}`,
+        check: ["colors"],
+        solution: function main(k) {
+          function readColor() {
+            let candidates = ["Red", "Orange", "Yellow", "Green", "Blue", "Cyan", "Magenta", "Pink"];
+            for (let i = 0; i < candidates.length; i++) {
+              if (k.cornerColorIs(candidates[i])) {
+                return candidates[i];
+              }
+            }
+            return "";
+          }
+          function step() {
+            if (!k.frontIsClear()) {
+              k.turnLeft();
+            }
+            k.move();
+          }
+          let colors = new Array(8);
+          for (let i = 0; i < 8; i++) {
+            colors[i] = readColor();
+            step();
+          }
+          for (let i = 0; i < 8; i++) {
+            k.paintCorner(colors[(i + 7) % 8]);
+            step();
+          }
+        } },
+
+      // ─── Array operations: push, pop, length ───
+
+      { md: `<h2>Arrays that grow and shrink</h2>
+      <p>A fixed size works when you know the size ahead of time. Often you don't: a row is as long as the
+      world is wide, and Karel only finds out by walking it. So arrays can change size as the program
+      runs:</p>
+      <pre class="code">let a = [];        // []          length 0
+a.push(3);         // [3]         length 1
+a.push(1);         // [3, 1]      length 2
+a.push(4);         // [3, 1, 4]   length 3
+let last = a.pop();  // last is 4,  a is [3, 1]
+a.length           // 2</pre>
+      <ul>
+        <li><code>push(value)</code> adds <code>value</code> to the <strong>end</strong>, making the array one
+        longer.</li>
+        <li><code>pop()</code> removes the <strong>last</strong> element and <em>returns</em> it, making the
+        array one shorter.</li>
+        <li><code>length</code> is always the current number of elements. It's a property, not a method, so
+        there are no parentheses.</li>
+      </ul>
+      <p>Start with <code>[]</code> and <code>push</code> as you discover things; the array ends up exactly
+      as long as it needs to be.</p>` },
+
+      { md: `<h3>Example · Turn a row into a column</h3>
+      <p><strong>Problem.</strong> The bottom row holds a pile on every corner, and Karel doesn't know how
+      wide the world is. Move the piles into the <em>west column</em>: the first pile goes on (1, 2), the
+      second on (1, 3), and so on up.</p>
+      <p>Karel collects every pile walking east and has to carry all of them back to avenue 1, keeping their
+      order. Each <code>takePile</code> result is <code>push</code>ed, so <code>piles</code> grows to fit
+      however many corners there turn out to be.</p>
+      <div class="callout"><strong>Looping without an index: <code>for…of</code></strong>
+      When you need each <em>value</em> in order but not its position, <code>for (let n of piles)</code> hands
+      you the elements one at a time: first <code>piles[0]</code>, then <code>piles[1]</code>, and so on. It
+      does the same thing as an index loop over <code>piles.length</code>, without the counter.</div>` },
+      { world: `Dimension: (5, 6)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 3
+Beeper: (2, 1); 1
+Beeper: (3, 1); 4
+Beeper: (4, 1); 1
+Beeper: (5, 1); 5`, code: `// Pick up the whole pile on this corner and return its size.
+function takePile(k) {
+  let n = 0;
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+    n++;
+  }
+  return n;
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  let piles = [];
+  piles.push(takePile(k));
+  while (k.frontIsClear()) {
+    k.move();
+    piles.push(takePile(k));
+  }
+  // piles is now [3, 1, 4, 1, 5], however wide the row was
+
+  turnAround(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);  // facing north up avenue 1
+
+  for (let n of piles) {
+    k.move();
+    for (let b = 0; b < n; b++) {
+      k.putBeeper();
+    }
+  }
+}` },
+
+      { md: `<h3>Example · Flip the flagpole</h3>
+      <p><strong>Problem.</strong> A pole of colored stripes runs up the middle column, any height. Turn it
+      <em>upside down</em> in place: the top stripe ends at the bottom, the bottom stripe at the top.</p>
+      <p>This is where <code>pop</code> shines. Karel climbs once, <code>push</code>ing every stripe, so the
+      <em>top</em> color ends up last in the array. Back at the bottom, each <code>pop()</code> hands out the
+      most recently pushed color first, which is exactly the reversed order. The loop runs
+      <code>while (stripes.length > 0)</code>: every pop shortens the array, so it stops when every color has
+      been used. A list you only add to and take from at the end is called a <strong>stack</strong>, like a
+      stack of plates.</p>` },
+      { world: `Dimension: (3, 5)
+Karel: (2, 1); north
+BeeperBag: INFINITY
+Color: (2, 1); Red
+Color: (2, 2); Orange
+Color: (2, 3); Yellow
+Color: (2, 4); Green
+Color: (2, 5); Blue`, code: `// Return the name of this corner's color.
+function readColor(k) {
+  let candidates = ["Red", "Orange", "Yellow", "Green", "Blue"];
+  for (let i = 0; i < candidates.length; i++) {
+    if (k.cornerColorIs(candidates[i])) {
+      return candidates[i];
+    }
+  }
+  return "";
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  // Climb the pole, remembering every stripe.
+  let stripes = [];
+  stripes.push(readColor(k));
+  while (k.frontIsClear()) {
+    k.move();
+    stripes.push(readColor(k));
+  }
+
+  // Back down to the bottom, facing up again.
+  turnAround(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnAround(k);
+
+  // Climb again, painting the colors back in reverse.
+  while (stripes.length > 0) {
+    k.paintCorner(stripes.pop());
     if (k.frontIsClear()) {
       k.move();
     }
   }
 }` },
 
-      { md: `<h3>Challenge · Paint the palette</h3>
-      <p>Karel faces <strong>east</strong> in a four-wide room. The array
-      <code>["Red", "Blue", "Green", "Yellow"]</code> is a palette, one color per corner. Walk the row and
-      paint each corner the color at that index.</p>` },
-      { world: `Dimension: (4, 1)
+      { md: `<h3>Challenge · Fold the row</h3>
+      <p>The bottom row holds piles (some may be empty), and its width is <strong>even</strong>. Fold the
+      row in half like a sheet of paper: the first and last piles land together, the second and
+      second-to-last land together, and so on. Each pair's <strong>sum</strong> goes on row 2, starting at
+      avenue 1. In this 6-wide world, piles <code>[1, 4, 2, 3, 0, 2]</code> become 3, 4, 5 on
+      (1, 2), (2, 2), and (3, 2). The bottom row ends empty.</p>` },
+      { world: `Dimension: (6, 2)
 Karel: (1, 1); east
-BeeperBag: INFINITY`,
-        prompt: `Loop <code>i</code> from 0 to <code>palette.length</code>. Paint the current corner with
-        <code>palette[i]</code>, then move on while the front is clear. Corners should end Red, Blue, Green,
-        Yellow.`,
-        starter: `function main(k) {
-  let palette = ["Red", "Blue", "Green", "Yellow"];
-  for (let i = 0; i < palette.length; i++) {
-    // paint this corner with palette[i]
-    if (k.frontIsClear()) {
-      k.move();
-    }
+BeeperBag: INFINITY
+Beeper: (1, 1); 1
+Beeper: (2, 1); 4
+Beeper: (3, 1); 2
+Beeper: (4, 1); 3
+Beeper: (6, 1); 2`,
+        prompt: `Don't hard-code the width. Collect the row with <code>push</code>, then get back to (1, 2)
+        facing east. One way to pair the piles: keep a front index <code>i</code> starting at 0, and on each
+        corner put <code>piles[i] + piles.pop()</code> beepers, then <code>i++</code>, looping while
+        <code>i &lt; piles.length</code>. (Can you see why that stops at the middle?) An index loop up to
+        <code>piles.length / 2</code> using <code>piles[piles.length - 1 - i]</code> works too.`,
+        starter: `// Pick up the whole pile on this corner and return its size.
+function takePile(k) {
+  let n = 0;
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+    n++;
   }
+  return n;
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  let piles = [];
+  // 1. collect the row into piles
+
+  // 2. get to (1, 2) facing east
+
+  // 3. put each pair's sum on row 2
 }`,
-        check: ["colors"],
-        end: { avenue: 4, street: 1, direction: "east" },
+        check: ["beepers"],
         solution: function main(k) {
-          let palette = ["Red", "Blue", "Green", "Yellow"];
-          for (let i = 0; i < palette.length; i++) {
-            k.paintCorner(palette[i]);
+          function takePile() {
+            let n = 0;
+            while (k.beepersPresent()) {
+              k.pickBeeper();
+              n++;
+            }
+            return n;
+          }
+          let piles = [];
+          piles.push(takePile());
+          while (k.frontIsClear()) {
+            k.move();
+            piles.push(takePile());
+          }
+          k.turnLeft();
+          k.turnLeft();
+          while (k.frontIsClear()) {
+            k.move();
+          }
+          k.turnLeft();
+          k.turnLeft();
+          k.turnLeft();
+          k.move();
+          k.turnLeft();
+          k.turnLeft();
+          k.turnLeft();
+          let i = 0;
+          while (i < piles.length) {
+            let sum = piles[i] + piles.pop();
+            for (let b = 0; b < sum; b++) {
+              k.putBeeper();
+            }
+            i++;
             if (k.frontIsClear()) {
               k.move();
             }
           }
         } },
 
-      { md: `<h2>A cleaner loop: <code>for…of</code></h2>
-      <p>When you don't need the index — just each value in turn — <code>for (let x of array)</code> reads
-      better. It hands you the elements one at a time, no counter to manage. Same bar chart as before, written
-      more directly:</p>` },
-      { world: `Dimension: (4, 1)
+      // ─── Two-dimensional arrays ───
+
+      { md: `<h2>Arrays of arrays: a grid in memory</h2>
+      <p>An array's elements can be anything, including other arrays. An array of rows, where each row is
+      itself an array, is a <strong>two-dimensional array</strong>: a grid, just like Karel's world.</p>
+      <pre class="code">let grid = [
+  [1, 0, 2],    // grid[0]
+  [0, 3, 0],    // grid[1]
+];
+
+grid[1]          // [0, 3, 0]   a whole row
+grid[1][1]       // 3           row 1, then column 1 of that row
+grid.length      // 2           number of rows
+grid[0].length   // 3           number of columns
+grid[0][2] = 5;  // assign one cell, same as any other slot</pre>
+      <p>Read <code>grid[r][c]</code> left to right: first pick row <code>r</code>, then pick column
+      <code>c</code> inside it. A nested loop visits every cell, the outer loop over rows and the inner loop
+      over the columns of that row.</p>
+      <div class="callout"><strong>Which way is up?</strong>
+      Rows written in a literal read top to bottom on the page, but Karel's streets count <em>up</em> from
+      the bottom. Pick one convention per program and say it in a comment. Below, the picture is written the
+      way it looks, so its <em>last</em> row goes on street 1.</div>` },
+
+      { md: `<h3>Example · Paint a picture from a grid</h3>
+      <p><strong>Problem.</strong> Paint the 5×5 heart below onto Karel's world, pixel for pixel.</p>
+      <p>Spelling this out as moves and <code>paintCorner</code> calls would take dozens of lines, and a new
+      picture would mean rewriting all of them. Store the picture as a 2D array of color codes and the
+      program becomes a loop over cells; to paint a different picture you only change the data. Code 0 means
+      "leave it blank," and <code>palette</code> turns every other code into a color, the lookup-table trick
+      from earlier, now in two dimensions.</p>` },
+      { world: `Dimension: (5, 5)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: `function main(k) {
-  let heights = [1, 2, 3, 4];
-  for (let h of heights) {
-    for (let b = 0; b < h; b++) {
-      k.putBeeper();
+BeeperBag: INFINITY`, code: `function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// Go back to the west wall and up one street, if there is one, facing east.
+function startNextRow(k) {
+  turnAround(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+  if (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+}
+
+function main(k) {
+  let palette = ["", "Red", "Pink"];
+  let picture = [          // written the way it looks: picture[0] is the TOP row
+    [0, 1, 0, 1, 0],
+    [1, 2, 1, 1, 1],
+    [1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 0],
+    [0, 0, 1, 0, 0],
+  ];
+
+  // Karel starts on street 1, the picture's LAST row, so walk the rows backward.
+  for (let r = picture.length - 1; r >= 0; r--) {
+    for (let c = 0; c < picture[r].length; c++) {
+      let code = picture[r][c];
+      if (code > 0) {
+        k.paintCorner(palette[code]);
+      }
+      if (k.frontIsClear()) {
+        k.move();
+      }
     }
-    if (k.frontIsClear()) {
+    startNextRow(k);
+  }
+}` },
+
+      { md: `<h3>Example · Turn the field upside down</h3>
+      <p><strong>Problem.</strong> A field of beeper piles fills the world. Flip it top-to-bottom: the
+      bottom row's piles move to the top row, the top row's to the bottom, and every pile keeps its
+      avenue.</p>
+      <p>Every row has to move, and the first row Karel reaches is the last one it can rebuild, so the whole
+      field must be held in memory at once. Karel reads one row at a time into a <code>row</code> array,
+      then <code>push</code>es that row onto <code>grid</code>, building a 2D array one row at a time. To
+      rebuild, <code>grid.pop()</code> hands back the rows in reverse: the top row comes off first and goes
+      on street 1. It's the flagpole trick again, with whole rows as the stack's items.</p>` },
+      { world: `Dimension: (4, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Beeper: (1, 1); 3
+Beeper: (2, 1); 1
+Beeper: (2, 2); 2
+Beeper: (3, 2); 1
+Beeper: (4, 3); 1`, code: `// Pick up the whole pile on this corner and return its size.
+function takePile(k) {
+  let n = 0;
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+    n++;
+  }
+  return n;
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// Go back to the west wall and up one street, if there is one, facing east.
+function startNextRow(k) {
+  turnAround(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+  if (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+}
+
+function main(k) {
+  // Read the field bottom to top. grid[0] is street 1.
+  let grid = [];
+  let more = true;
+  while (more) {
+    let row = [];
+    row.push(takePile(k));
+    while (k.frontIsClear()) {
       k.move();
+      row.push(takePile(k));
     }
+    grid.push(row);
+    more = k.leftIsClear();  // is there a street above?
+    startNextRow(k);
+  }
+
+  // Back down to (1, 1), facing east.
+  turnRight(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+
+  // Rebuild: the last row read (the top) comes off first and goes on street 1.
+  while (grid.length > 0) {
+    let row = grid.pop();
+    for (let c = 0; c < row.length; c++) {
+      for (let b = 0; b < row[c]; b++) {
+        k.putBeeper();
+      }
+      if (k.frontIsClear()) {
+        k.move();
+      }
+    }
+    startNextRow(k);
   }
 }` },
 
-      { md: `<h2>Growing an array with <code>push</code></h2>
-      <p>Arrays don't have to be written out in full — you can start empty and <strong>build one up</strong>
-      with <code>.push(value)</code>, which adds to the end. That lets a program <em>plan</em>: assemble a list
-      of actions first, then carry them out. Below we push three actions, then run the list with
-      <code>for…of</code>.</p>` },
-      { world: `Dimension: (3, 1)
+      { md: `<h3>Challenge · Minesweeper hints</h3>
+      <p>Each beeper in this 4×4 world is a <strong>mine</strong>. Paint every corner that is
+      <em>next to</em> a mine (directly north, south, east, or west of it) <strong>Yellow</strong>. Don't
+      paint the mines themselves, and leave the beepers where they are.</p>
+      <p>When Karel is on a corner it can see only that corner, not its neighbors. So make two passes: the
+      first records the whole field into a 2D array <code>mines</code>, where <code>mines[r][c]</code> is
+      <code>true</code> if street <code>r + 1</code>, avenue <code>c + 1</code> has a beeper; the second pass
+      paints using the array.</p>` },
+      { world: `Dimension: (4, 4)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: `function main(k) {
-  let plan = [];
-  plan.push("move");
-  plan.push("move");
-  plan.push("beeper");
-  for (let action of plan) {
-    if (action === "move") k.move();
-    if (action === "beeper") k.putBeeper();
-  }
-}` },
+BeeperBag: INFINITY
+Beeper: (2, 2); 1
+Beeper: (4, 1); 1
+Beeper: (4, 4); 1`,
+        prompt: `The helpers are written for you. <code>nextCorner(k)</code> walks the grid row by row, west to
+        east and bottom to top, returning <code>false</code> after the last corner. <code>goHome(k)</code>
+        returns to (1, 1) facing east. <code>isMine(mines, r, c)</code> safely answers <code>false</code>
+        for cells outside the grid. Pass one: build each row with <code>push</code>, then push the row onto
+        <code>mines</code>. Pass two: at row <code>r</code>, column <code>c</code>, paint Yellow if the
+        corner isn't a mine but one of <code>(r+1, c)</code>, <code>(r-1, c)</code>, <code>(r, c+1)</code>,
+        <code>(r, c-1)</code> is.`,
+        starter: `function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
 
-      { md: `<h3>Challenge · Plot the data</h3>
-      <p>Karel faces <strong>east</strong> in a five-wide room with an infinite bag. Given the data array
-      <code>[3, 1, 4, 1, 5]</code>, build a bar chart: drop that many beepers on each corner, left to right.
-      Corner 1 gets 3, corner 2 gets 1, corner 3 gets 4, and so on.</p>` },
-      { world: `Dimension: (5, 1)
-Karel: (1, 1); east
-BeeperBag: INFINITY`,
-        prompt: `Loop over <code>data</code>. At each corner drop that element's number of beepers with an
-        inner loop, then move on while the front is clear. Piles should read 3, 1, 4, 1, 5.`,
-        starter: `function main(k) {
-  let data = [3, 1, 4, 1, 5];
-  for (let n of data) {
-    // drop n beepers here, then move on
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// Step to the next corner: west to east along a row, then up to the next row.
+// Returns false (facing east on the top row's west end) when no corners are left.
+function nextCorner(k) {
+  if (k.frontIsClear()) {
+    k.move();
+    return true;
   }
+  turnAround(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+  if (!k.frontIsClear()) {
+    turnRight(k);
+    return false;
+  }
+  k.move();
+  turnRight(k);
+  return true;
+}
+
+// From anywhere on the west wall facing east, return to (1, 1) facing east.
+function goHome(k) {
+  turnRight(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+}
+
+// true if row r, column c is a mine; false if it isn't or is off the grid.
+function isMine(mines, r, c) {
+  if (r < 0 || r >= mines.length) {
+    return false;
+  }
+  if (c < 0 || c >= mines[r].length) {
+    return false;
+  }
+  return mines[r][c];
+}
+
+function main(k) {
+  let mines = [];
+  // pass one: 4 rows of 4 corners, record k.beepersPresent() for each
+
+  goHome(k);
+  // pass two: visit every corner again and paint the hints
 }`,
-        check: ["beepers"],
-        end: { avenue: 5, street: 1, direction: "east" },
+        check: ["colors", "beepers"],
         solution: function main(k) {
-          let data = [3, 1, 4, 1, 5];
-          for (let n of data) {
-            for (let b = 0; b < n; b++) {
-              k.putBeeper();
-            }
+          function turnRight() {
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+          }
+          function nextCorner() {
             if (k.frontIsClear()) {
               k.move();
+              return true;
+            }
+            k.turnLeft();
+            k.turnLeft();
+            while (k.frontIsClear()) {
+              k.move();
+            }
+            turnRight();
+            if (!k.frontIsClear()) {
+              turnRight();
+              return false;
+            }
+            k.move();
+            turnRight();
+            return true;
+          }
+          function isMine(mines, r, c) {
+            if (r < 0 || r >= mines.length) return false;
+            if (c < 0 || c >= mines[r].length) return false;
+            return mines[r][c];
+          }
+          let mines = [];
+          for (let r = 0; r < 4; r++) {
+            let row = [];
+            for (let c = 0; c < 4; c++) {
+              row.push(k.beepersPresent());
+              nextCorner();
+            }
+            mines.push(row);
+          }
+          turnRight();
+          while (k.frontIsClear()) {
+            k.move();
+          }
+          k.turnLeft();
+          for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+              let near = isMine(mines, r + 1, c) || isMine(mines, r - 1, c) ||
+                isMine(mines, r, c + 1) || isMine(mines, r, c - 1);
+              if (!mines[r][c] && near) {
+                k.paintCorner("Yellow");
+              }
+              nextCorner();
             }
           }
         } },
 
       { md: `<div class="callout tip"><strong>You learned</strong>
-      An array is an ordered list written with <code>[…]</code> and indexed from 0. <code>.length</code>
-      counts the slots; a <code>for</code> loop with an index or a <code>for…of</code> loop visits each
-      element. <code>.push()</code> grows an array so a program can build a plan before executing it. Arrays
-      turn "do this to a whole list of things" into a few clean lines.</div>` },
+      An array is an ordered list written with <code>[…]</code> and indexed from 0. Read a slot with
+      <code>a[i]</code> and assign one with <code>a[i] = value</code>; <code>new Array(n).fill(v)</code> makes
+      a fixed-size array ready to fill. When the size isn't known ahead of time, start from <code>[]</code>
+      and <code>push</code>; <code>pop</code> takes the last element back off, which reverses order;
+      <code>length</code> always says how many elements there are. An array of arrays is a grid, read as
+      <code>grid[row][col]</code>. Together they give Karel a memory: record now, use the data later,
+      somewhere else, in whatever order the problem needs.</div>` },
     ];
 
     renderNotebook(cells, undefined, { isolate: true });
