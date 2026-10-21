@@ -10,168 +10,914 @@
   <header class="course">
     <div class="crumb">Learning JavaScript with Karel · Lesson 14 of 18</div>
     <h1>14 · Objects</h1>
-    <p class="lead">Group related values under named keys — a record that keeps a thing's details together.</p>
+    <p class="lead">Bundle the facts about one thing under names: records you can pass around, return, collect into lists, and nest inside each other.</p>
   </header>
 
-  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-14">✏️ Practice this lesson → Assignment 14 (3 problems)</a></p>
+  <p class="assign-cta"><a href="../assignments/assignment.html?id=lesson-14">✏️ Practice this lesson → Assignment 14 (4 problems)</a></p>
   <main id="notebook"></main>
 
   <script type="module">
     import { renderNotebook } from "./lesson.js";
 
     const cells = [
-      { md: `<h2>Values that belong together</h2>
-      <p>An array lists values by <em>position</em>. An <strong>object</strong> lists them by
-      <em>name</em>. It bundles related facts about one thing into a single value, written with curly braces
-      and <code>key: value</code> pairs:</p>
-      <div class="callout"><strong>Anatomy of an object</strong>
-      <code>let spot = { color: "Red", beepers: 2 };</code><br>
-      The <em>keys</em> are <code>color</code> and <code>beepers</code>; the <em>values</em> are
-      <code>"Red"</code> and <code>2</code>. You read a value with a dot: <code>spot.color</code> is
-      <code>"Red"</code>, <code>spot.beepers</code> is <code>2</code>.</div>
-      <p>Where an array is "a list of things," an object is "one thing with several labelled parts."</p>` },
+      // ─── Intro: what an object is, creating one, reading and writing fields ───
 
-      { md: `<h2>The smallest use: one record</h2>
-      <p>Here a single object describes what to do at one corner: paint it green and drop two beepers. We read
-      each field by name and act on it. Everything about this corner travels together in one tidy value.</p>` },
-      { world: `Dimension: (1, 1)
+      { md: `<h2>Which number was which?</h2>
+      <p>An array is perfect when every slot means the same kind of thing: a row of pile sizes, a pole of
+      colors. But often the values you need to keep together mean <em>different</em> things. A flag has an
+      avenue, a height, and a color. You could put them in an array:</p>
+      <pre class="code">let flag = [3, 4, "Red"];   // flag[0] is... the avenue? the height?</pre>
+      <p>and then spend the rest of the program remembering that slot 0 is the avenue and slot 1 is the
+      height. Mix them up and Karel plants a flag four tall on avenue 3 instead of three tall on avenue 4,
+      with no error to warn you.</p>
+      <p>An <strong>object</strong> fixes this by giving every value a <em>name</em> instead of a position.
+      It's written with curly braces and <code>key: value</code> pairs:</p>
+      <pre class="code">let flag = { avenue: 3, height: 4, color: "Red" };</pre>
+      <p>You read a value with a dot and its key:</p>
+      <pre class="code">flag.avenue          // 3
+flag.color           // "Red"
+flag.width           // undefined: there is no "width" key
+flag.height = 5;     // change a field:  { avenue: 3, height: 5, color: "Red" }
+flag.height++;       //                  { avenue: 3, height: 6, color: "Red" }
+flag.planted = true; // add a new field: { avenue: 3, height: 6, color: "Red", planted: true }</pre>
+      <div class="callout"><strong>Keys, values, fields</strong>
+      In <code>{ avenue: 3, height: 4 }</code>, <code>avenue</code> and <code>height</code> are the
+      <em>keys</em> and <code>3</code> and <code>4</code> are their <em>values</em>. A key and its value
+      together are a <strong>field</strong> (you'll also hear <em>property</em>). The order you write them in
+      doesn't matter: an object is looked up by name, never by position.</div>` },
+
+      { md: `<h2>One argument instead of five</h2>
+      <p><strong>Problem.</strong> Paint a flag: a gray pole three corners west of a red banner. Both are
+      rectangles, so one helper should paint either one.</p>
+      <p>A rectangle needs five facts: where its south-west corner is (avenue and street), how wide and how
+      tall it is, and its color. With five plain parameters every call looks like
+      <code>paintRect(k, 3, 3, 3, 2, "Red")</code>, and nothing on that line tells you which 3 is which.
+      Hand the helper one <em>object</em> instead and every value arrives labelled: inside,
+      <code>rect.width</code> can't be confused with <code>rect.height</code>.</p>
+      <p>Notice <code>goTo(k, rect)</code>. <code>goTo</code> only reads <code>.avenue</code> and
+      <code>.street</code>, so <em>any</em> object with those two fields is a place it can go, and it
+      ignores the rest.</p>` },
+      { world: `Dimension: (6, 5)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: `function main(k) {
-  let spot = { color: "Green", beepers: 2 };
-  k.paintCorner(spot.color);
-  for (let i = 0; i < spot.beepers; i++) {
-    k.putBeeper();
+BeeperBag: INFINITY`, code: `function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// From (1, 1) facing east, walk to (spot.avenue, spot.street), ending facing east.
+function goTo(k, spot) {
+  for (let i = 1; i < spot.avenue; i++) {
+    k.move();
   }
+  k.turnLeft();
+  for (let i = 1; i < spot.street; i++) {
+    k.move();
+  }
+  turnRight(k);
+}
+
+// From anywhere, facing any way, return to (1, 1) facing east.
+function goHome(k) {
+  while (!k.facingWest()) {
+    k.turnLeft();
+  }
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+}
+
+// Paint rect.width by rect.height corners in rect.color, then go home.
+function paintRect(k, rect) {
+  goTo(k, rect);
+  for (let row = 0; row < rect.height; row++) {
+    for (let c = 0; c < rect.width; c++) {
+      k.paintCorner(rect.color);
+      if (c < rect.width - 1) {
+        k.move();
+      }
+    }
+    // Back to the row's west end, then up one street, facing east.
+    turnAround(k);
+    for (let c = 1; c < rect.width; c++) {
+      k.move();
+    }
+    turnRight(k);
+    if (row < rect.height - 1) {
+      k.move();
+    }
+    turnRight(k);
+  }
+  goHome(k);
+}
+
+function main(k) {
+  let pole   = { avenue: 2, street: 1, width: 1, height: 5, color: "Gray" };
+  let banner = { avenue: 3, street: 3, width: 3, height: 2, color: "Red" };
+  paintRect(k, pole);
+  paintRect(k, banner);
 }` },
 
-      { md: `<h2>Reading and updating fields</h2>
-      <p>Dot notation both reads and writes. <code>robot.dropped</code> reads the value;
-      <code>robot.dropped = robot.dropped + 1</code> stores a new one. An object makes a fine little
-      <strong>scoreboard</strong> — a bundle of counters a program keeps as it works. Below, Karel plants a
-      row and tallies its progress in one object.</p>` },
-      { world: `Dimension: (4, 1)
+      { md: `<h2>Returning several answers at once</h2>
+      <p>A function can <code>return</code> only one value. When you need it to report several things, make
+      that one value an object.</p>
+      <p><strong>Problem.</strong> The bottom row holds piles, some of them empty. Without disturbing them,
+      build a report on street 2: on (1, 2) one beeper per non-empty pile, on (2, 2) the total number of
+      beepers, and on (3, 2) the size of the biggest pile.</p>
+      <p><code>survey</code> starts a <code>report</code> object with every count at 0 and updates its fields
+      as it walks: <code>report.piles++</code> and <code>report.beepers = report.beepers + n</code> work on a
+      field exactly the way they work on a variable. At the end it hands back all three counts in one
+      <code>return</code>, and <code>main</code> reads them out by name.</p>` },
+      { world: `Dimension: (6, 2)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: `function main(k) {
-  let robot = { dropped: 0 };
-  for (let i = 0; i < 4; i++) {
+BeeperBag: INFINITY
+Beeper: (2, 1); 2
+Beeper: (3, 1); 3
+Beeper: (4, 1); 1
+Beeper: (6, 1); 4`, code: `// Count the pile on this corner, then put it back as it was.
+function countPile(k) {
+  let n = 0;
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+    n++;
+  }
+  for (let i = 0; i < n; i++) {
     k.putBeeper();
-    robot.dropped = robot.dropped + 1;
-    if (k.frontIsClear()) {
+  }
+  return n;
+}
+
+function putMany(k, n) {
+  for (let i = 0; i < n; i++) {
+    k.putBeeper();
+  }
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// Walk the row east and describe it. Ends at the east wall.
+function survey(k) {
+  let report = { piles: 0, beepers: 0, biggest: 0 };
+  let more = true;
+  while (more) {
+    let n = countPile(k);
+    if (n > 0) {
+      report.piles++;
+      report.beepers = report.beepers + n;
+    }
+    if (n > report.biggest) {
+      report.biggest = n;
+    }
+    more = k.frontIsClear();
+    if (more) {
       k.move();
     }
   }
-  // robot.dropped is now 4
+  return report;
+}
+
+function main(k) {
+  let report = survey(k);  // { piles: 4, beepers: 10, biggest: 4 }
+
+  // Back to the west wall, then up to street 2 facing east.
+  turnAround(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+  k.move();
+  turnRight(k);
+
+  putMany(k, report.piles);
+  k.move();
+  putMany(k, report.beepers);
+  k.move();
+  putMany(k, report.biggest);
 }` },
+
+      { md: `<h3>Challenge · Mark the center</h3>
+      <p>Karel is in the south-west corner of a room whose width and height are both <strong>odd</strong>,
+      but Karel doesn't know what they are. Put one beeper on the room's <strong>center</strong> corner.
+      In this 7×5 room that's (4, 3).</p>
+      <p>Finish <code>measureRoom</code> so it walks to the walls and back and returns the size as one object,
+      <code>{ width, height }</code>. Then use it to describe the center as another object,
+      <code>{ avenue, street }</code>, and hand that to <code>goTo</code>.</p>` },
+      { world: `Dimension: (7, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`,
+        prompt: `In <code>measureRoom</code>: walk east to the wall adding 1 to <code>size.width</code> for every
+        move, then turn left and do the same northward for <code>size.height</code>, then
+        <code>goHome(k)</code>. In <code>main</code>, a room 7 wide has its middle at avenue
+        <code>Math.floor(7 / 2) + 1</code>, which is 4. Build
+        <code>let center = { avenue: …, street: … };</code> from <code>size</code>, then
+        <code>goTo(k, center)</code> and put the beeper. Don't type 7 or 5 anywhere.`,
+        starter: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// From (1, 1) facing east, walk to (spot.avenue, spot.street), ending facing east.
+function goTo(k, spot) {
+  for (let i = 1; i < spot.avenue; i++) {
+    k.move();
+  }
+  k.turnLeft();
+  for (let i = 1; i < spot.street; i++) {
+    k.move();
+  }
+  turnRight(k);
+}
+
+// From anywhere, facing any way, return to (1, 1) facing east.
+function goHome(k) {
+  while (!k.facingWest()) {
+    k.turnLeft();
+  }
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+}
+
+// From (1, 1) facing east, measure the room and come back.
+// Returns { width, height }.
+function measureRoom(k) {
+  let size = { width: 1, height: 1 };
+  // walk east counting size.width, then north counting size.height, then go home
+
+  return size;
+}
+
+function main(k) {
+  let size = measureRoom(k);
+  // build center = { avenue, street } from size, go there, put a beeper
+}`,
+        check: ["beepers"],
+        solution: function main(k) {
+          function turnRight() {
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+          }
+          function goTo(spot) {
+            for (let i = 1; i < spot.avenue; i++) k.move();
+            k.turnLeft();
+            for (let i = 1; i < spot.street; i++) k.move();
+            turnRight();
+          }
+          function goHome() {
+            while (!k.facingWest()) k.turnLeft();
+            while (k.frontIsClear()) k.move();
+            k.turnLeft();
+            while (k.frontIsClear()) k.move();
+            k.turnLeft();
+          }
+          let size = { width: 1, height: 1 };
+          while (k.frontIsClear()) {
+            k.move();
+            size.width++;
+          }
+          k.turnLeft();
+          while (k.frontIsClear()) {
+            k.move();
+            size.height++;
+          }
+          goHome();
+          let center = {
+            avenue: Math.floor(size.width / 2) + 1,
+            street: Math.floor(size.height / 2) + 1,
+          };
+          goTo(center);
+          k.putBeeper();
+        } },
+
+      // ─── Arrays of objects ───
 
       { md: `<h2>A list of records</h2>
       <p>Objects and arrays combine into the shape you'll reach for constantly: an <strong>array of
-      objects</strong>. Each element is a record, so a whole plan reads almost like a table. This
-      <code>plan</code> says corner by corner what color to paint and how many beepers to drop.</p>` },
-      { world: `Dimension: (3, 1)
+      objects</strong>. Each element is a record with the same keys, so the whole list reads like a
+      table, where every object is a row and every key is a column:</p>
+      <pre class="code">let orders = [
+  { avenue: 2, street: 3, count: 1 },   // orders[0]
+  { avenue: 5, street: 1, count: 3 },   // orders[1]
+];
+
+orders[1]          // { avenue: 5, street: 1, count: 3 }   a whole record
+orders[1].count    // 3      record 1, then its count field
+orders.length      // 2
+orders.push({ avenue: 4, street: 4, count: 2 });   // add a record to the end</pre>
+      <p>Read <code>orders[1].count</code> left to right, the same way you read <code>grid[r][c]</code>:
+      first pick record 1, then pick the <code>count</code> field inside it. And <code>for…of</code> hands
+      you one whole record at a time: <code>for (let order of orders)</code>.</p>` },
+
+      { md: `<h3>Example · Make the deliveries</h3>
+      <p><strong>Problem.</strong> Karel has a list of orders: each one says which corner to visit and how
+      many beepers to leave there. Deliver them all, returning home between trips.</p>
+      <p>Each order keeps its address and its count together, so they can never get out of step. And since
+      every order has <code>.avenue</code> and <code>.street</code> fields, the order itself is a spot
+      <code>goTo</code> can travel to. To take a new order, add one line to the list; the loop doesn't
+      change.</p>` },
+      { world: `Dimension: (5, 4)
 Karel: (1, 1); east
-BeeperBag: INFINITY`, code: `function main(k) {
-  let plan = [
-    { color: "Red",   beepers: 1 },
-    { color: "Blue",  beepers: 2 },
-    { color: "Green", beepers: 0 },
+BeeperBag: INFINITY`, code: `function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// From (1, 1) facing east, walk to (spot.avenue, spot.street), ending facing east.
+function goTo(k, spot) {
+  for (let i = 1; i < spot.avenue; i++) {
+    k.move();
+  }
+  k.turnLeft();
+  for (let i = 1; i < spot.street; i++) {
+    k.move();
+  }
+  turnRight(k);
+}
+
+// From anywhere, facing any way, return to (1, 1) facing east.
+function goHome(k) {
+  while (!k.facingWest()) {
+    k.turnLeft();
+  }
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+}
+
+function deliver(k, order) {
+  goTo(k, order);
+  for (let i = 0; i < order.count; i++) {
+    k.putBeeper();
+  }
+  goHome(k);
+}
+
+function main(k) {
+  let orders = [
+    { avenue: 2, street: 3, count: 1 },
+    { avenue: 5, street: 1, count: 3 },
+    { avenue: 4, street: 4, count: 2 },
+    { avenue: 1, street: 2, count: 4 },
   ];
-  for (let step of plan) {
-    k.paintCorner(step.color);
-    for (let i = 0; i < step.beepers; i++) {
-      k.putBeeper();
-    }
-    if (k.frontIsClear()) {
-      k.move();
-    }
+  for (let order of orders) {
+    deliver(k, order);
   }
 }` },
 
-      { md: `<h3>Challenge · Follow the color plan</h3>
-      <p>Karel faces <strong>east</strong> in a four-wide room. Each object in <code>plan</code> has a
-      <code>color</code> field. Walk the row and paint each corner the color its record names, ending Red,
-      Blue, Yellow, Green.</p>` },
-      { world: `Dimension: (4, 1)
+      { md: `<h3>Example · Find the biggest and the smallest</h3>
+      <p><strong>Problem.</strong> Karel stands on an empty corner at the west end of the bottom row, and
+      every corner east of it holds a pile, all different sizes. Paint the corner just above the biggest
+      pile <strong>Green</strong> and the corner just above the smallest pile <strong>Red</strong>.</p>
+      <p>Knowing the biggest <em>size</em> isn't enough; Karel needs to know <em>where</em> it was. So as it
+      walks, Karel <code>push</code>es a record <code>{ avenue, size }</code> for every pile, building the
+      list one record at a time. Then a loop keeps the best record seen so far. Because
+      <code>biggest</code> holds a whole record, the winning pile's avenue comes along with it for
+      free.</p>` },
+      { world: `Dimension: (7, 2)
 Karel: (1, 1); east
-BeeperBag: INFINITY`,
-        prompt: `Loop over <code>plan</code>. For each <code>step</code>, paint the corner with
-        <code>step.color</code>, then move on while the front is clear.`,
-        starter: `function main(k) {
-  let plan = [
-    { color: "Red" },
-    { color: "Blue" },
-    { color: "Yellow" },
-    { color: "Green" },
-  ];
-  for (let step of plan) {
-    // paint this corner step.color, then move on
+BeeperBag: INFINITY
+Beeper: (2, 1); 3
+Beeper: (3, 1); 1
+Beeper: (4, 1); 4
+Beeper: (5, 1); 6
+Beeper: (6, 1); 2
+Beeper: (7, 1); 5`, code: `// Count the pile on this corner, then put it back as it was.
+function countPile(k) {
+  let n = 0;
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+    n++;
   }
+  for (let i = 0; i < n; i++) {
+    k.putBeeper();
+  }
+  return n;
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// From (1, 1) facing east, walk to (spot.avenue, spot.street), ending facing east.
+function goTo(k, spot) {
+  for (let i = 1; i < spot.avenue; i++) {
+    k.move();
+  }
+  k.turnLeft();
+  for (let i = 1; i < spot.street; i++) {
+    k.move();
+  }
+  turnRight(k);
+}
+
+// From anywhere, facing any way, return to (1, 1) facing east.
+function goHome(k) {
+  while (!k.facingWest()) {
+    k.turnLeft();
+  }
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+}
+
+function main(k) {
+  // Walk the row, recording every pile as { avenue, size }.
+  let piles = [];
+  let avenue = 1;
+  while (k.frontIsClear()) {
+    k.move();
+    avenue++;
+    piles.push({ avenue: avenue, size: countPile(k) });
+  }
+
+  // Keep the best record seen so far.
+  let biggest = piles[0];
+  let smallest = piles[0];
+  for (let pile of piles) {
+    if (pile.size > biggest.size) {
+      biggest = pile;
+    }
+    if (pile.size < smallest.size) {
+      smallest = pile;
+    }
+  }
+  // biggest is { avenue: 5, size: 6 }, smallest is { avenue: 3, size: 1 }
+
+  goHome(k);
+  goTo(k, { avenue: biggest.avenue, street: 2 });
+  k.paintCorner("Green");
+  goHome(k);
+  goTo(k, { avenue: smallest.avenue, street: 2 });
+  k.paintCorner("Red");
+}` },
+
+      { md: `<h3>Challenge · Reverse the colored row</h3>
+      <p>Karel starts on a blank corner at the west end of the bottom row. Every corner east of it is
+      painted, and some hold a pile. Reverse that part of the row: the last corner's color <em>and</em> pile
+      move to avenue 2, the second-to-last corner's to avenue 3, and so on. In this world Red-with-2 on
+      (2, 1) ends up on (6, 1), and Blue-with-1 on (6, 1) ends up on (2, 1). Karel's corner stays
+      blank.</p>
+      <p>A corner's color and its pile have to travel <em>together</em>. Keep them in two separate arrays and
+      you have to keep them in step yourself; keep them in one record and they can't drift apart.</p>` },
+      { world: `Dimension: (6, 1)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (2, 1); Red
+Color: (3, 1); Orange
+Color: (4, 1); Yellow
+Color: (5, 1); Green
+Color: (6, 1); Blue
+Beeper: (2, 1); 2
+Beeper: (4, 1); 1
+Beeper: (5, 1); 3
+Beeper: (6, 1); 1`,
+        prompt: `Don't hard-code the width. While the front is clear, move and <code>push</code>
+        <code>{ color: readColor(k), size: takePile(k) }</code> for the corner you land on. Walk back to the
+        west wall and turn to face east. Now <code>pop()</code> hands back the <em>last</em> corner's record
+        first, which is exactly the one avenue 2 needs: move, paint its <code>.color</code>, put its
+        <code>.size</code> beepers, and repeat while <code>row.length &gt; 0</code>.`,
+        starter: `// Return the name of this corner's color.
+function readColor(k) {
+  let candidates = ["Red", "Orange", "Yellow", "Green", "Blue", "Cyan", "Magenta", "Pink"];
+  for (let i = 0; i < candidates.length; i++) {
+    if (k.cornerColorIs(candidates[i])) {
+      return candidates[i];
+    }
+  }
+  return "";
+}
+
+// Pick up the whole pile on this corner and return its size.
+function takePile(k) {
+  let n = 0;
+  while (k.beepersPresent()) {
+    k.pickBeeper();
+    n++;
+  }
+  return n;
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function main(k) {
+  let row = [];
+  // 1. record every corner as { color, size }, walking east
+
+  // 2. back to the west wall, facing east
+
+  // 3. rebuild the row from the records, last one first
 }`,
-        check: ["colors"],
-        end: { avenue: 4, street: 1, direction: "east" },
+        check: ["colors", "beepers"],
         solution: function main(k) {
-          let plan = [
-            { color: "Red" },
-            { color: "Blue" },
-            { color: "Yellow" },
-            { color: "Green" },
-          ];
-          for (let step of plan) {
-            k.paintCorner(step.color);
-            if (k.frontIsClear()) {
-              k.move();
+          function readColor() {
+            let candidates = ["Red", "Orange", "Yellow", "Green", "Blue", "Cyan", "Magenta", "Pink"];
+            for (let i = 0; i < candidates.length; i++) {
+              if (k.cornerColorIs(candidates[i])) {
+                return candidates[i];
+              }
+            }
+            return "";
+          }
+          function takePile() {
+            let n = 0;
+            while (k.beepersPresent()) {
+              k.pickBeeper();
+              n++;
+            }
+            return n;
+          }
+          let row = [];
+          while (k.frontIsClear()) {
+            k.move();
+            row.push({ color: readColor(), size: takePile() });
+          }
+          k.turnLeft();
+          k.turnLeft();
+          while (k.frontIsClear()) {
+            k.move();
+          }
+          k.turnLeft();
+          k.turnLeft();
+          while (row.length > 0) {
+            k.move();
+            let corner = row.pop();
+            k.paintCorner(corner.color);
+            for (let b = 0; b < corner.size; b++) {
+              k.putBeeper();
             }
           }
         } },
 
-      { md: `<h2>Why bundle? Two facts, one record</h2>
-      <p>You could keep colors in one array and beeper counts in another and hope they stay lined up. Objects
-      remove that risk: each corner's color and count live in the <em>same</em> record, so they can never
-      drift apart. That's the practical reason objects exist — related data stays together.</p>` },
-      { md: `<h3>Challenge · Paint and stack from one plan</h3>
-      <p>Karel faces <strong>east</strong> in a four-wide room with an infinite bag. Each record in
-      <code>plan</code> has both a <code>color</code> and a <code>beepers</code> count. At every corner, paint
-      it <em>and</em> drop the right number of beepers, then move on. Use both fields from each record.</p>` },
-      { world: `Dimension: (4, 1)
+      // ─── Objects inside objects, and objects that are shared ───
+
+      { md: `<h2>Objects inside objects</h2>
+      <p>A field's value can be anything, including another object. That lets a record group its own
+      details: a shape has a position and a size, and each of those is a little record of its own.</p>
+      <pre class="code">let door = {
+  at:    { avenue: 4, street: 1 },
+  size:  { width: 1, height: 2 },
+  color: "Dark Gray",
+};
+
+door.at              // { avenue: 4, street: 1 }   a whole position
+door.at.avenue       // 4
+door.size.height     // 2
+goTo(k, door.at);    // door.at is a spot, so goTo can go there</pre>
+      <p>Read <code>door.size.height</code> left to right: the door's <code>size</code>, then that size's
+      <code>height</code>. Nesting pays off when the inner object is useful on its own, like
+      <code>door.at</code> being handed straight to <code>goTo</code>.</p>
+      <div class="callout"><strong>Two names, one object</strong>
+      Assigning an object doesn't copy it. After <code>let b = a;</code>, <code>a</code> and <code>b</code>
+      are two names for the <em>same</em> object, so <code>b.count = 5</code> also changes
+      <code>a.count</code>. The same thing happens when you pass an object to a function: the parameter is
+      another name for the caller's object, and any field the function changes stays changed after it
+      returns. Numbers and strings don't behave this way; changing a number parameter never touches the
+      caller's variable.</div>` },
+
+      { md: `<h3>Example · Build a house from shapes</h3>
+      <p><strong>Problem.</strong> Paint a house: a yellow body, a two-step red roof, a gray door, and two
+      cyan windows.</p>
+      <p>The picture is a list of shape records, each with a nested <code>at</code> and <code>size</code>.
+      The helper is the same <code>paintRect</code> from the start of the lesson, now reading
+      <code>rect.at</code> and <code>rect.size.width</code>. Shapes are painted in list order, so a later
+      shape paints over an earlier one, like layers: the door and windows go after the body.</p>` },
+      { world: `Dimension: (7, 6)
 Karel: (1, 1); east
-BeeperBag: INFINITY`,
-        prompt: `Loop over <code>plan</code>. For each <code>step</code>: <code>paintCorner(step.color)</code>,
-        drop <code>step.beepers</code> beepers with an inner loop, then move while the front is clear.`,
-        starter: `function main(k) {
-  let plan = [
-    { color: "Red",    beepers: 2 },
-    { color: "Yellow", beepers: 0 },
-    { color: "Blue",   beepers: 1 },
-    { color: "Green",  beepers: 3 },
-  ];
-  for (let step of plan) {
-    // paint step.color and drop step.beepers, then move on
+BeeperBag: INFINITY`, code: `function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// From (1, 1) facing east, walk to (spot.avenue, spot.street), ending facing east.
+function goTo(k, spot) {
+  for (let i = 1; i < spot.avenue; i++) {
+    k.move();
   }
+  k.turnLeft();
+  for (let i = 1; i < spot.street; i++) {
+    k.move();
+  }
+  turnRight(k);
+}
+
+// From anywhere, facing any way, return to (1, 1) facing east.
+function goHome(k) {
+  while (!k.facingWest()) {
+    k.turnLeft();
+  }
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+}
+
+// Paint rect.size.width by rect.size.height corners from rect.at, then go home.
+function paintRect(k, rect) {
+  goTo(k, rect.at);
+  for (let row = 0; row < rect.size.height; row++) {
+    for (let c = 0; c < rect.size.width; c++) {
+      k.paintCorner(rect.color);
+      if (c < rect.size.width - 1) {
+        k.move();
+      }
+    }
+    turnAround(k);
+    for (let c = 1; c < rect.size.width; c++) {
+      k.move();
+    }
+    turnRight(k);
+    if (row < rect.size.height - 1) {
+      k.move();
+    }
+    turnRight(k);
+  }
+  goHome(k);
+}
+
+function main(k) {
+  let house = [
+    { at: { avenue: 2, street: 1 }, size: { width: 5, height: 3 }, color: "Yellow" },
+    { at: { avenue: 2, street: 4 }, size: { width: 5, height: 1 }, color: "Red" },
+    { at: { avenue: 3, street: 5 }, size: { width: 3, height: 1 }, color: "Red" },
+    { at: { avenue: 4, street: 1 }, size: { width: 1, height: 2 }, color: "Dark Gray" },
+    { at: { avenue: 3, street: 2 }, size: { width: 1, height: 1 }, color: "Cyan" },
+    { at: { avenue: 5, street: 2 }, size: { width: 1, height: 1 }, color: "Cyan" },
+  ];
+  for (let shape of house) {
+    paintRect(k, shape);
+  }
+}` },
+
+      { md: `<h3>Example · A pen that remembers</h3>
+      <p><strong>Problem.</strong> Draw around the edge of the room with a pen: the south side Blue, the east
+      side Red, the north side left blank, and the west side Green. Then drop one beeper at home for every
+      corner the pen painted.</p>
+      <p>The <code>pen</code> object holds the pen's whole state: its color, whether it's touching the paper,
+      and how many corners it has painted. <code>main</code> changes the color and lifts the pen between
+      strokes. <code>draw</code> adds to <code>pen.painted</code> as it goes, and because
+      <code>draw</code>'s <code>pen</code> parameter is the very same object as <code>main</code>'s
+      <code>pen</code>, the count is still there when <code>main</code> reads it at the end.</p>` },
+      { world: `Dimension: (5, 5)
+Karel: (1, 1); east
+BeeperBag: INFINITY`, code: `// Move n corners forward. If the pen is down, paint each corner and count it.
+function draw(k, pen, n) {
+  for (let i = 0; i < n; i++) {
+    k.move();
+    if (pen.down) {
+      k.paintCorner(pen.color);
+      pen.painted++;
+    }
+  }
+}
+
+function main(k) {
+  let pen = { color: "Blue", down: true, painted: 0 };
+  draw(k, pen, 4);        // south side
+  k.turnLeft();
+  pen.color = "Red";
+  draw(k, pen, 4);        // east side
+  k.turnLeft();
+  pen.down = false;
+  draw(k, pen, 4);        // north side: pen lifted
+  k.turnLeft();
+  pen.down = true;
+  pen.color = "Green";
+  draw(k, pen, 4);        // west side, ending back on (1, 1)
+  k.turnLeft();
+
+  // draw changed pen.painted, and main sees the change: 12.
+  for (let i = 0; i < pen.painted; i++) {
+    k.putBeeper();
+  }
+}` },
+
+      { md: `<h3>Challenge · Copy the picture</h3>
+      <p>A small picture is painted on the west half of this 8×3 world, avenues 1 to 4. Paint an exact copy
+      of it on the east half, avenues 5 to 8: whatever color is on (<em>a</em>, <em>s</em>) goes on
+      (<em>a</em> + 4, <em>s</em>) too. Corners that are blank in the picture stay blank in the copy.</p>
+      <p>Make two passes. The first visits every corner and records each <em>painted</em> one as
+      <code>{ at: { avenue, street }, color }</code>. The second goes through the records, works out where
+      each copy belongs, and paints it there.</p>` },
+      { world: `Dimension: (8, 3)
+Karel: (1, 1); east
+BeeperBag: INFINITY
+Color: (2, 1); Red
+Color: (3, 1); Blue
+Color: (1, 2); Red
+Color: (2, 2); Green
+Color: (4, 2); Yellow
+Color: (1, 3); Blue
+Color: (3, 3); Red
+Color: (4, 3); Green`,
+        prompt: `The helpers are written for you. <code>nextCorner(k)</code> walks the grid row by row, west to
+        east and bottom to top. <code>goTo(k, spot)</code> walks from (1, 1) to a spot, and
+        <code>goHome(k)</code> comes back from anywhere. Pass one: two nested loops over
+        <code>street</code> 1–3 and <code>avenue</code> 1–8; whenever <code>readColor(k)</code> isn't
+        <code>""</code>, push a record. Pass two: for each record, <code>goTo</code> the spot
+        <code>{ avenue: spot.at.avenue + 4, street: spot.at.street }</code>, paint
+        <code>spot.color</code>, and <code>goHome</code>.`,
+        starter: `// Return the name of this corner's color, or "" if it isn't painted.
+function readColor(k) {
+  let candidates = ["Red", "Orange", "Yellow", "Green", "Blue", "Cyan", "Magenta", "Pink"];
+  for (let i = 0; i < candidates.length; i++) {
+    if (k.cornerColorIs(candidates[i])) {
+      return candidates[i];
+    }
+  }
+  return "";
+}
+
+function turnAround(k) {
+  k.turnLeft();
+  k.turnLeft();
+}
+
+function turnRight(k) {
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+}
+
+// Step to the next corner: west to east along a row, then up to the next row.
+// Returns false (facing east on the top row's west end) when no corners are left.
+function nextCorner(k) {
+  if (k.frontIsClear()) {
+    k.move();
+    return true;
+  }
+  turnAround(k);
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  turnRight(k);
+  if (!k.frontIsClear()) {
+    turnRight(k);
+    return false;
+  }
+  k.move();
+  turnRight(k);
+  return true;
+}
+
+// From (1, 1) facing east, walk to (spot.avenue, spot.street), ending facing east.
+function goTo(k, spot) {
+  for (let i = 1; i < spot.avenue; i++) {
+    k.move();
+  }
+  k.turnLeft();
+  for (let i = 1; i < spot.street; i++) {
+    k.move();
+  }
+  turnRight(k);
+}
+
+// From anywhere, facing any way, return to (1, 1) facing east.
+function goHome(k) {
+  while (!k.facingWest()) {
+    k.turnLeft();
+  }
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+  while (k.frontIsClear()) {
+    k.move();
+  }
+  k.turnLeft();
+}
+
+function main(k) {
+  let picture = [];
+  // pass one: record every painted corner as { at: { avenue, street }, color }
+
+  goHome(k);
+  // pass two: paint each record's copy 4 avenues to the east
 }`,
-        check: ["beepers", "colors"],
-        end: { avenue: 4, street: 1, direction: "east" },
+        check: ["colors"],
         solution: function main(k) {
-          let plan = [
-            { color: "Red",    beepers: 2 },
-            { color: "Yellow", beepers: 0 },
-            { color: "Blue",   beepers: 1 },
-            { color: "Green",  beepers: 3 },
-          ];
-          for (let step of plan) {
-            k.paintCorner(step.color);
-            for (let i = 0; i < step.beepers; i++) {
-              k.putBeeper();
+          function readColor() {
+            let candidates = ["Red", "Orange", "Yellow", "Green", "Blue", "Cyan", "Magenta", "Pink"];
+            for (let i = 0; i < candidates.length; i++) {
+              if (k.cornerColorIs(candidates[i])) {
+                return candidates[i];
+              }
             }
+            return "";
+          }
+          function turnRight() {
+            k.turnLeft();
+            k.turnLeft();
+            k.turnLeft();
+          }
+          function nextCorner() {
             if (k.frontIsClear()) {
               k.move();
+              return true;
             }
+            k.turnLeft();
+            k.turnLeft();
+            while (k.frontIsClear()) k.move();
+            turnRight();
+            if (!k.frontIsClear()) {
+              turnRight();
+              return false;
+            }
+            k.move();
+            turnRight();
+            return true;
+          }
+          function goTo(spot) {
+            for (let i = 1; i < spot.avenue; i++) k.move();
+            k.turnLeft();
+            for (let i = 1; i < spot.street; i++) k.move();
+            turnRight();
+          }
+          function goHome() {
+            while (!k.facingWest()) k.turnLeft();
+            while (k.frontIsClear()) k.move();
+            k.turnLeft();
+            while (k.frontIsClear()) k.move();
+            k.turnLeft();
+          }
+          let picture = [];
+          for (let street = 1; street <= 3; street++) {
+            for (let avenue = 1; avenue <= 8; avenue++) {
+              let color = readColor();
+              if (color !== "") {
+                picture.push({ at: { avenue: avenue, street: street }, color: color });
+              }
+              nextCorner();
+            }
+          }
+          goHome();
+          for (let spot of picture) {
+            goTo({ avenue: spot.at.avenue + 4, street: spot.at.street });
+            k.paintCorner(spot.color);
+            goHome();
           }
         } },
 
       { md: `<div class="callout tip"><strong>You learned</strong>
-      An object groups values under named keys: <code>{ color: "Red", beepers: 2 }</code>. Read and write
-      fields with a dot (<code>step.color</code>). An <strong>array of objects</strong> is the natural shape
-      for a table of records — a plan where each row keeps all its related details bundled together, so they
-      stay in sync.</div>` },
+      An object bundles related values under names: <code>{ avenue: 3, color: "Red" }</code>. Read a field
+      with a dot (<code>flag.color</code>), and assign to it to change it or add a new one. Passing one
+      object instead of many parameters labels every value, and returning an object lets a function report
+      several answers at once. An <strong>array of objects</strong> is a table of records, built with
+      <code>push</code> and read as <code>list[i].field</code>, which keeps each row's details together. A
+      field can hold another object (<code>shape.at.avenue</code>), and an object is shared, not copied:
+      when a function changes a field of an object you handed it, the change is still there after it
+      returns.</div>` },
     ];
 
     renderNotebook(cells, undefined, { isolate: true });
