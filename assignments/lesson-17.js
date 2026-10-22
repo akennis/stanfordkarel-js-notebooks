@@ -38,7 +38,7 @@ export const lesson17 = {
       key: "complex",
       label: "Complex",
       points: 15,
-      world: "Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (4, 1); 1\nBeeper: (5, 1); 1",
+      world: "Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (4, 1); 1\nBeeper: (5, 1); 1",
       prompt: "Write a recursive <code>collect(k)</code>: pick up any beeper on the current corner, then — if the front is clear — move and recurse. It clears the whole corridor and stops at the wall.",
       starter: "function collect(k) {\n  \n}\n\nfunction main(k) {\n  \n}\n",
       check: ["beepers","position"],

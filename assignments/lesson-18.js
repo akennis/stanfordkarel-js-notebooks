@@ -38,7 +38,7 @@ export const lesson18 = {
       key: "complex",
       label: "Complex",
       points: 15,
-      world: "Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (3, 1); 1\nBeeper: (5, 1); 1",
+      world: "Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (5, 1); 1",
       prompt: "Some corners are empty, so <code>pickBeeper()</code> sometimes throws. Walk all five corners and, at each, <code>try</code> to pick a beeper and <code>catch</code> the failure when there isn't one. End on <code>(5, 1)</code> with every beeper collected.",
       starter: "function main(k) {\n  \n}\n",
       check: ["beepers","position"],

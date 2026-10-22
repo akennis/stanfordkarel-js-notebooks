@@ -1,9 +1,10 @@
 /**
  * Assignment "collect-all" — Collect Every Beeper.
  *
- * A straight east–west corridor lined with one beeper per corner. The student
- * walks the corridor picking up every beeper and stops at the far wall. Graded
- * on the final beeper layout (all gone) and Karel's ending avenue/street.
+ * A straight east–west corridor with one beeper on every corner east of Karel's
+ * (empty) starting corner. The student walks the corridor picking up every
+ * beeper and stops at the far wall. Graded on the final beeper layout (all
+ * gone) and Karel's ending avenue/street.
  *
  * An assignment manifest mirrors a lesson "challenge" cell (see lessons/lesson.js)
  * but stores its reference `solution` *sealed* (see tools/seal.js) so the page
@@ -26,7 +27,6 @@ export const collectAll = {
 Dimension: (7, 1)
 Karel: (1, 1); east
 BeeperBag: 0
-Beeper: (1, 1); 1
 Beeper: (2, 1); 1
 Beeper: (3, 1); 1
 Beeper: (4, 1); 1
@@ -35,8 +35,8 @@ Beeper: (6, 1); 1
 Beeper: (7, 1); 1
 `,
   prompt:
-    `Karel is standing at the west end of a corridor with a beeper on every ` +
-    `corner. Walk east to the wall, picking up <strong>every</strong> beeper ` +
+    `Karel is standing on an empty corner at the west end of a corridor, and ` +
+    `every corner east of it holds a beeper. Walk east to the wall, picking up <strong>every</strong> beeper ` +
     `along the way. Karel should finish standing on the last corner.`,
   starter: "function main(k) {\n  \n}\n",
   check: ["beepers", "position"],

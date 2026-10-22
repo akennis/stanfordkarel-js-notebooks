@@ -18,7 +18,7 @@ export const lesson11 = {
       key: "simple",
       label: "Simple",
       points: 5,
-      world: "Dimension: (20, 20)\nKarel: (1, 3); east\nBeeperBag: INFINITY\nBeeper: (1, 3); 1\nBeeper: (2, 3); 1\nBeeper: (5, 3); 1\nBeeper: (6, 3); 1\nBeeper: (7, 3); 1\nBeeper: (1, 4); 1\nBeeper: (2, 4); 1\nBeeper: (3, 4); 1\nBeeper: (5, 4); 1\nBeeper: (1, 5); 1\nBeeper: (5, 5); 1\nBeeper: (6, 5); 1\nBeeper: (1, 6); 1\nBeeper: (2, 6); 1\nBeeper: (5, 6); 1\nBeeper: (6, 6); 1",
+      world: "Dimension: (20, 20)\nKarel: (1, 3); east\nBeeperBag: INFINITY\nBeeper: (2, 3); 1\nBeeper: (3, 3); 1\nBeeper: (5, 3); 1\nBeeper: (6, 3); 1\nBeeper: (7, 3); 1\nBeeper: (1, 4); 1\nBeeper: (2, 4); 1\nBeeper: (3, 4); 1\nBeeper: (5, 4); 1\nBeeper: (1, 5); 1\nBeeper: (5, 5); 1\nBeeper: (6, 5); 1\nBeeper: (1, 6); 1\nBeeper: (2, 6); 1\nBeeper: (5, 6); 1\nBeeper: (6, 6); 1",
       prompt: "Karel stands at the start of street 3, facing east. Four streets (3&ndash;6) each hold two groups of beepers: a <strong>left group</strong> in avenues 1&ndash;3 and a <strong>right group</strong> in avenues 5&ndash;7, each with 1, 2 or 3 beepers on that street. Process <em>each street individually</em>: count the beepers in its left group and in its right group, store the two counts in variables, then use a <code>for</code> loop over their <em>sum</em> to lay out that many beepers in a row on the same street, starting at avenue 9 (to the right of both groups). Leave the original beepers where they are.",
       starter: "function main(k) {\n  \n}\n",
       check: ["beepers"],

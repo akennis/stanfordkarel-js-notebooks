@@ -126,18 +126,20 @@ function main(k) {
       standing. Call the function once while you're still there, store the result in a variable, and that
       answer survives the trip. Below, <code>isBeeperCorner(k)</code> checks two different signals at
       once — a beeper <em>and</em> green paint, together — and Karel remembers the verdict in
-      <code>wasSpecial</code> before crossing the room.</p>` },
+      <code>wasSpecial</code> as soon as it steps onto the corner at <code>(2, 1)</code>, before crossing
+      the room.</p>` },
       { world: `Dimension: (4, 3)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Beeper: (1, 1); 1
-Color: (1, 1); Green`, code: `function isBeeperCorner(k) {
+Beeper: (2, 1); 1
+Color: (2, 1); Green`, code: `function isBeeperCorner(k) {
   return k.beepersPresent() && k.cornerColorIs("Green");
 }
 
 function main(k) {
+  k.move();
   const wasSpecial = isBeeperCorner(k);
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     k.move();
   }
   k.turnLeft();
@@ -150,19 +152,19 @@ function main(k) {
 }` },
       { md: `<div class="callout tip"><strong>Why capture it?</strong>
       By the time Karel reaches <code>(4, 3)</code>, calling <code>isBeeperCorner(k)</code> again would
-      check the <em>wrong</em> corner — Karel isn't standing on <code>(1, 1)</code> anymore, and none of
+      check the <em>wrong</em> corner — Karel isn't standing on <code>(2, 1)</code> anymore, and none of
       its sensing commands can reach back and ask about a corner it already left. The variable
       <code>wasSpecial</code> is a snapshot of the answer, taken at the one moment it was true to ask.</div>` },
 
       { md: `<h3>Challenge · Remember and match</h3>
-      <p>Karel starts at the west wall, facing <strong>west</strong>, in a 3×3 room. Write
-      <code>isRedWall(k)</code>, returning <code>true</code> when the front is blocked <em>and</em> the
-      corner is painted <code>"Red"</code>. Capture the answer into a variable right away — before turning
-      around. Then turn <strong>around</strong> (two <code>turnLeft()</code>s) and travel to
+      <p>Karel starts one corner east of the west wall, facing <strong>west</strong>, in a 3×3 room. Step
+      west onto the wall corner. Write <code>isRedWall(k)</code>, returning <code>true</code> when the front
+      is blocked <em>and</em> the corner is painted <code>"Red"</code>. Capture the answer into a variable
+      right away — before turning around. Then turn <strong>around</strong> (two <code>turnLeft()</code>s) and travel to
       <strong>(3, 3)</strong> (east 2, then north 2). If the remembered variable was <code>true</code>,
       paint <code>(3, 3)</code> <code>"Red"</code> too; otherwise leave it blank.</p>` },
       { world: `Dimension: (3, 3)
-Karel: (1, 1); west
+Karel: (2, 1); west
 BeeperBag: INFINITY
 Color: (1, 1); Red`,
         prompt: `Write <code>isRedWall(k)</code>: <code>return k.frontIsBlocked() && k.cornerColorIs("Red")</code>
@@ -172,6 +174,7 @@ Color: (1, 1); Red`,
 }
 
 function main(k) {
+  k.move();
   // capture isRedWall(k) into a variable here, before turning around
   k.turnLeft();
   k.turnLeft();
@@ -191,6 +194,7 @@ function main(k) {
           function isRedWall(kk) {
             return kk.frontIsBlocked() && kk.cornerColorIs("Red");
           }
+          k.move();
           const wasRedWall = isRedWall(k);
           k.turnLeft();
           k.turnLeft();
@@ -215,7 +219,7 @@ function main(k) {
       { world: `Dimension: (4, 2)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Beeper: (1, 1); 1
+Beeper: (2, 1); 1
 Beeper: (3, 1); 1
 Beeper: (4, 1); 1`, code: `function countBeepers(k) {
   let count = 0;
@@ -251,7 +255,7 @@ function main(k) {
       { world: `Dimension: (5, 2)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Color: (1, 1); Green
+Color: (2, 1); Green
 Color: (3, 1); Green
 Color: (5, 1); Green`,
         prompt: `Write <code>countGreen(k)</code>: start a counter at 0, add 1 whenever

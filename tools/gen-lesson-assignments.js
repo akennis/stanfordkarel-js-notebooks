@@ -107,17 +107,17 @@ const LESSONS = {
     problems: [
       {
         key: "simple", label: "Simple", points: 5,
-        world: `Dimension: (1, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1`,
-        prompt: `There may or may not be a beeper here. Using a single <code>if</code>, pick the beeper up <strong>only if</strong> one is present.`,
+        world: `Dimension: (2, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 1); 1`,
+        prompt: `Step one corner east. There may or may not be a beeper there. Using a single <code>if</code>, pick the beeper up <strong>only if</strong> one is present.`,
         starter: STUB, check: ["beepers"],
-        solution: `function main(k) {\n  if (k.beepersPresent()) {\n    k.pickBeeper();\n  }\n}`,
+        solution: `function main(k) {\n  k.move();\n  if (k.beepersPresent()) {\n    k.pickBeeper();\n  }\n}`,
       },
       {
         key: "moderate", label: "Moderate", points: 10,
-        world: `Dimension: (3, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (3, 1); 1`,
-        prompt: `Some corners have a beeper, some don't. Visit all three corners in a row (no loop yet — write it out). At each corner, pick a beeper up only if one is present.`,
+        world: `Dimension: (4, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 1); 1\nBeeper: (4, 1); 1`,
+        prompt: `Karel starts on an empty corner. Of the three corners east of it, some have a beeper and some don't. Visit all three (no loop yet — write it out). At each one, pick a beeper up only if one is present.`,
         starter: STUB, check: ["beepers", "position"],
-        solution: `function main(k) {\n  if (k.beepersPresent()) k.pickBeeper();\n  k.move();\n  if (k.beepersPresent()) k.pickBeeper();\n  k.move();\n  if (k.beepersPresent()) k.pickBeeper();\n}`,
+        solution: `function main(k) {\n  k.move();\n  if (k.beepersPresent()) k.pickBeeper();\n  k.move();\n  if (k.beepersPresent()) k.pickBeeper();\n  k.move();\n  if (k.beepersPresent()) k.pickBeeper();\n}`,
       },
       {
         key: "complex", label: "Complex", points: 15,
@@ -148,25 +148,25 @@ const LESSONS = {
       },
       {
         key: "moderate", label: "Moderate", points: 10,
-        world: `Dimension: (5, 5)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (2, 2); 1\nBeeper: (3, 3); 1\nBeeper: (4, 4); 1\nBeeper: (5, 5); 1`,
-        prompt: `A beeper sits on every corner of the diagonal, from <code>(1, 1)</code> up to <code>(5, 5)</code>. Use a <code>for</code> loop to walk the diagonal, picking up each beeper along the way, and finish on <code>(5, 5)</code>. Karel can only <code>turnLeft()</code>, so one step to the northeast means: move east, turn to face north, move north, then turn back to face east.`,
+        world: `Dimension: (6, 6)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 2); 1\nBeeper: (3, 3); 1\nBeeper: (4, 4); 1\nBeeper: (5, 5); 1\nBeeper: (6, 6); 1`,
+        prompt: `Karel starts on the empty corner <code>(1, 1)</code>. A beeper sits on every corner of the diagonal northeast of it, from <code>(2, 2)</code> up to <code>(6, 6)</code>. Use a <code>for</code> loop to walk the diagonal, picking up each beeper along the way, and finish on <code>(6, 6)</code>. Karel can only <code>turnLeft()</code>, so one step to the northeast means: move east, turn to face north, move north, then turn back to face east.`,
         starter: STUB, check: ["beepers", "position"],
-        solution: `function main(k) {\n  for (let i = 0; i < 4; i++) {\n    k.pickBeeper();\n    k.move();\n    k.turnLeft();\n    k.move();\n    k.turnLeft();\n    k.turnLeft();\n    k.turnLeft();\n  }\n  k.pickBeeper();\n}`,
+        solution: `function main(k) {\n  for (let i = 0; i < 5; i++) {\n    k.move();\n    k.turnLeft();\n    k.move();\n    k.turnLeft();\n    k.turnLeft();\n    k.turnLeft();\n    k.pickBeeper();\n  }\n}`,
       },
       {
         key: "complex", label: "Complex", points: 15,
-        world: `Dimension: (5, 5)\nKarel: (1, 1); east\nBeeperBag: 0\n` +
-          // perimeter: all 16 edge corners
-          `Beeper: (1, 1); 1\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (4, 1); 1\nBeeper: (5, 1); 1\n` +
-          `Beeper: (5, 2); 1\nBeeper: (5, 3); 1\nBeeper: (5, 4); 1\nBeeper: (5, 5); 1\n` +
-          `Beeper: (4, 5); 1\nBeeper: (3, 5); 1\nBeeper: (2, 5); 1\nBeeper: (1, 5); 1\n` +
-          `Beeper: (1, 4); 1\nBeeper: (1, 3); 1\nBeeper: (1, 2); 1\n` +
+        world: `Dimension: (6, 6)\nKarel: (1, 1); east\nBeeperBag: 0\n` +
+          // perimeter of the 5x5 square from (2, 2) to (6, 6): all 16 edge corners
+          `Beeper: (2, 2); 1\nBeeper: (3, 2); 1\nBeeper: (4, 2); 1\nBeeper: (5, 2); 1\nBeeper: (6, 2); 1\n` +
+          `Beeper: (6, 3); 1\nBeeper: (6, 4); 1\nBeeper: (6, 5); 1\nBeeper: (6, 6); 1\n` +
+          `Beeper: (5, 6); 1\nBeeper: (4, 6); 1\nBeeper: (3, 6); 1\nBeeper: (2, 6); 1\n` +
+          `Beeper: (2, 5); 1\nBeeper: (2, 4); 1\nBeeper: (2, 3); 1\n` +
           // interior diagonal
-          `Beeper: (2, 2); 1\nBeeper: (3, 3); 1\nBeeper: (4, 4); 1`,
-        prompt: `This 5&times;5 world has a beeper on all 16 perimeter corners and one on each interior diagonal corner &mdash; <code>(2, 2)</code>, <code>(3, 3)</code>, <code>(4, 4)</code>. Pick up every beeper with two loops, one after the other.\n<p><strong>1. A nested loop for the perimeter.</strong> The outer loop runs once per side (four sides). The inner loop walks that side &mdash; <code>pickBeeper()</code> then <code>move()</code>, four times. After the inner loop, <code>turnLeft()</code> to face the next side. Four sides later Karel is back where it started, facing east.</p>\n<p><strong>2. A simple loop for the diagonal.</strong> Three times: step one corner to the north-east (<code>move()</code>, <code>turnLeft()</code>, <code>move()</code>, <code>turnRight(k)</code>) and <code>pickBeeper()</code>.</p>\n<p>The <code>turnRight</code> helper is already written for you.</p>`,
-        starter: `function turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  // Loop 1: walk the perimeter (outer loop = 4 sides, inner loop = 4 steps)\n\n  // Loop 2: climb the diagonal, picking up (2,2), (3,3), (4,4)\n\n}\n`,
+          `Beeper: (3, 3); 1\nBeeper: (4, 4); 1\nBeeper: (5, 5); 1`,
+        prompt: `Karel starts on the empty corner <code>(1, 1)</code>, just south-west of a 5&times;5 square that runs from <code>(2, 2)</code> to <code>(6, 6)</code>. The square has a beeper on all 16 of its perimeter corners and one on each interior diagonal corner &mdash; <code>(3, 3)</code>, <code>(4, 4)</code>, <code>(5, 5)</code>. The starter already steps Karel north-east onto <code>(2, 2)</code>, facing east. From there, pick up every beeper with two loops, one after the other.\n<p><strong>1. A nested loop for the perimeter.</strong> The outer loop runs once per side (four sides). The inner loop walks that side &mdash; <code>pickBeeper()</code> then <code>move()</code>, four times. After the inner loop, <code>turnLeft()</code> to face the next side. Four sides later Karel is back on <code>(2, 2)</code>, facing east.</p>\n<p><strong>2. A simple loop for the diagonal.</strong> Three times: step one corner to the north-east (<code>move()</code>, <code>turnLeft()</code>, <code>move()</code>, <code>turnRight(k)</code>) and <code>pickBeeper()</code>.</p>\n<p>The <code>turnRight</code> helper is already written for you.</p>`,
+        starter: `function turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  // Step north-east onto (2, 2), facing east.\n  k.move();\n  k.turnLeft();\n  k.move();\n  turnRight(k);\n\n  // Loop 1: walk the perimeter (outer loop = 4 sides, inner loop = 4 steps)\n\n  // Loop 2: climb the diagonal, picking up (3,3), (4,4), (5,5)\n\n}\n`,
         check: ["beepers"],
-        solution: `function turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  for (let side = 0; side < 4; side++) {\n    for (let step = 0; step < 4; step++) {\n      k.pickBeeper();\n      k.move();\n    }\n    k.turnLeft();\n  }\n  for (let i = 0; i < 3; i++) {\n    k.move();\n    k.turnLeft();\n    k.move();\n    turnRight(k);\n    k.pickBeeper();\n  }\n}`,
+        solution: `function turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  k.move();\n  k.turnLeft();\n  k.move();\n  turnRight(k);\n  for (let side = 0; side < 4; side++) {\n    for (let step = 0; step < 4; step++) {\n      k.pickBeeper();\n      k.move();\n    }\n    k.turnLeft();\n  }\n  for (let i = 0; i < 3; i++) {\n    k.move();\n    k.turnLeft();\n    k.move();\n    turnRight(k);\n    k.pickBeeper();\n  }\n}`,
       },
     ],
   },
@@ -183,17 +183,17 @@ const LESSONS = {
       },
       {
         key: "moderate", label: "Moderate", points: 10,
-        world: `Dimension: (6, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (4, 1); 1\nBeeper: (5, 1); 1\nBeeper: (6, 1); 1`,
-        prompt: `Every corner holds a beeper. Walk east to the wall, collecting <strong>every</strong> beeper along the way, and stop on the last corner.`,
+        world: `Dimension: (6, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (4, 1); 1\nBeeper: (5, 1); 1\nBeeper: (6, 1); 1`,
+        prompt: `Karel starts on an empty corner, and every corner east of it holds a beeper. Walk east to the wall, collecting <strong>every</strong> beeper along the way, and stop on the last corner.`,
         starter: STUB, check: ["beepers", "position"],
         solution: `function main(k) {\n  while (true) {\n    while (k.beepersPresent()) k.pickBeeper();\n    if (!k.frontIsClear()) break;\n    k.move();\n  }\n}`,
       },
       {
         key: "complex", label: "Complex", points: 15,
-        world: `Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (1, 2); 2\nBeeper: (1, 3); 3\nBeeper: (1, 4); 4\nBeeper: (1, 5); 5\nBeeper: (1, 6); 6\nBeeper: (1, 7); 7\nBeeper: (1, 8); 8`,
-        prompt: `Eight piles of beepers sit along avenue 1 &mdash; one per street, and each pile is <strong>as many beepers as its street number</strong> (street 1 has 1 beeper, street 2 has 2, &hellip; street 8 has 8). Karel starts on <code>(1, 1)</code> facing east with an empty bag.\n<p>For every street, carry that street's entire pile from avenue 1 across to avenue 8 and drop it there, then move on to the next street.</p>\n<p>Use <code>while</code> loops to pick up and drop each pile &mdash; <code>beepersPresent()</code> and <code>beepersInBag()</code> tell Karel when a pile (or its own bag) is empty.</p>`,
+        world: `Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 1); 1\nBeeper: (2, 2); 2\nBeeper: (2, 3); 3\nBeeper: (2, 4); 4\nBeeper: (2, 5); 5\nBeeper: (2, 6); 6\nBeeper: (2, 7); 7\nBeeper: (2, 8); 8`,
+        prompt: `Eight piles of beepers sit along avenue 2 &mdash; one per street, and each pile is <strong>as many beepers as its street number</strong> (street 1 has 1 beeper, street 2 has 2, &hellip; street 8 has 8). Karel starts on the empty corner <code>(1, 1)</code>, just west of the first pile, facing east with an empty bag.\n<p>For every street, step onto that street's pile, carry the entire pile across to avenue 8 and drop it there, then move on to the next street.</p>\n<p>Use <code>while</code> loops to pick up and drop each pile &mdash; <code>beepersPresent()</code> and <code>beepersInBag()</code> tell Karel when a pile (or its own bag) is empty.</p>`,
         starter: STUB, check: ["beepers"],
-        solution: `function main(k) {\n  while (true) {\n    while (k.beepersPresent()) k.pickBeeper();\n    while (k.frontIsClear()) k.move();\n    while (k.beepersInBag()) k.putBeeper();\n    if (!k.leftIsClear()) break;\n    k.turnLeft();\n    k.move();\n    k.turnLeft();\n    while (k.frontIsClear()) k.move();\n    k.turnLeft();\n    k.turnLeft();\n  }\n}`,
+        solution: `function main(k) {\n  while (true) {\n    k.move();\n    while (k.beepersPresent()) k.pickBeeper();\n    while (k.frontIsClear()) k.move();\n    while (k.beepersInBag()) k.putBeeper();\n    if (!k.leftIsClear()) break;\n    k.turnLeft();\n    k.move();\n    k.turnLeft();\n    while (k.frontIsClear()) k.move();\n    k.turnLeft();\n    k.turnLeft();\n  }\n}`,
       },
       {
         key: "complex2", label: "Complex II", points: 20,
@@ -297,7 +297,7 @@ const LESSONS = {
       },
       {
         key: "complex", label: "Complex", points: 15,
-        world: `Dimension: (5, 4)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nColor: (1, 1); Red\nColor: (3, 1); Red\nColor: (5, 1); Green\nColor: (2, 2); Green\nColor: (4, 2); Green\nColor: (5, 2); Red\nColor: (2, 3); Red\nColor: (4, 3); Green\nColor: (1, 4); Red\nColor: (3, 4); Green\nColor: (5, 4); Green`,
+        world: `Dimension: (5, 4)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nColor: (2, 1); Red\nColor: (3, 1); Red\nColor: (5, 1); Green\nColor: (2, 2); Green\nColor: (4, 2); Green\nColor: (5, 2); Red\nColor: (2, 3); Red\nColor: (4, 3); Green\nColor: (1, 4); Red\nColor: (3, 4); Green\nColor: (5, 4); Green`,
         prompt: `Some corners in each row are painted <code>"Red"</code> or <code>"Green"</code>; the rest are blank. For <strong>each row</strong>, decide the row's majority color and paint every <em>blank</em> corner in that row with it &mdash; leave already-painted corners alone. If a row has the same number of red and green corners, fill its blanks with <code>"Yellow"</code> instead. Keep the chosen color in a <strong>string variable</strong> and pass it to a helper that does the painting. Only the paint is graded.`,
         starter: STUB, check: ["colors"],
         solution: `function turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction turnAround(k) {\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction fillBlank(k, color) {\n  if (k.cornerColorIs("Red")) {\n    // already painted - leave it\n  } else if (k.cornerColorIs("Green")) {\n    // already painted - leave it\n  } else {\n    k.paintCorner(color);\n  }\n}\n\nfunction main(k) {\n  let checking = true;\n  while (checking) {\n    let redCount = 0;\n    let greenCount = 0;\n    if (k.cornerColorIs("Red")) redCount++;\n    if (k.cornerColorIs("Green")) greenCount++;\n    while (k.frontIsClear()) {\n      k.move();\n      if (k.cornerColorIs("Red")) redCount++;\n      if (k.cornerColorIs("Green")) greenCount++;\n    }\n    let winner = "Yellow";\n    if (redCount > greenCount) {\n      winner = "Red";\n    } else if (greenCount > redCount) {\n      winner = "Green";\n    }\n    turnAround(k);\n    fillBlank(k, winner);\n    while (k.frontIsClear()) {\n      k.move();\n      fillBlank(k, winner);\n    }\n    turnRight(k);\n    if (k.frontIsClear()) {\n      k.move();\n      turnRight(k);\n    } else {\n      checking = false;\n    }\n  }\n}`,
@@ -317,7 +317,7 @@ const LESSONS = {
     problems: [
       {
         key: "simple", label: "Simple", points: 5,
-        world: `Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nBeeper: (1, 1); 1\nColor: (1, 1); Blue\nColor: (3, 1); Blue\nBeeper: (5, 1); 1\nColor: (5, 1); Blue\nBeeper: (8, 1); 1\nBeeper: (2, 2); 1\nBeeper: (6, 2); 1\nColor: (6, 2); Blue\nColor: (4, 3); Blue\nBeeper: (7, 3); 1\nColor: (7, 3); Blue\nBeeper: (1, 4); 1\nColor: (1, 4); Blue\nBeeper: (5, 4); 1\nBeeper: (3, 5); 1\nColor: (3, 5); Blue\nColor: (8, 5); Blue\nBeeper: (2, 6); 1\nColor: (2, 6); Blue\nBeeper: (6, 6); 1\nColor: (4, 7); Blue\nBeeper: (7, 7); 1\nColor: (7, 7); Blue\nBeeper: (1, 8); 1\nColor: (1, 8); Blue\nBeeper: (5, 8); 1\nBeeper: (8, 8); 1\nColor: (8, 8); Blue`,
+        world: `Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nBeeper: (2, 1); 1\nColor: (2, 1); Blue\nColor: (3, 1); Blue\nBeeper: (5, 1); 1\nColor: (5, 1); Blue\nBeeper: (8, 1); 1\nBeeper: (2, 2); 1\nBeeper: (6, 2); 1\nColor: (6, 2); Blue\nColor: (4, 3); Blue\nBeeper: (7, 3); 1\nColor: (7, 3); Blue\nBeeper: (1, 4); 1\nColor: (1, 4); Blue\nBeeper: (5, 4); 1\nBeeper: (3, 5); 1\nColor: (3, 5); Blue\nColor: (8, 5); Blue\nBeeper: (2, 6); 1\nColor: (2, 6); Blue\nBeeper: (6, 6); 1\nColor: (4, 7); Blue\nBeeper: (7, 7); 1\nColor: (7, 7); Blue\nBeeper: (1, 8); 1\nColor: (1, 8); Blue\nBeeper: (5, 8); 1\nBeeper: (8, 8); 1\nColor: (8, 8); Blue`,
         prompt: `Some corners in this 8&times;8 room hold a beeper, and some are painted <code>"Blue"</code> &mdash; but only a corner with <strong>both</strong> is real treasure. Write <code>isTreasure(k)</code>: <code>return</code> the combined expression <code>k.cornerColorIs("Blue") && k.beepersPresent()</code> directly, true only when both hold. Sweep the <strong>entire grid</strong> &mdash; eight rows, in a back-and-forth snake pattern (east, turn up, west, turn up, east) &mdash; and call <code>isTreasure(k)</code> directly inside an <code>if</code> to decide whether to pick up the beeper at each corner. Leave beepers on non-treasure corners alone.`,
         starter: `function isTreasure(k) {\n  \n}\n\nfunction main(k) {\n  \n}\n`,
         check: ["beepers"],
@@ -326,7 +326,7 @@ const LESSONS = {
       },
       {
         key: "moderate", label: "Moderate", points: 10,
-        world: `Dimension: (4, 3)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nColor: (1, 1); Green\nColor: (3, 1); Green\nColor: (2, 2); Green\nColor: (4, 3); Green`,
+        world: `Dimension: (4, 3)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nColor: (3, 1); Green\nColor: (1, 2); Green\nColor: (2, 2); Green\nColor: (4, 3); Green`,
         prompt: `A 4&times;3 room has a few corners painted <code>"Green"</code>, scattered with no pattern. Write <code>countGreen(k)</code> that sweeps the <strong>entire grid</strong> &mdash; all three rows, in a back-and-forth snake pattern (east, turn up, west, turn up, east) &mdash; and <code>return</code>s the total number of green corners. Capture that number in a variable, and once the sweep ends, drop that many beepers on the final corner.`,
         starter: `function countGreen(k) {\n  let count = 0;\n  \n  return count;\n}\n\nfunction main(k) {\n  \n}\n`,
         check: ["beepers", "position"],
@@ -343,7 +343,7 @@ const LESSONS = {
       },
       {
         key: "complex2", label: "Complex II", points: 20,
-        world: `Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nBeeper: (1, 1); 1\nColor: (1, 1); Orange\nColor: (3, 1); Orange\nBeeper: (5, 1); 1\nBeeper: (8, 1); 1\nColor: (8, 1); Orange\nBeeper: (2, 2); 1\nColor: (2, 2); Orange\nBeeper: (6, 2); 1\nBeeper: (4, 4); 1\nColor: (4, 4); Orange\nColor: (7, 4); Orange\nBeeper: (1, 5); 1\nColor: (1, 5); Orange\nBeeper: (5, 5); 1\nColor: (5, 5); Orange\nBeeper: (3, 6); 1\nColor: (6, 6); Orange\nBeeper: (2, 7); 1\nColor: (2, 7); Orange\nBeeper: (8, 7); 1\nColor: (8, 7); Orange\nBeeper: (5, 8); 1\nColor: (5, 8); Orange`,
+        world: `Dimension: (8, 8)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nBeeper: (2, 1); 1\nColor: (2, 1); Orange\nColor: (3, 1); Orange\nBeeper: (5, 1); 1\nBeeper: (8, 1); 1\nColor: (8, 1); Orange\nBeeper: (2, 2); 1\nColor: (2, 2); Orange\nBeeper: (6, 2); 1\nBeeper: (4, 4); 1\nColor: (4, 4); Orange\nColor: (7, 4); Orange\nBeeper: (1, 5); 1\nColor: (1, 5); Orange\nBeeper: (5, 5); 1\nColor: (5, 5); Orange\nBeeper: (3, 6); 1\nColor: (6, 6); Orange\nBeeper: (2, 7); 1\nColor: (2, 7); Orange\nBeeper: (8, 7); 1\nColor: (8, 7); Orange\nBeeper: (5, 8); 1\nColor: (5, 8); Orange`,
         prompt: `An 8&times;8 room mixes beepers and <code>"Orange"</code> paint &mdash; some corners have one, some the other, some both, most neither. Only a corner with <strong>both</strong> counts as marked. Write <code>isMarked(k)</code>: <code>return k.beepersPresent() && k.cornerColorIs("Orange")</code> directly, then a helper <code>collectMarked(k)</code> that sweeps <strong>one row</strong>: it picks up the beeper at every marked corner it passes and <code>return</code>s how many it collected. Call <code>collectMarked(k)</code> once per row &mdash; eight rows, in a back-and-forth snake pattern &mdash; adding each row's return value into a running total. When the sweep is done, drop that many beepers on the final corner.`,
         starter: `function isMarked(k) {\n  \n}\n\nfunction collectMarked(k) {\n  let count = 0;\n  \n  return count;\n}\n\nfunction main(k) {\n  let total = 0;\n  \n}\n`,
         check: ["beepers", "position"],
@@ -387,7 +387,7 @@ const LESSONS = {
     problems: [
       {
         key: "simple", label: "Simple", points: 5,
-        world: `Dimension: (20, 20)\nKarel: (1, 3); east\nBeeperBag: INFINITY\nBeeper: (1, 3); 1\nBeeper: (2, 3); 1\nBeeper: (5, 3); 1\nBeeper: (6, 3); 1\nBeeper: (7, 3); 1\nBeeper: (1, 4); 1\nBeeper: (2, 4); 1\nBeeper: (3, 4); 1\nBeeper: (5, 4); 1\nBeeper: (1, 5); 1\nBeeper: (5, 5); 1\nBeeper: (6, 5); 1\nBeeper: (1, 6); 1\nBeeper: (2, 6); 1\nBeeper: (5, 6); 1\nBeeper: (6, 6); 1`,
+        world: `Dimension: (20, 20)\nKarel: (1, 3); east\nBeeperBag: INFINITY\nBeeper: (2, 3); 1\nBeeper: (3, 3); 1\nBeeper: (5, 3); 1\nBeeper: (6, 3); 1\nBeeper: (7, 3); 1\nBeeper: (1, 4); 1\nBeeper: (2, 4); 1\nBeeper: (3, 4); 1\nBeeper: (5, 4); 1\nBeeper: (1, 5); 1\nBeeper: (5, 5); 1\nBeeper: (6, 5); 1\nBeeper: (1, 6); 1\nBeeper: (2, 6); 1\nBeeper: (5, 6); 1\nBeeper: (6, 6); 1`,
         prompt: `Karel stands at the start of street 3, facing east. Four streets (3&ndash;6) each hold two groups of beepers: a <strong>left group</strong> in avenues 1&ndash;3 and a <strong>right group</strong> in avenues 5&ndash;7, each with 1, 2 or 3 beepers on that street. Process <em>each street individually</em>: count the beepers in its left group and in its right group, store the two counts in variables, then use a <code>for</code> loop over their <em>sum</em> to lay out that many beepers in a row on the same street, starting at avenue 9 (to the right of both groups). Leave the original beepers where they are.`,
         starter: `function main(k) {\n  \n}\n`,
         check: ["beepers"],
@@ -467,14 +467,14 @@ const LESSONS = {
       },
       {
         key: "complex", label: "Complex", points: 15,
-        world: `Dimension: (6, 7)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nBeeper: (1, 1); 2\nBeeper: (2, 1); 1\nBeeper: (3, 1); 3\nBeeper: (1, 2); 1\nBeeper: (2, 2); 1\nBeeper: (3, 2); 1\nBeeper: (4, 2); 2\nBeeper: (5, 2); 1\nBeeper: (1, 4); 3\nBeeper: (2, 4); 2\nBeeper: (3, 4); 1\nBeeper: (4, 4); 1\nBeeper: (5, 4); 2\nBeeper: (6, 4); 1\nBeeper: (1, 5); 4\nBeeper: (1, 6); 1\nBeeper: (2, 6); 3\nBeeper: (1, 7); 2\nBeeper: (2, 7); 2\nBeeper: (3, 7); 1\nBeeper: (4, 7); 3`,
-        prompt: `<strong>Right-justify the text.</strong> Each street holds one "word": a run of non-empty piles that starts on avenue 1 and ends at the first empty corner (or the east wall). A street may be blank. Slide every word east so its <em>last</em> pile sits against the east wall, keeping the piles in the same order. Street 1's word <code>2 1 3</code> ends up on avenues 4, 5, 6. Don't hard-code the world's size or the words' lengths: <code>push</code> each pile as you pick up the word, walk to the east wall, then lay the word back down walking <em>west</em>. Which array method hands you the piles in the order you need?`,
+        world: `Dimension: (6, 8)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nBeeper: (1, 2); 2\nBeeper: (2, 2); 1\nBeeper: (3, 2); 3\nBeeper: (1, 3); 1\nBeeper: (2, 3); 1\nBeeper: (3, 3); 1\nBeeper: (4, 3); 2\nBeeper: (5, 3); 1\nBeeper: (1, 5); 3\nBeeper: (2, 5); 2\nBeeper: (3, 5); 1\nBeeper: (4, 5); 1\nBeeper: (5, 5); 2\nBeeper: (6, 5); 1\nBeeper: (1, 6); 4\nBeeper: (1, 7); 1\nBeeper: (2, 7); 3\nBeeper: (1, 8); 2\nBeeper: (2, 8); 2\nBeeper: (3, 8); 1\nBeeper: (4, 8); 3`,
+        prompt: `<strong>Right-justify the text.</strong> Each street holds one "word": a run of non-empty piles that starts on avenue 1 and ends at the first empty corner (or the east wall). A street may be blank: street 1, where Karel starts, is. Slide every word east so its <em>last</em> pile sits against the east wall, keeping the piles in the same order. Street 2's word <code>2 1 3</code> ends up on avenues 4, 5, 6. Don't hard-code the world's size or the words' lengths: <code>push</code> each pile as you pick up the word, walk to the east wall, then lay the word back down walking <em>west</em>. Which array method hands you the piles in the order you need?`,
         starter: STUB, check: ["beepers"],
         solution: `// Pick up the whole pile on this corner and return its size.\nfunction takePile(k) {\n  let n = 0;\n  while (k.beepersPresent()) {\n    k.pickBeeper();\n    n++;\n  }\n  return n;\n}\n\nfunction putMany(k, n) {\n  for (let i = 0; i < n; i++) {\n    k.putBeeper();\n  }\n}\n\nfunction turnAround(k) {\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction main(k) {\n  let more = true;\n  while (more) {\n    // Pick up this street's word, west to east.\n    let word = [];\n    while (k.beepersPresent()) {\n      word.push(takePile(k));\n      if (k.frontIsClear()) {\n        k.move();\n      }\n    }\n\n    // Lay it back down from the east wall: pop gives the last pile first.\n    while (k.frontIsClear()) {\n      k.move();\n    }\n    turnAround(k);\n    while (word.length > 0) {\n      putMany(k, word.pop());\n      if (word.length > 0) {\n        k.move();\n      }\n    }\n\n    // Back to the west wall, then up a street if there is one, facing east.\n    while (k.frontIsClear()) {\n      k.move();\n    }\n    turnRight(k);\n    more = k.frontIsClear();\n    if (more) {\n      k.move();\n    }\n    turnRight(k);\n  }\n}`,
       },
       {
         key: "complex2", label: "Complex II", points: 20,
-        world: `Dimension: (4, 4)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nBeeper: (1, 1); 3\nBeeper: (2, 1); 1\nBeeper: (4, 1); 2\nBeeper: (2, 2); 2\nBeeper: (1, 3); 1\nBeeper: (3, 3); 3\nBeeper: (2, 4); 2\nBeeper: (4, 4); 1`,
+        world: `Dimension: (4, 4)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nBeeper: (2, 1); 1\nBeeper: (4, 1); 2\nBeeper: (2, 2); 2\nBeeper: (1, 3); 1\nBeeper: (3, 3); 3\nBeeper: (2, 4); 2\nBeeper: (4, 4); 1`,
         prompt: `<strong>Quarter turn.</strong> Rotate the whole field of piles 90&deg; <em>clockwise</em>, as if you turned the picture a quarter turn to the right: the pile in the south-west corner moves to the north-west corner, the north-west one to the north-east, and so on around. In an <em>n</em>&times;<em>n</em> world, the pile on (<em>a</em>, <em>s</em>) moves to (<em>s</em>, <em>n</em> + 1 &minus; <em>a</em>); here the pile on (2, 1) goes to (1, 3). Every pile moves at once, so pick the whole field up into a 2D array <code>grid</code> first (<code>grid[r][c]</code> for street <code>r + 1</code>, avenue <code>c + 1</code>), then put it back down rotated. Work out which <code>grid</code> cell belongs on each corner. Don't hard-code the size: your program should work for a square world of any size.`,
         starter: STUB, check: ["beepers"],
         solution: `// Pick up the whole pile on this corner and return its size.\nfunction takePile(k) {\n  let n = 0;\n  while (k.beepersPresent()) {\n    k.pickBeeper();\n    n++;\n  }\n  return n;\n}\n\nfunction turnAround(k) {\n  k.turnLeft();\n  k.turnLeft();\n}\n\nfunction turnRight(k) {\n  k.turnLeft();\n  k.turnLeft();\n  k.turnLeft();\n}\n\n// Go back to the west wall and up one street, if there is one, facing east.\nfunction startNextRow(k) {\n  turnAround(k);\n  while (k.frontIsClear()) {\n    k.move();\n  }\n  turnRight(k);\n  if (k.frontIsClear()) {\n    k.move();\n  }\n  turnRight(k);\n}\n\nfunction main(k) {\n  // Pick up the field street by street. grid[r][c] is street r + 1, avenue c + 1.\n  let grid = [];\n  let more = true;\n  while (more) {\n    let row = [];\n    row.push(takePile(k));\n    while (k.frontIsClear()) {\n      k.move();\n      row.push(takePile(k));\n    }\n    grid.push(row);\n    more = k.leftIsClear();\n    startNextRow(k);\n  }\n\n  // Back down to (1, 1), facing east.\n  turnRight(k);\n  while (k.frontIsClear()) {\n    k.move();\n  }\n  k.turnLeft();\n\n  // Corner (r, c) of the rotated field comes from grid[c][n - 1 - r].\n  let n = grid.length;\n  for (let r = 0; r < n; r++) {\n    for (let c = 0; c < n; c++) {\n      for (let b = 0; b < grid[c][n - 1 - r]; b++) {\n        k.putBeeper();\n      }\n      if (k.frontIsClear()) {\n        k.move();\n      }\n    }\n    startNextRow(k);\n  }\n}`,
@@ -597,7 +597,7 @@ const LESSONS = {
       },
       {
         key: "complex", label: "Complex", points: 15,
-        world: `Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (4, 1); 1\nBeeper: (5, 1); 1`,
+        world: `Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (4, 1); 1\nBeeper: (5, 1); 1`,
         prompt: `Write a recursive <code>collect(k)</code>: pick up any beeper on the current corner, then — if the front is clear — move and recurse. It clears the whole corridor and stops at the wall.`,
         starter: `function collect(k) {\n  \n}\n\nfunction main(k) {\n  \n}\n`,
         check: ["beepers", "position"],
@@ -625,7 +625,7 @@ const LESSONS = {
       },
       {
         key: "complex", label: "Complex", points: 15,
-        world: `Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (1, 1); 1\nBeeper: (3, 1); 1\nBeeper: (5, 1); 1`,
+        world: `Dimension: (5, 1)\nKarel: (1, 1); east\nBeeperBag: 0\nBeeper: (2, 1); 1\nBeeper: (3, 1); 1\nBeeper: (5, 1); 1`,
         prompt: `Some corners are empty, so <code>pickBeeper()</code> sometimes throws. Walk all five corners and, at each, <code>try</code> to pick a beeper and <code>catch</code> the failure when there isn't one. End on <code>(5, 1)</code> with every beeper collected.`,
         starter: STUB, check: ["beepers", "position"],
         solution: `function main(k) {\n  for (let i = 0; i < 5; i++) {\n    try {\n      k.pickBeeper();\n    } catch (e) {\n      // no beeper here\n    }\n    if (i < 4) k.move();\n  }\n}`,

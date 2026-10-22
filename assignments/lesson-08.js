@@ -38,7 +38,7 @@ export const lesson08 = {
       key: "complex",
       label: "Complex",
       points: 15,
-      world: "Dimension: (5, 4)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nColor: (1, 1); Red\nColor: (3, 1); Red\nColor: (5, 1); Green\nColor: (2, 2); Green\nColor: (4, 2); Green\nColor: (5, 2); Red\nColor: (2, 3); Red\nColor: (4, 3); Green\nColor: (1, 4); Red\nColor: (3, 4); Green\nColor: (5, 4); Green",
+      world: "Dimension: (5, 4)\nKarel: (1, 1); east\nBeeperBag: INFINITY\nColor: (2, 1); Red\nColor: (3, 1); Red\nColor: (5, 1); Green\nColor: (2, 2); Green\nColor: (4, 2); Green\nColor: (5, 2); Red\nColor: (2, 3); Red\nColor: (4, 3); Green\nColor: (1, 4); Red\nColor: (3, 4); Green\nColor: (5, 4); Green",
       prompt: "Some corners in each row are painted <code>\"Red\"</code> or <code>\"Green\"</code>; the rest are blank. For <strong>each row</strong>, decide the row's majority color and paint every <em>blank</em> corner in that row with it &mdash; leave already-painted corners alone. If a row has the same number of red and green corners, fill its blanks with <code>\"Yellow\"</code> instead. Keep the chosen color in a <strong>string variable</strong> and pass it to a helper that does the painting. Only the paint is graded.",
       starter: "function main(k) {\n  \n}\n",
       check: ["colors"],

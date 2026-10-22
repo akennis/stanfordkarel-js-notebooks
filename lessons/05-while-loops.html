@@ -94,33 +94,37 @@ BeeperBag: INFINITY`,
       <p>Conditions don't have to be about walls. A corner can hold a whole <em>stack</em> of beepers, and
       <code>pickBeeper()</code> removes just one at a time. To scoop up the entire pile — without knowing
       how tall it is — loop <code>while (k.beepersPresent())</code>. Each pass removes one beeper, and when
-      the corner is finally empty the condition turns <code>false</code> and the loop stops.</p>` },
+      the corner is finally empty the condition turns <code>false</code> and the loop stops. Below, Karel
+      steps onto a pile of four and clears it.</p>` },
       { world: `Dimension: (3, 1)
 Karel: (1, 1); east
 BeeperBag: 0
-Beeper: (1, 1); 4`, code: `function main(k) {
+Beeper: (2, 1); 4`, code: `function main(k) {
+  k.move();
   while (k.beepersPresent()) {
     k.pickBeeper();
   }
 }` },
       { md: `<h3>Challenge · Clear the corner</h3>
-      <p>Karel is standing on a corner buried under a pile of beepers. Pick them all up so the corner is
-      completely empty. You don't know how many there are — so loop until the corner reports no beepers
+      <p>The corner just east of Karel is buried under a pile of beepers. Step onto it and pick them all
+      up so the corner is completely empty. You don't know how many there are — so loop until the corner reports no beepers
       left.</p>` },
       { world: `Dimension: (3, 1)
 Karel: (1, 1); east
 BeeperBag: 0
-Beeper: (1, 1); 5`,
-        prompt: `Loop <code>while (k.beepersPresent())</code> and <code>pickBeeper()</code> each pass until
-        the corner is bare.`,
+Beeper: (2, 1); 5`,
+        prompt: `Move onto the pile, then loop <code>while (k.beepersPresent())</code> and
+        <code>pickBeeper()</code> each pass until the corner is bare.`,
         starter: `function main(k) {
+  k.move();
   while (k.beepersPresent()) {
     // pick one beeper
   }
 }`,
         check: ["beepers"],
-        end: { avenue: 1, street: 1, direction: "east" },
+        end: { avenue: 2, street: 1, direction: "east" },
         solution: function main(k) {
+          k.move();
           while (k.beepersPresent()) {
             k.pickBeeper();
           }

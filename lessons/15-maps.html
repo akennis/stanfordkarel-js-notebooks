@@ -125,18 +125,19 @@ BeeperBag: INFINITY`, code: `function main(k) {
       <code>map.set(key, (map.get(key) || 0) + 1)</code> — "whatever the count was (or 0 if new), add one."
       This turns a stream of observations into a summary.</p>` },
       { md: `<h3>Challenge · Count the red corners</h3>
-      <p>Karel faces <strong>east</strong> in a six-wide room whose corners are already painted. Walk the
+      <p>Karel faces <strong>east</strong> in a six-wide room. Karel's own corner is blank, and most of the
+      others are painted. Walk the
       whole row, using a Map to tally how many corners are <strong>Red</strong>. Then, standing on the last
       corner, drop that many beepers — a beeper pile that <em>reports the count</em>. (There are three red
       corners, so three beepers.)</p>` },
       { world: `Dimension: (6, 1)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Color: (1, 1); Red
 Color: (2, 1); Blue
 Color: (3, 1); Red
 Color: (4, 1); Red
-Color: (5, 1); Blue`,
+Color: (5, 1); Blue
+Color: (6, 1); Red`,
         prompt: `Loop across all six corners. When <code>k.cornerColorIs("Red")</code>, bump the
         <code>"Red"</code> count in your tally with the counting idiom. After the walk, drop
         <code>tally.get("Red")</code> beepers where Karel stands (corner 6).`,

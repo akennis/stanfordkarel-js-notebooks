@@ -187,9 +187,9 @@ function main(k) {
       { world: `Dimension: (4, 3)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Color: (1, 1); Green
 Color: (2, 1); Red
 Color: (3, 1); Red
+Color: (4, 1); Green
 Color: (1, 2); Red
 Color: (2, 2); Green
 Color: (4, 2); Green
@@ -233,8 +233,8 @@ function main(k) {
   }
 }` },
       { md: `<h3>Challenge · Pick the smaller pile</h3>
-      <p>Each row has two piles of beepers — one on Karel's starting corner at the west edge, and one
-      at the east edge — and the two piles are never the same size. Karel has no sensor that counts a
+      <p>Karel starts in an empty hallway on street 1. Each row above it has two piles of beepers — one
+      at the west edge and one at the east edge — and the two piles are never the same size. Karel has no sensor that counts a
       pile directly, only <code>k.beepersPresent()</code>, so counting one means picking up every
       beeper in it while a variable tracks how many that was — then putting the same number back so the
       pile is undisturbed. Do that at both piles, storing the results in <code>countA</code> and
@@ -242,14 +242,15 @@ function main(k) {
       is smaller: travel to it and pick it up for good, leaving the larger pile's beepers exactly where
       you found them. Do this for every row, climbing to the next one the same sensing way as
       before.</p>` },
-      { world: `Dimension: (3, 2)
+      { world: `Dimension: (3, 3)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Beeper: (1, 1); 2
-Beeper: (3, 1); 4
-Beeper: (1, 2); 5
-Beeper: (3, 2); 3`,
-        prompt: `At the west pile, <code>while (k.beepersPresent())</code> pick up every beeper,
+Beeper: (1, 2); 2
+Beeper: (3, 2); 4
+Beeper: (1, 3); 5
+Beeper: (3, 3); 3`,
+        prompt: `The starter already climbs Karel from the hallway onto the first row's west pile. At the
+        west pile, <code>while (k.beepersPresent())</code> pick up every beeper,
         counting into <code>countA</code>, then put <code>countA</code> beepers back down. Travel
         east with <code>while (k.frontIsClear())</code>, and do the same at the east pile into
         <code>countB</code>, restoring it too. Compare <code>countA</code> and <code>countB</code>: if
@@ -257,6 +258,13 @@ Beeper: (3, 2); 3`,
         good; otherwise pick up <code>countB</code> beepers from the pile Karel's already standing on.
         Finish each row back at the west edge, then sense whether another row is waiting above.`,
         starter: `function main(k) {
+  // climb out of the hallway onto (1, 2), facing east
+  k.turnLeft();
+  k.move();
+  k.turnLeft();
+  k.turnLeft();
+  k.turnLeft();
+
   let checking = true;
   while (checking) {
     // count every beeper in the west pile into countA, then put them back
@@ -272,6 +280,11 @@ Beeper: (3, 2); 3`,
   }
 }`,
         solution: function main(k) {
+          k.turnLeft();
+          k.move();
+          k.turnLeft();
+          k.turnLeft();
+          k.turnLeft();
           let checking = true;
           while (checking) {
             let countA = 0;
@@ -325,7 +338,6 @@ Beeper: (3, 2); 3`,
       { world: `Dimension: (3, 2)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Beeper: (1, 1); 1
 Beeper: (2, 1); 1
 Beeper: (3, 1); 1
 Beeper: (1, 2); 1
@@ -351,14 +363,14 @@ Beeper: (3, 2); 1`, code: `function main(k) {
   }
 }` },
       { md: `<h3>Challenge · Count and pile the grid</h3>
-      <p>Every corner of this <strong>4 × 2</strong> grid has one beeper. Sweep the whole grid the same way
+      <p>Every corner of this <strong>4 × 2</strong> grid, except Karel's empty starting corner, has one
+      beeper. Sweep the whole grid the same way
       as above — east across the bottom row, up, then west across the top row — counting every beeper you
       pick up in a <code>total</code> variable. Finish by dropping <code>total</code> beepers in a single
       pile on Karel's final corner.</p>` },
       { world: `Dimension: (4, 2)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Beeper: (1, 1); 1
 Beeper: (2, 1); 1
 Beeper: (3, 1); 1
 Beeper: (4, 1); 1
@@ -410,16 +422,17 @@ Beeper: (4, 2); 1`,
       <code>checkingRows</code> above is a boolean that stays <code>true</code> until Karel finds there's no
       row left, and then flips to <code>false</code> to end the loop.</p>
       <p>A sensor only answers about <em>right now</em>, <em>right here</em>. The moment Karel moves, or picks
-      something up, the old answer is gone. A boolean variable keeps it. Below, Karel asks
-      <code>k.beepersPresent()</code> on its starting corner and stores the answer in
+      something up, the old answer is gone. A boolean variable keeps it. Below, Karel steps onto the
+      first corner east of its start, asks <code>k.beepersPresent()</code> there, and stores the answer in
       <code>hadBeeper</code>. Then it picks the beeper up — so asking the sensor again would now say
-      <code>false</code> — and walks to the far wall. There, the variable still remembers what the start
+      <code>false</code> — and walks to the far wall. There, the variable still remembers what that
       corner looked like: Karel puts the beeper down if there was one, or paints the corner red to report
       that there wasn't.</p>` },
       { world: `Dimension: (5, 3)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Beeper: (1, 1); 1`, code: `function main(k) {
+Beeper: (2, 1); 1`, code: `function main(k) {
+  k.move();
   let hadBeeper = k.beepersPresent();  // ask now, while Karel is standing here
   if (hadBeeper) {
     k.pickBeeper();                    // this changes the sensor's answer...
@@ -543,31 +556,35 @@ function main(k) {
   }
 }` },
       { md: `<h3>Challenge · Copy the color down the row</h3>
-      <p>Each row's west-end corner is already painted <strong>red</strong>, <strong>green</strong>,
+      <p>Each row's east-end corner is already painted <strong>red</strong>, <strong>green</strong>,
       <strong>blue</strong>, or <strong>yellow</strong>, and the rest of the row is blank. Paint every
-      corner in each row to match its west-end corner.</p>
+      corner in each row to match its east-end corner.</p>
       <p>Karel can't ask a corner "what color are you?", only "are you this color?" with
-      <code>k.cornerColorIs(...)</code>. Work out the color once, while Karel is standing on the west end,
-      store it in a string variable, and let that variable carry the answer across the row.</p>` },
+      <code>k.cornerColorIs(...)</code>. Walk to the east end, work out the color once while Karel is
+      standing there, store it in a string variable, and let that variable carry the answer back across
+      the row.</p>` },
       { world: `Dimension: (5, 4)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Color: (1, 1); Green
-Color: (1, 2); Blue
-Color: (1, 3); Yellow
-Color: (1, 4); Red`,
-        prompt: `On each row's west-end corner, use an <code>if</code> / <code>else if</code> chain of
-        <code>k.cornerColorIs(...)</code> checks to decide what to store in <code>color</code>. Then paint
-        every other corner in the row with <code>color</code> as you cross it.`,
+Color: (5, 1); Green
+Color: (5, 2); Blue
+Color: (5, 3); Yellow
+Color: (5, 4); Red`,
+        prompt: `Walk east to the row's east-end corner. There, use an <code>if</code> / <code>else if</code>
+        chain of <code>k.cornerColorIs(...)</code> checks to decide what to store in <code>color</code>.
+        Then turn around and paint every other corner in the row with <code>color</code> as you walk back
+        west.`,
         starter: `function main(k) {
   let checking = true;
   while (checking) {
     let color = "Red";
+    // walk east to the painted corner
+
     // work out this row's color and store it in color
 
-    // sweep east, painting every corner with color
+    // turn around and walk back west, painting every corner with color
 
-    // walk back to the west end, then climb to the next row or stop checking
+    // climb to the next row or stop checking
   }
 }`,
         check: ["colors"],
@@ -575,6 +592,7 @@ Color: (1, 4); Red`,
           let checking = true;
           while (checking) {
             let color = "Red";
+            while (k.frontIsClear()) k.move();
             if (k.cornerColorIs("Green")) {
               color = "Green";
             } else if (k.cornerColorIs("Blue")) {
@@ -582,13 +600,12 @@ Color: (1, 4); Red`,
             } else if (k.cornerColorIs("Yellow")) {
               color = "Yellow";
             }
+            k.turnLeft();
+            k.turnLeft();
             while (k.frontIsClear()) {
               k.move();
               k.paintCorner(color);
             }
-            k.turnLeft();
-            k.turnLeft();
-            while (k.frontIsClear()) k.move();
             k.turnLeft();
             k.turnLeft();
             k.turnLeft();

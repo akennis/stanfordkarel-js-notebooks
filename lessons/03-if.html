@@ -284,15 +284,16 @@ if (k.cornerColorIs("Green")) k.paintCorner("Red");</pre>
       <p>The first <code>if</code> repaints a red corner green — then the <em>second</em> <code>if</code>
       sees that fresh green and paints it straight back to red. Every corner ends up red. The fix is a
       neutral third color: send red to <code>"Yellow"</code> first, then green to red, then the yellows
-      on to green. Each <code>if</code> now tests a color no earlier line can have produced.</p>` },
-      { world: `Dimension: (5, 1)
+      on to green. Each <code>if</code> now tests a color no earlier line can have produced. Below, Karel
+      starts on a blank corner and steps onto each of the five painted corners in turn.</p>` },
+      { world: `Dimension: (6, 1)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Color: (1, 1); Red
-Color: (2, 1); Green
-Color: (3, 1); Red
-Color: (4, 1); Green
-Color: (5, 1); Red`, code: `function flip(k) {
+Color: (2, 1); Red
+Color: (3, 1); Green
+Color: (4, 1); Red
+Color: (5, 1); Green
+Color: (6, 1); Red`, code: `function flip(k) {
   if (k.cornerColorIs("Red")) {
     k.paintCorner("Yellow");
   }
@@ -305,6 +306,7 @@ Color: (5, 1); Red`, code: `function flip(k) {
 }
 
 function main(k) {
+  k.move();
   flip(k);
   k.move();
   flip(k);
@@ -316,22 +318,22 @@ function main(k) {
   flip(k);
 }` },
       { md: `<h3>Challenge · Swap red and green</h3>
-      <p>Six corners, each painted red or green. Finish the <code>flip</code> helper using the
+      <p>Karel starts on a blank corner just west of six corners, each painted red or green. Finish the <code>flip</code> helper using the
       neutral-color trick above, then call it once per corner so every red ends up green and every green
       ends up red. Grading checks the final colors.</p>` },
-      { world: `Dimension: (6, 1)
+      { world: `Dimension: (7, 1)
 Karel: (1, 1); east
 BeeperBag: INFINITY
-Color: (1, 1); Green
-Color: (2, 1); Red
-Color: (3, 1); Green
+Color: (2, 1); Green
+Color: (3, 1); Red
 Color: (4, 1); Green
-Color: (5, 1); Red
-Color: (6, 1); Green`,
+Color: (5, 1); Green
+Color: (6, 1); Red
+Color: (7, 1); Green`,
         prompt: `Complete <code>flip(k)</code>: <code>if (k.cornerColorIs("Red"))</code> paint
         <code>"Yellow"</code>; <code>if (k.cornerColorIs("Green"))</code> paint <code>"Red"</code>;
-        <code>if (k.cornerColorIs("Yellow"))</code> paint <code>"Green"</code>. Call it once per corner,
-        moving east between them, so the row ends green-red-green-green-red-green flipped to
+        <code>if (k.cornerColorIs("Yellow"))</code> paint <code>"Green"</code>. Step east onto each painted
+        corner and call it once there, so the row ends green-red-green-green-red-green flipped to
         red-green-red-red-green-red.`,
         starter: `function flip(k) {
   // Red here?    -> paint a neutral color first, e.g. "Yellow"
@@ -340,8 +342,9 @@ Color: (6, 1); Green`,
 }
 
 function main(k) {
+  k.move();
   flip(k);
-  // move east and flip once per corner (six in all)
+  // keep moving east and flipping, once per painted corner (six in all)
 }`,
         check: ["colors"],
         solution: function main(k) {
@@ -356,6 +359,7 @@ function main(k) {
               k.paintCorner("Green");
             }
           }
+          k.move();
           flip(k);
           k.move();
           flip(k);
